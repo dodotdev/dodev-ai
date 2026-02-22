@@ -1,0 +1,216 @@
+# TodoMCP
+
+**AI-native task and memory management via the Model Context Protocol.**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/dodotdev/todomcp)](https://github.com/dodotdev/todomcp)
+
+TodoMCP gives AI agents persistent memory and task tracking across sessions and projects. Built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io), it works with Claude Code, Cursor, Windsurf, and any MCP-compatible client.
+
+**Website:** [todomcp.ai](https://todomcp.ai)
+
+---
+
+## Why TodoMCP?
+
+AI agents are powerful but forgetful. Every new session starts from scratch — no memory of what was decided, what's pending, or what was learned. TodoMCP fixes this by giving agents a persistent brain:
+
+- **Todos** — Track tasks across sessions. An agent can pick up exactly where it left off.
+- **Memories** — Store decisions, context, and learnings. "We chose Postgres because..." is never lost.
+- **Projects** — Organize work across multiple codebases and initiatives.
+
+```
+You: "What's left to do on the auth system?"
+Agent: *checks TodoMCP* "3 pending tasks: implement refresh tokens,
+       add rate limiting to login, and write integration tests.
+       Memory note from last session: we decided to use httpOnly
+       cookies instead of localStorage for token storage."
+```
+
+## Features
+
+- **18 MCP tools** for managing todos, memories, and projects
+- **Real-time sync** — Dashboard updates instantly when agents make changes (powered by Convex)
+- **Cross-agent** — Works with any MCP client (Claude Code, Cursor, Windsurf, custom agents)
+- **Project-scoped** — Organize todos and memories by project
+- **Context tool** — One call to get the full picture: active project, pending todos, recent memories
+- **Self-hosted** — Run locally with Docker, bring your own Convex deployment
+- **Cloud option** — Or just connect to [todomcp.ai](https://todomcp.ai) for a managed experience
+
+## Quick Start
+
+### Option 1: Cloud (Fastest)
+
+1. Sign up at [todomcp.ai](https://todomcp.ai)
+2. Get your API key from the dashboard
+3. Add to your MCP client config:
+
+**Claude Code (`~/.claude/claude_code_config.json`):**
+```json
+{
+  "mcpServers": {
+    "todomcp": {
+      "command": "npx",
+      "args": ["-y", "@todomcp/mcp-server"],
+      "env": {
+        "TODOMCP_API_KEY": "your-api-key",
+        "TODOMCP_MODE": "cloud"
+      }
+    }
+  }
+}
+```
+
+**Cursor (`.cursor/mcp.json`):**
+```json
+{
+  "mcpServers": {
+    "todomcp": {
+      "command": "npx",
+      "args": ["-y", "@todomcp/mcp-server"],
+      "env": {
+        "TODOMCP_API_KEY": "your-api-key",
+        "TODOMCP_MODE": "cloud"
+      }
+    }
+  }
+}
+```
+
+### Option 2: Self-Hosted (Free)
+
+1. **Set up Convex** (if you don't have an account):
+   ```bash
+   npx convex dev  # Creates a free Convex deployment
+   ```
+
+2. **Run with Docker:**
+   ```bash
+   git clone https://github.com/dodotdev/todomcp.git
+   cd todomcp
+   cp .env.example .env
+   # Edit .env with your Convex URL
+   docker compose up -d
+   ```
+
+3. **Generate an API key:**
+   ```bash
+   npx @todomcp/mcp-server generate-key
+   ```
+
+4. **Configure your MCP client** (same as above, but with `TODOMCP_MODE=self-hosted`)
+
+### Option 3: Direct npm
+
+```bash
+npm install -g @todomcp/mcp-server
+```
+
+Then configure your MCP client to use the installed binary.
+
+## MCP Tools
+
+### Todos
+
+| Tool | Description |
+|------|-------------|
+| `create_todo` | Create a todo with title, description, priority, project, due date |
+| `update_todo` | Update any field on a todo |
+| `complete_todo` | Mark a todo as done |
+| `list_todos` | List and filter todos by project, status, priority |
+| `delete_todo` | Remove a todo |
+| `get_todo` | Get details of a specific todo |
+
+### Memories
+
+| Tool | Description |
+|------|-------------|
+| `add_memory` | Store a decision, learning, or context snippet |
+| `search_memories` | Full-text search across memories |
+| `list_memories` | List recent memories, optionally by project |
+| `update_memory` | Update a memory |
+| `delete_memory` | Remove a memory |
+
+### Projects
+
+| Tool | Description |
+|------|-------------|
+| `create_project` | Create a new project |
+| `list_projects` | List all projects |
+| `get_project` | Project details with todo/memory counts |
+| `update_project` | Update project info |
+| `archive_project` | Archive a completed project |
+| `set_active_project` | Set default project for subsequent calls |
+
+### Context
+
+| Tool | Description |
+|------|-------------|
+| `get_context` | Get active project, pending todos, and recent memories in one call |
+
+## Architecture
+
+TodoMCP is a monorepo with three main packages:
+
+```
+todomcp/
+├── apps/web/              # Next.js — landing, docs, dashboard
+├── packages/mcp-server/   # MCP server (npm + Docker)
+├── packages/convex/       # Convex schema and functions
+└── packages/shared/       # Shared types
+```
+
+**Tech stack:** TypeScript, Convex, Next.js 15, WorkOS AuthKit, Stripe, Tailwind + shadcn/ui, Docker, Turborepo.
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full architecture document.
+
+## Cloud Pricing
+
+| | Free | Pro ($10/mo) | Team ($20/mo) |
+|---|---|---|---|
+| Projects | 3 | Unlimited | Unlimited |
+| Todos | 100 | Unlimited | Unlimited |
+| Memories | 50 | Unlimited | Unlimited |
+| Memory search | Basic | Vector search | Vector search |
+| Rate limit | 60/min | 600/min | 2000/min |
+| Team members | 1 | 1 | 10 |
+| Data retention | 30 days | Unlimited | Unlimited |
+
+Self-hosted is always free and unlimited.
+
+## Development
+
+```bash
+# Prerequisites: Node.js 20+, pnpm 9+
+
+# Install dependencies
+pnpm install
+
+# Start Convex dev server
+pnpm --filter @todomcp/convex dev
+
+# Start MCP server in dev mode
+pnpm --filter @todomcp/mcp-server dev
+
+# Start web app
+pnpm --filter @todomcp/web dev
+
+# Run all in parallel
+pnpm dev
+```
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
+
+## License
+
+MIT — see [LICENSE](LICENSE) for details.
+
+## Links
+
+- **Website:** [todomcp.ai](https://todomcp.ai)
+- **Documentation:** [todomcp.ai/docs](https://todomcp.ai/docs)
+- **GitHub:** [github.com/dodotdev/todomcp](https://github.com/dodotdev/todomcp)
+- **npm:** [@todomcp/mcp-server](https://www.npmjs.com/package/@todomcp/mcp-server)
+- **Discord:** [Join our community](https://discord.gg/todomcp)

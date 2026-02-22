@@ -1,0 +1,28 @@
+{
+  "name": "todomcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-native task and memory management via the Model Context Protocol",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dodotdev/todomcp.git"
+  },
+  "homepage": "https://todomcp.ai",
+  "license": "MIT",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.2.0",
+    "turbo": "^2.3.0",
+    "typescript": "^5.7.0"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
