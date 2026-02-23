@@ -1,7 +1,11 @@
 export type DeployMode = "cloud" | "self-hosted"
 
 export function getMode(): DeployMode {
-  return process.env.NEXT_PUBLIC_DOMCP_MODE === "cloud" ? "cloud" : "self-hosted"
+  if (process.env.NEXT_PUBLIC_DOMCP_MODE) {
+    return process.env.NEXT_PUBLIC_DOMCP_MODE === "cloud" ? "cloud" : "self-hosted"
+  }
+  // Auto-detect: if WorkOS is configured, we're in cloud mode
+  return process.env.WORKOS_CLIENT_ID ? "cloud" : "self-hosted"
 }
 
 export function isCloud(): boolean {
