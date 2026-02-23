@@ -50,3 +50,9 @@ docker-compose.override.yml
 # Temporary / cache directories
 tmp/
 mnt/
+
+# Internal design docs (kept locally for AI context)
+docs/ARCHITECTURE.md
+docs/CONVEX_SCHEMA.md
+docs/MCP_TOOLS.md
+docs/MEMORY.md
