@@ -1,10 +1,10 @@
-import { redirect } from "next/navigation"
-import { getUser } from "@/lib/auth"
-import { isCloud, isSelfHosted } from "@/lib/mode"
-import { getSelfHostedUser } from "@/lib/self-hosted-auth"
-import { getConvexClient } from "@/lib/convex"
 import { api } from "@domcp/convex/api"
+import { redirect } from "next/navigation"
 import { DashboardProviders } from "@/components/providers/dashboard-providers"
+import { getUser } from "@/lib/auth"
+import { getConvexClient } from "@/lib/convex"
+import { isSelfHosted } from "@/lib/mode"
+import { getSelfHostedUser } from "@/lib/self-hosted-auth"
 
 export const dynamic = "force-dynamic"
 

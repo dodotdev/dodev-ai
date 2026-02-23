@@ -2,6 +2,7 @@
 
 import { Plus } from "lucide-react"
 import { useState } from "react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -20,7 +21,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
 interface ProjectConfig {
@@ -255,11 +255,7 @@ export function IssueForm({ onSubmit, projectConfig }: IssueFormProps) {
               <Label>Labels</Label>
               <div className="mt-1 flex flex-wrap gap-1.5">
                 {projectConfig.labels.map((l) => (
-                  <button
-                    key={l.id}
-                    type="button"
-                    onClick={() => toggleLabel(l.id)}
-                  >
+                  <button key={l.id} type="button" onClick={() => toggleLabel(l.id)}>
                     <Badge
                       variant={selectedLabelIds.includes(l.id) ? "default" : "outline"}
                       className={cn(

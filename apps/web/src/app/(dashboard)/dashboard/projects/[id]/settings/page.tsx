@@ -4,23 +4,20 @@ import { api } from "@domcp/convex/api"
 import { useQuery } from "convex/react"
 import { Loader2 } from "lucide-react"
 import { useParams } from "next/navigation"
-import { useAuth } from "@/components/providers/auth-provider"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { StatusEditor } from "@/components/dashboard/settings/status-editor"
+import { CycleEditor } from "@/components/dashboard/settings/cycle-editor"
+import { EstimateEditor } from "@/components/dashboard/settings/estimate-editor"
 import { LabelEditor } from "@/components/dashboard/settings/label-editor"
 import { MemberEditor } from "@/components/dashboard/settings/member-editor"
-import { EstimateEditor } from "@/components/dashboard/settings/estimate-editor"
-import { CycleEditor } from "@/components/dashboard/settings/cycle-editor"
 import { PersonaEditor } from "@/components/dashboard/settings/persona-editor"
+import { StatusEditor } from "@/components/dashboard/settings/status-editor"
+import { useAuth } from "@/components/providers/auth-provider"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function ProjectSettingsPage() {
   const { id } = useParams<{ id: string }>()
   const { apiKeyHash, isLoading: authLoading } = useAuth()
 
-  const project = useQuery(
-    api.projects.get,
-    apiKeyHash ? { apiKeyHash, id: id as never } : "skip"
-  )
+  const project = useQuery(api.projects.get, apiKeyHash ? { apiKeyHash, id: id as never } : "skip")
 
   const cycles = useQuery(
     api.cycles.list,
@@ -58,24 +55,15 @@ export default function ProjectSettingsPage() {
         </TabsList>
 
         <TabsContent value="workflow" className="mt-6">
-          <StatusEditor
-            projectId={id}
-            statuses={project.statuses ?? []}
-          />
+          <StatusEditor projectId={id} statuses={project.statuses ?? []} />
         </TabsContent>
 
         <TabsContent value="labels" className="mt-6">
-          <LabelEditor
-            projectId={id}
-            labels={project.labels ?? []}
-          />
+          <LabelEditor projectId={id} labels={project.labels ?? []} />
         </TabsContent>
 
         <TabsContent value="members" className="mt-6">
-          <MemberEditor
-            projectId={id}
-            members={project.members ?? []}
-          />
+          <MemberEditor projectId={id} members={project.members ?? []} />
         </TabsContent>
 
         <TabsContent value="estimates" className="mt-6">
@@ -100,10 +88,7 @@ export default function ProjectSettingsPage() {
         </TabsContent>
 
         <TabsContent value="persona" className="mt-6">
-          <PersonaEditor
-            projectId={id}
-            persona={project.persona}
-          />
+          <PersonaEditor projectId={id} persona={project.persona} />
         </TabsContent>
       </Tabs>
     </div>

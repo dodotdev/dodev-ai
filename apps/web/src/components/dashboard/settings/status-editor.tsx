@@ -5,7 +5,6 @@ import { useMutation } from "convex/react"
 import { GripVertical, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useAuth } from "@/components/providers/auth-provider"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -67,7 +66,9 @@ export function StatusEditor({ projectId, statuses: initialStatuses }: StatusEdi
     // Ensure at least one status remains per category
     const sameCategoryCount = statuses.filter((s) => s.category === target.category).length
     if (sameCategoryCount <= 1) {
-      setError(`Cannot remove the last "${target.category}" status. Each category must have at least one.`)
+      setError(
+        `Cannot remove the last "${target.category}" status. Each category must have at least one.`
+      )
       return
     }
 
@@ -125,16 +126,11 @@ export function StatusEditor({ projectId, statuses: initialStatuses }: StatusEdi
         </Button>
       </div>
 
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="space-y-2">
         {statuses.map((status) => (
-          <div
-            key={status.id}
-            className="flex items-center gap-2 rounded-md border p-2"
-          >
+          <div key={status.id} className="flex items-center gap-2 rounded-md border p-2">
             <GripVertical className="size-4 shrink-0 text-muted-foreground" />
 
             {/* Color dot preview */}

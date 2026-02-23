@@ -5,18 +5,15 @@ import { useMutation, useQuery } from "convex/react"
 import { ArrowLeft, Loader2, Settings } from "lucide-react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
-import { useAuth } from "@/components/providers/auth-provider"
 import { KanbanBoard } from "@/components/dashboard/kanban/kanban-board"
 import { TodoForm } from "@/components/dashboard/todo-form"
+import { useAuth } from "@/components/providers/auth-provider"
 
 export default function ProjectKanbanPage() {
   const { id } = useParams<{ id: string }>()
   const { apiKeyHash, isLoading: authLoading } = useAuth()
 
-  const project = useQuery(
-    api.projects.get,
-    apiKeyHash ? { apiKeyHash, id: id as never } : "skip"
-  )
+  const project = useQuery(api.projects.get, apiKeyHash ? { apiKeyHash, id: id as never } : "skip")
 
   const todos = useQuery(
     api.todos.list,
@@ -116,14 +113,11 @@ export default function ProjectKanbanPage() {
       cycleId: raw.cycleId as string | undefined,
       createdAt: t.createdAt,
       updatedAt: t.updatedAt,
-      issueId:
-        projectStub && todoNumber ? `${projectStub}-${todoNumber}` : undefined,
+      issueId: projectStub && todoNumber ? `${projectStub}-${todoNumber}` : undefined,
       resolvedLabels: (raw.labelIds as string[] | undefined)
         ?.map((lid) => labelMap.get(lid))
         .filter(Boolean) as Array<{ id: string; name: string; color: string }> | undefined,
-      resolvedAssignee: raw.assigneeId
-        ? memberMap.get(raw.assigneeId as string)
-        : undefined,
+      resolvedAssignee: raw.assigneeId ? memberMap.get(raw.assigneeId as string) : undefined,
     }
   })
 

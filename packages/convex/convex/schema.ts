@@ -13,9 +13,7 @@ export default defineSchema({
     apiKeyHash: v.string(),
 
     // Access control
-    role: v.optional(
-      v.union(v.literal("waitlisted"), v.literal("approved"), v.literal("admin"))
-    ),
+    role: v.optional(v.union(v.literal("waitlisted"), v.literal("approved"), v.literal("admin"))),
     waitlistEmailSentAt: v.optional(v.number()),
 
     // Billing

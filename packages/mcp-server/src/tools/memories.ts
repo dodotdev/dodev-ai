@@ -59,7 +59,8 @@ export const memoryTools: Tool[] = [
         },
         limit: {
           type: "number",
-          description: "Max results (1-50). Default: 10. Use higher limits when exploring a broad topic.",
+          description:
+            "Max results (1-50). Default: 10. Use higher limits when exploring a broad topic.",
         },
       },
       required: ["query"],

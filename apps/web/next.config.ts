@@ -1,5 +1,5 @@
-import { readFileSync } from "fs"
-import { resolve } from "path"
+import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
 import type { NextConfig } from "next"
 
 const rootPkg = JSON.parse(

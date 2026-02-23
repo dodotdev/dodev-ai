@@ -42,7 +42,11 @@ export async function checkQuota(
     .withIndex("by_user_period", (q) => q.eq("userId", user._id).eq("period", period))
     .unique()
 
-  const countField = `${resource}Count` as "todoCount" | "memoryCount" | "projectCount" | "issueCount"
+  const countField = `${resource}Count` as
+    | "todoCount"
+    | "memoryCount"
+    | "projectCount"
+    | "issueCount"
   const count = usage?.[countField] ?? 0
   if (count >= limits[resource]) {
     throw new ConvexError("QUOTA_EXCEEDED")

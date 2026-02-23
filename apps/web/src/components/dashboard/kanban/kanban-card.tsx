@@ -68,14 +68,9 @@ interface KanbanCardProps {
 }
 
 export function KanbanCard({ todo, isDragOverlay }: KanbanCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: todo._id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: todo._id,
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -98,7 +93,7 @@ export function KanbanCard({ todo, isDragOverlay }: KanbanCardProps) {
       className={cn(
         "cursor-grab rounded-lg border border-border bg-white p-3 shadow-sm transition-all dark:bg-card",
         isDragging && "opacity-50 border-dashed",
-        isDragOverlay && "shadow-xl scale-105 rotate-2",
+        isDragOverlay && "shadow-xl scale-105 rotate-2"
       )}
     >
       {todo.issueId && (
@@ -158,11 +153,7 @@ export function KanbanCard({ todo, isDragOverlay }: KanbanCardProps) {
         )}
 
         {todo.resolvedLabels?.map((label) => (
-          <Badge
-            key={label.id}
-            variant="outline"
-            className="text-[10px] px-1.5 py-0 gap-1"
-          >
+          <Badge key={label.id} variant="outline" className="text-[10px] px-1.5 py-0 gap-1">
             <span
               className="inline-block size-2 rounded-full"
               style={{ backgroundColor: label.color }}
@@ -178,9 +169,7 @@ export function KanbanCard({ todo, isDragOverlay }: KanbanCardProps) {
         ))}
       </div>
 
-      <p className="mt-2 text-[10px] text-muted-foreground">
-        {formatRelativeTime(todo.updatedAt)}
-      </p>
+      <p className="mt-2 text-[10px] text-muted-foreground">{formatRelativeTime(todo.updatedAt)}</p>
     </div>
   )
 }

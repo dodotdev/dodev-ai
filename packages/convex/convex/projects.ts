@@ -45,10 +45,7 @@ export const create = mutation({
     await checkQuota(ctx, user, "projects")
 
     // Determine stub: use provided or derive from name
-    let stub = (args.stub?.trim().toUpperCase() || deriveStub(args.name)).replace(
-      /[^A-Z0-9]/g,
-      ""
-    )
+    let stub = (args.stub?.trim().toUpperCase() || deriveStub(args.name)).replace(/[^A-Z0-9]/g, "")
     if (!stub) stub = "PRJ"
 
     // Ensure uniqueness for this user -- append a digit if taken
@@ -295,10 +292,7 @@ export const getContext = query({
       activeCycle = await ctx.db
         .query("cycles")
         .withIndex("by_user_project_status", (q) =>
-          q
-            .eq("userId", user._id)
-            .eq("projectId", activeProject._id)
-            .eq("status", "active")
+          q.eq("userId", user._id).eq("projectId", activeProject._id).eq("status", "active")
         )
         .first()
     }

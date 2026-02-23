@@ -125,9 +125,8 @@ export const update = mutation({
         updates.statusId = undefined
       } else {
         updates.statusId = args.statusId
-        const projectId = args.projectId !== undefined
-          ? (args.projectId ?? undefined)
-          : issue.projectId
+        const projectId =
+          args.projectId !== undefined ? (args.projectId ?? undefined) : issue.projectId
         if (projectId) {
           const project = await ctx.db.get(projectId)
           if (project) {

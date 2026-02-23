@@ -3,9 +3,9 @@
 import { api } from "@domcp/convex/api"
 import { useMutation, useQuery } from "convex/react"
 import { Loader2 } from "lucide-react"
-import { useAuth } from "@/components/providers/auth-provider"
 import { ProjectCards } from "@/components/dashboard/project-cards"
 import { ProjectForm } from "@/components/dashboard/project-form"
+import { useAuth } from "@/components/providers/auth-provider"
 
 export default function ProjectsPage() {
   const { apiKeyHash, isLoading: authLoading } = useAuth()
@@ -51,7 +51,20 @@ export default function ProjectsPage() {
     status: t.status,
     createdAt: t.createdAt,
     updatedAt: t.updatedAt,
-    stats: "stats" in t ? (t as { stats: { totalTodos: number; pendingTodos: number; inProgressTodos: number; completedTodos: number; memoryCount: number } }).stats : undefined,
+    stats:
+      "stats" in t
+        ? (
+            t as {
+              stats: {
+                totalTodos: number
+                pendingTodos: number
+                inProgressTodos: number
+                completedTodos: number
+                memoryCount: number
+              }
+            }
+          ).stats
+        : undefined,
   }))
 
   return (

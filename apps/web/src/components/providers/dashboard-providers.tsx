@@ -1,9 +1,9 @@
 "use client"
 
-import { ConvexProvider } from "./convex-provider"
-import { AuthProvider } from "./auth-provider"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar"
+import { AuthProvider } from "./auth-provider"
+import { ConvexProvider } from "./convex-provider"
 
 interface DashboardProvidersProps {
   workosUserId: string

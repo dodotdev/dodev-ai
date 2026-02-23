@@ -4,9 +4,9 @@ import { api } from "@domcp/convex/api"
 import { useQuery } from "convex/react"
 import { ArrowRight, Loader2, Plus } from "lucide-react"
 import Link from "next/link"
-import { useAuth } from "@/components/providers/auth-provider"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { TodoList } from "@/components/dashboard/todo-list"
+import { useAuth } from "@/components/providers/auth-provider"
 import { Button } from "@/components/ui/button"
 
 export default function DashboardPage() {
@@ -14,10 +14,7 @@ export default function DashboardPage() {
 
   const context = useQuery(api.projects.getContext, apiKeyHash ? { apiKeyHash } : "skip")
   const usage = useQuery(api.usage.getCurrentUsage, apiKeyHash ? { apiKeyHash } : "skip")
-  const recentTodos = useQuery(
-    api.todos.list,
-    apiKeyHash ? { apiKeyHash, limit: 4 } : "skip"
-  )
+  const recentTodos = useQuery(api.todos.list, apiKeyHash ? { apiKeyHash, limit: 4 } : "skip")
 
   if (authLoading || !apiKeyHash) {
     return (
@@ -28,10 +25,15 @@ export default function DashboardPage() {
   }
 
   const stats = {
-    totalTodos: (usage?.todoCount ?? 0),
+    totalTodos: usage?.todoCount ?? 0,
     pendingTodos: context?.todoSummary?.pending ?? 0,
     inProgressTodos: context?.todoSummary?.inProgress ?? 0,
-    completedTodos: Math.max(0, (usage?.todoCount ?? 0) - (context?.todoSummary?.pending ?? 0) - (context?.todoSummary?.inProgress ?? 0)),
+    completedTodos: Math.max(
+      0,
+      (usage?.todoCount ?? 0) -
+        (context?.todoSummary?.pending ?? 0) -
+        (context?.todoSummary?.inProgress ?? 0)
+    ),
     totalMemories: usage?.memoryCount ?? 0,
     totalProjects: usage?.projectCount ?? 0,
   }

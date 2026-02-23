@@ -7,19 +7,19 @@ import {
   ChevronDown,
   ChevronUp,
   CreditCard,
+  FolderOpen,
   LayoutDashboard,
   LogOut,
   Settings,
   User,
-  FolderOpen,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
 import { useAuth } from "@/components/providers/auth-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { cn } from "@/lib/utils"
 import { isCloud } from "@/lib/mode"
+import { cn } from "@/lib/utils"
 
 const mainNav = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -160,7 +160,9 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
             <div
               className={cn(
                 "relative ml-4 transition-all duration-300 ease-in-out",
-                userMenuOpen ? "mt-2 max-h-96 opacity-100" : "mt-0 max-h-0 overflow-hidden opacity-0"
+                userMenuOpen
+                  ? "mt-2 max-h-96 opacity-100"
+                  : "mt-0 max-h-0 overflow-hidden opacity-0"
               )}
             >
               <div className="absolute bottom-0 left-3 top-0 w-px bg-border" />

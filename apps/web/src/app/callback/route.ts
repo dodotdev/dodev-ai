@@ -2,7 +2,6 @@ import { handleAuth } from "@workos-inc/authkit-nextjs"
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { getConvexClient } from "@/lib/convex"
-import { api } from "@domcp/convex/api"
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     // Sync user to Convex in the background (best-effort)
     try {
-      const convex = getConvexClient()
+      const _convex = getConvexClient()
       // Extract user info from the WorkOS callback
       const code = url.searchParams.get("code")
       if (code) {
