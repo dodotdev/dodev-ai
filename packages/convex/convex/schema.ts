@@ -12,6 +12,12 @@ export default defineSchema({
     apiKey: v.string(),
     apiKeyHash: v.string(),
 
+    // Access control
+    role: v.optional(
+      v.union(v.literal("waitlisted"), v.literal("approved"), v.literal("admin"))
+    ),
+    waitlistEmailSentAt: v.optional(v.number()),
+
     // Billing
     plan: v.union(v.literal("free"), v.literal("pro"), v.literal("team")),
     stripeCustomerId: v.optional(v.string()),
@@ -43,6 +49,7 @@ export default defineSchema({
       v.literal("archived")
     ),
     todoCounter: v.number(),
+    issueCounter: v.number(),
     metadata: v.optional(v.any()),
 
     // Project config
@@ -110,6 +117,9 @@ export default defineSchema({
       v.literal("high"),
       v.literal("urgent")
     ),
+    severity: v.optional(
+      v.union(v.literal("critical"), v.literal("major"), v.literal("minor"), v.literal("trivial"))
+    ),
     dueDate: v.optional(v.number()),
     tags: v.array(v.string()),
     completedAt: v.optional(v.number()),
@@ -129,6 +139,65 @@ export default defineSchema({
     .index("by_user_project", ["userId", "projectId"])
     .index("by_user_project_status", ["userId", "projectId", "status"])
     .index("by_user_priority", ["userId", "priority"])
+    .index("by_user_due_date", ["userId", "dueDate"])
+    .index("by_user_severity", ["userId", "severity"])
+    .index("by_user_project_cycle", ["userId", "projectId", "cycleId"])
+    .searchIndex("search_title_description", {
+      searchField: "title",
+      filterFields: ["userId", "projectId", "status"],
+    }),
+
+  issues: defineTable({
+    userId: v.id("users"),
+    projectId: v.optional(v.id("projects")),
+    number: v.optional(v.number()),
+    title: v.string(),
+    description: v.optional(v.string()),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("in_progress"),
+      v.literal("completed"),
+      v.literal("cancelled")
+    ),
+    priority: v.union(
+      v.literal("low"),
+      v.literal("medium"),
+      v.literal("high"),
+      v.literal("urgent")
+    ),
+    type: v.union(
+      v.literal("bug"),
+      v.literal("feature"),
+      v.literal("improvement"),
+      v.literal("task")
+    ),
+    severity: v.union(
+      v.literal("critical"),
+      v.literal("major"),
+      v.literal("minor"),
+      v.literal("trivial")
+    ),
+    dueDate: v.optional(v.number()),
+    tags: v.array(v.string()),
+    completedAt: v.optional(v.number()),
+
+    // Linear-like fields
+    statusId: v.optional(v.string()),
+    labelIds: v.optional(v.array(v.string())),
+    assigneeId: v.optional(v.string()),
+    estimate: v.optional(v.string()),
+    cycleId: v.optional(v.id("cycles")),
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_status", ["userId", "status"])
+    .index("by_user_project", ["userId", "projectId"])
+    .index("by_user_project_status", ["userId", "projectId", "status"])
+    .index("by_user_priority", ["userId", "priority"])
+    .index("by_user_type", ["userId", "type"])
+    .index("by_user_severity", ["userId", "severity"])
     .index("by_user_due_date", ["userId", "dueDate"])
     .index("by_user_project_cycle", ["userId", "projectId", "cycleId"])
     .searchIndex("search_title_description", {
@@ -190,6 +259,7 @@ export default defineSchema({
     todoCount: v.number(),
     memoryCount: v.number(),
     projectCount: v.number(),
+    issueCount: v.number(),
     apiCalls: v.number(),
   }).index("by_user_period", ["userId", "period"]),
 })

@@ -117,9 +117,9 @@ export default function SignInPage() {
               </div>
               <span className="text-lg font-semibold tracking-tight">DoMCP.ai</span>
             </Link>
-            <h1 className="mt-6 text-2xl font-bold tracking-tight">Welcome back</h1>
+            <h1 className="mt-6 text-2xl font-bold tracking-tight">Get on the waitlist</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Sign in to manage your AI agent&apos;s todos, memories, and projects.
+              Sign up to reserve your spot. Already approved? Sign in below.
             </p>
           </div>
 

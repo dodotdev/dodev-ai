@@ -5,6 +5,7 @@ import { OpenSource } from "@/components/marketing/open-source"
 import { Pricing } from "@/components/marketing/pricing"
 import { SocialProof } from "@/components/marketing/social-proof"
 import { ToolShowcase } from "@/components/marketing/tool-showcase"
+import { Waitlist } from "@/components/marketing/waitlist"
 
 export default function HomePage() {
   return (
@@ -15,6 +16,7 @@ export default function HomePage() {
       <HowItWorks />
       <ToolShowcase />
       <Pricing />
+      <Waitlist />
       <OpenSource />
     </>
   )

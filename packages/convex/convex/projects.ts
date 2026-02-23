@@ -73,6 +73,7 @@ export const create = mutation({
       description: args.description,
       status: "active",
       todoCounter: 0,
+      issueCounter: 0,
       metadata: args.metadata,
       statuses: DEFAULT_STATUSES.map((s) => ({
         ...s,

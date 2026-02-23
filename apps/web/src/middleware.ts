@@ -1,26 +1,53 @@
-import { authkitMiddleware } from "@workos-inc/authkit-nextjs"
+import { NextResponse } from "next/server"
+import type { NextFetchEvent, NextMiddleware, NextRequest } from "next/server"
 
-export default authkitMiddleware({
-  middlewareAuth: {
-    enabled: true,
-    unauthenticatedPaths: [
-      "/",
-      "/auth/sign-in",
-      "/auth/sign-in/(.*)",
-      "/auth/sign-out",
-      "/callback",
-      "/api/auth/(.*)",
-      "/api/health",
-      "/favicon.ico",
-      "/robots.txt",
-      "/sitemap.xml",
-      "/privacy",
-      "/terms",
-    ],
-  },
-  redirectUri: process.env.WORKOS_REDIRECT_URI,
-  debug: process.env.NODE_ENV === "development",
-})
+const isCloud = !!process.env.WORKOS_CLIENT_ID
+
+let cachedCloudMiddleware: NextMiddleware | null = null
+
+async function getCloudMiddleware() {
+  if (cachedCloudMiddleware) return cachedCloudMiddleware
+  const { authkitMiddleware } = await import("@workos-inc/authkit-nextjs")
+  cachedCloudMiddleware = authkitMiddleware({
+    middlewareAuth: {
+      enabled: true,
+      unauthenticatedPaths: [
+        "/",
+        "/auth/sign-in",
+        "/auth/sign-in/(.*)",
+        "/auth/sign-out",
+        "/callback",
+        "/api/auth/(.*)",
+        "/api/health",
+        "/waitlisted",
+        "/favicon.ico",
+        "/robots.txt",
+        "/sitemap.xml",
+        "/privacy",
+        "/terms",
+      ],
+    },
+    redirectUri: process.env.WORKOS_REDIRECT_URI,
+    debug: process.env.NODE_ENV === "development",
+  })
+  return cachedCloudMiddleware
+}
+
+function selfHostedMiddleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  if (pathname === "/" || pathname.startsWith("/auth") || pathname === "/waitlisted") {
+    return NextResponse.redirect(new URL("/dashboard", request.url))
+  }
+  return NextResponse.next()
+}
+
+export default async function middleware(request: NextRequest, event: NextFetchEvent) {
+  if (!isCloud) {
+    return selfHostedMiddleware(request)
+  }
+  const handler = await getCloudMiddleware()
+  return handler!(request, event)
+}
 
 export const config = {
   matcher: [

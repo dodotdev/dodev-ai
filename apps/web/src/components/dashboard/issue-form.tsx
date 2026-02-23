@@ -30,11 +30,12 @@ interface ProjectConfig {
   estimateScale?: { type: string; values: string[] }
 }
 
-interface TodoFormData {
+interface IssueFormData {
   title: string
   description?: string
+  type: string
+  severity: string
   priority: string
-  severity?: string
   tags?: string[]
   statusId?: string
   labelIds?: string[]
@@ -42,17 +43,18 @@ interface TodoFormData {
   estimate?: string
 }
 
-interface TodoFormProps {
-  onSubmit: (data: TodoFormData) => void
+interface IssueFormProps {
+  onSubmit: (data: IssueFormData) => void
   projectConfig?: ProjectConfig
 }
 
-export function TodoForm({ onSubmit, projectConfig }: TodoFormProps) {
+export function IssueForm({ onSubmit, projectConfig }: IssueFormProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
+  const [type, setType] = useState("task")
+  const [severity, setSeverity] = useState("minor")
   const [priority, setPriority] = useState("medium")
-  const [severity, setSeverity] = useState("")
   const [tags, setTags] = useState("")
   const [statusId, setStatusId] = useState("")
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([])
@@ -66,8 +68,9 @@ export function TodoForm({ onSubmit, projectConfig }: TodoFormProps) {
     onSubmit({
       title: title.trim(),
       description: description.trim() || undefined,
+      type,
+      severity,
       priority,
-      severity: severity || undefined,
       tags: tags
         .split(",")
         .map((t) => t.trim())
@@ -80,8 +83,9 @@ export function TodoForm({ onSubmit, projectConfig }: TodoFormProps) {
 
     setTitle("")
     setDescription("")
+    setType("task")
+    setSeverity("minor")
     setPriority("medium")
-    setSeverity("")
     setTags("")
     setStatusId("")
     setSelectedLabelIds([])
@@ -108,38 +112,70 @@ export function TodoForm({ onSubmit, projectConfig }: TodoFormProps) {
           className="bg-gradient-to-r from-emerald-400 to-emerald-600 text-white hover:from-emerald-500 hover:to-emerald-700"
         >
           <Plus className="mr-1 size-4" />
-          New Todo
+          New Issue
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Todo</DialogTitle>
+          <DialogTitle>Create Issue</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="issue-title">Title</Label>
             <Input
-              id="title"
+              id="issue-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="What needs to be done?"
+              placeholder="What's the issue?"
               required
             />
           </div>
           <div>
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="issue-description">Description</Label>
             <Textarea
-              id="description"
+              id="issue-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Additional details..."
+              placeholder="Steps to reproduce, expected behavior, etc."
               rows={3}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="priority">Priority</Label>
+              <Label>Type</Label>
+              <Select value={type} onValueChange={setType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bug">Bug</SelectItem>
+                  <SelectItem value="feature">Feature</SelectItem>
+                  <SelectItem value="improvement">Improvement</SelectItem>
+                  <SelectItem value="task">Task</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Severity</Label>
+              <Select value={severity} onValueChange={setSeverity}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="critical">Critical</SelectItem>
+                  <SelectItem value="major">Major</SelectItem>
+                  <SelectItem value="minor">Minor</SelectItem>
+                  <SelectItem value="trivial">Trivial</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Priority</Label>
               <Select value={priority} onValueChange={setPriority}>
                 <SelectTrigger>
                   <SelectValue />
@@ -153,23 +189,6 @@ export function TodoForm({ onSubmit, projectConfig }: TodoFormProps) {
               </Select>
             </div>
 
-            <div>
-              <Label>Severity</Label>
-              <Select value={severity} onValueChange={setSeverity}>
-                <SelectTrigger>
-                  <SelectValue placeholder="None" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="critical">Critical</SelectItem>
-                  <SelectItem value="major">Major</SelectItem>
-                  <SelectItem value="minor">Minor</SelectItem>
-                  <SelectItem value="trivial">Trivial</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
             {sortedStatuses.length > 0 && (
               <div>
                 <Label>Status</Label>
@@ -261,12 +280,12 @@ export function TodoForm({ onSubmit, projectConfig }: TodoFormProps) {
           )}
 
           <div>
-            <Label htmlFor="tags">Tags</Label>
+            <Label htmlFor="issue-tags">Tags</Label>
             <Input
-              id="tags"
+              id="issue-tags"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              placeholder="auth, backend, bug (comma-separated)"
+              placeholder="auth, backend, regression (comma-separated)"
             />
           </div>
           <div className="flex justify-end gap-2">

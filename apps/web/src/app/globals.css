@@ -36,7 +36,7 @@
   --color-accent-foreground: #18181b;
   --color-destructive: #ef4444;
   --color-destructive-foreground: #fafafa;
-  --color-border: #e4e4e7;
+  --color-border: #f0f0f2;
   --color-input: #e4e4e7;
   --color-ring: #10b981;
   --color-chart-1: #3b82f6;
@@ -91,6 +91,7 @@
 
 html {
   font-size: 18px;
+  overflow-x: hidden;
 }
 
 body {
@@ -99,6 +100,7 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 button,

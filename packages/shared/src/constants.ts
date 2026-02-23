@@ -7,12 +7,14 @@ export const API_KEY_PREFIX = "domcp_sk_"
 export const API_KEY_LENGTH = 32
 
 /** Plan limits for free tier */
-export const PLAN_LIMITS: Record<PlanTier, { todos: number; memories: number; projects: number }> =
-  {
-    free: { todos: 100, memories: 50, projects: 1 },
-    pro: { todos: Infinity, memories: Infinity, projects: Infinity },
-    team: { todos: Infinity, memories: Infinity, projects: Infinity },
-  }
+export const PLAN_LIMITS: Record<
+  PlanTier,
+  { todos: number; memories: number; projects: number; issues: number }
+> = {
+  free: { todos: 100, memories: 50, projects: 1, issues: 200 },
+  pro: { todos: Infinity, memories: Infinity, projects: Infinity, issues: Infinity },
+  team: { todos: Infinity, memories: Infinity, projects: Infinity, issues: Infinity },
+}
 
 /** Rate limits per plan (requests per minute) */
 export const RATE_LIMITS: Record<PlanTier, { windowMs: number; maxRequests: number }> = {

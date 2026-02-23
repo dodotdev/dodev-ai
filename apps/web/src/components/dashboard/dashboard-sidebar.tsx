@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  AlertCircle,
   Brain,
   CheckSquare,
   ChevronDown,
@@ -18,11 +19,13 @@ import { useState } from "react"
 import { useAuth } from "@/components/providers/auth-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
+import { isCloud } from "@/lib/mode"
 
 const mainNav = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/projects", label: "Projects", icon: FolderOpen },
   { href: "/dashboard/todos", label: "Todos", icon: CheckSquare },
+  { href: "/dashboard/issues", label: "Issues", icon: AlertCircle },
   { href: "/dashboard/memories", label: "Memories", icon: Brain },
 ]
 
@@ -81,26 +84,28 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
 
       {/* Bottom section */}
       <div className="p-3">
-        {/* Plan info */}
-        <div className="mb-3 rounded-lg border border-border bg-white p-3 dark:bg-accent">
-          <p className="text-xs font-medium text-foreground capitalize">{userPlan} Plan</p>
-          {userPlan === "free" ? (
-            <>
-              <p className="mt-1 text-xs text-muted-foreground">
-                1 project &middot; 100 todos &middot; 50 memories
-              </p>
-              <Link
-                href="/dashboard/settings"
-                onClick={onNavigate}
-                className="mt-2 inline-block text-xs font-medium text-emerald-600 hover:text-emerald-700"
-              >
-                Upgrade &rarr;
-              </Link>
-            </>
-          ) : (
-            <p className="mt-1 text-xs text-muted-foreground">Unlimited resources</p>
-          )}
-        </div>
+        {/* Plan info (cloud only) */}
+        {isCloud() && (
+          <div className="mb-3 rounded-lg border border-border bg-white p-3 dark:bg-accent">
+            <p className="text-xs font-medium text-foreground capitalize">{userPlan} Plan</p>
+            {userPlan === "free" ? (
+              <>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  1 project &middot; 100 todos &middot; 50 memories
+                </p>
+                <Link
+                  href="/dashboard/settings"
+                  onClick={onNavigate}
+                  className="mt-2 inline-block text-xs font-medium text-emerald-600 hover:text-emerald-700"
+                >
+                  Upgrade &rarr;
+                </Link>
+              </>
+            ) : (
+              <p className="mt-1 text-xs text-muted-foreground">Unlimited resources</p>
+            )}
+          </div>
+        )}
 
         {/* Bottom nav items */}
         <div className="space-y-1">
@@ -127,62 +132,66 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
           })}
         </div>
 
-        {/* Divider */}
-        <hr className="my-3 border-t border-border" />
+        {isCloud() && (
+          <>
+            {/* Divider */}
+            <hr className="my-3 border-t border-border" />
 
-        {/* User menu */}
-        <button
-          type="button"
-          className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-white hover:text-foreground dark:hover:bg-accent"
-          onClick={() => setUserMenuOpen(!userMenuOpen)}
-        >
-          <Avatar className="size-6">
-            <AvatarFallback className="bg-emerald-500/10 text-[10px] font-semibold text-emerald-600">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <span className="flex-1 truncate text-left">{userEmail}</span>
-          {userMenuOpen ? (
-            <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
-          ) : (
-            <ChevronUp className="size-4 shrink-0 text-muted-foreground" />
-          )}
-        </button>
+            {/* User menu (cloud only) */}
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-white hover:text-foreground dark:hover:bg-accent"
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+            >
+              <Avatar className="size-6">
+                <AvatarFallback className="bg-emerald-500/10 text-[10px] font-semibold text-emerald-600">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <span className="flex-1 truncate text-left">{userEmail}</span>
+              {userMenuOpen ? (
+                <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+              ) : (
+                <ChevronUp className="size-4 shrink-0 text-muted-foreground" />
+              )}
+            </button>
 
-        {/* Expandable user menu */}
-        <div
-          className={cn(
-            "relative ml-4 transition-all duration-300 ease-in-out",
-            userMenuOpen ? "mt-2 max-h-96 opacity-100" : "mt-0 max-h-0 overflow-hidden opacity-0"
-          )}
-        >
-          <div className="absolute bottom-0 left-3 top-0 w-px bg-border" />
-          <div className="space-y-0.5">
-            <Link
-              href="/dashboard/settings"
-              onClick={onNavigate}
-              className="flex items-center gap-3 rounded-md py-2 pl-8 pr-2 text-sm text-muted-foreground transition-colors hover:bg-white hover:text-foreground dark:hover:bg-accent"
+            {/* Expandable user menu */}
+            <div
+              className={cn(
+                "relative ml-4 transition-all duration-300 ease-in-out",
+                userMenuOpen ? "mt-2 max-h-96 opacity-100" : "mt-0 max-h-0 overflow-hidden opacity-0"
+              )}
             >
-              <User className="size-4 shrink-0" />
-              Profile
-            </Link>
-            <Link
-              href="/dashboard/settings"
-              onClick={onNavigate}
-              className="flex items-center gap-3 rounded-md py-2 pl-8 pr-2 text-sm text-muted-foreground transition-colors hover:bg-white hover:text-foreground dark:hover:bg-accent"
-            >
-              <CreditCard className="size-4 shrink-0" />
-              Billing
-            </Link>
-            <Link
-              href="/auth/sign-out"
-              className="flex items-center gap-3 rounded-md py-2 pl-8 pr-2 text-sm text-muted-foreground transition-colors hover:bg-white hover:text-foreground dark:hover:bg-accent"
-            >
-              <LogOut className="size-4 shrink-0" />
-              Sign Out
-            </Link>
-          </div>
-        </div>
+              <div className="absolute bottom-0 left-3 top-0 w-px bg-border" />
+              <div className="space-y-0.5">
+                <Link
+                  href="/dashboard/settings"
+                  onClick={onNavigate}
+                  className="flex items-center gap-3 rounded-md py-2 pl-8 pr-2 text-sm text-muted-foreground transition-colors hover:bg-white hover:text-foreground dark:hover:bg-accent"
+                >
+                  <User className="size-4 shrink-0" />
+                  Profile
+                </Link>
+                <Link
+                  href="/dashboard/settings"
+                  onClick={onNavigate}
+                  className="flex items-center gap-3 rounded-md py-2 pl-8 pr-2 text-sm text-muted-foreground transition-colors hover:bg-white hover:text-foreground dark:hover:bg-accent"
+                >
+                  <CreditCard className="size-4 shrink-0" />
+                  Billing
+                </Link>
+                <Link
+                  href="/auth/sign-out"
+                  className="flex items-center gap-3 rounded-md py-2 pl-8 pr-2 text-sm text-muted-foreground transition-colors hover:bg-white hover:text-foreground dark:hover:bg-accent"
+                >
+                  <LogOut className="size-4 shrink-0" />
+                  Sign Out
+                </Link>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

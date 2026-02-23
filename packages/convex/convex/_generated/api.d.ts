@@ -10,6 +10,7 @@
 
 import type * as cycles from "../cycles.js";
 import type * as http from "../http.js";
+import type * as issues from "../issues.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_utils from "../lib/utils.js";
 import type * as memories from "../memories.js";
@@ -30,6 +31,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   cycles: typeof cycles;
   http: typeof http;
+  issues: typeof issues;
   "lib/auth": typeof lib_auth;
   "lib/utils": typeof lib_utils;
   memories: typeof memories;

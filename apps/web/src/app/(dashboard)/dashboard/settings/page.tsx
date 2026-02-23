@@ -9,6 +9,7 @@ import { ApiKeyDisplay } from "@/components/dashboard/api-key-display"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import { isCloud } from "@/lib/mode"
 
 export default function SettingsPage() {
   const { user, apiKeyHash, isLoading: authLoading } = useAuth()
@@ -43,7 +44,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
+    <div className="mx-auto max-w-2xl space-y-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
         <p className="mt-1 text-sm text-muted-foreground">Manage your account and API access</p>
@@ -55,35 +56,39 @@ export default function SettingsPage() {
         onRegenerate={handleRegenerate}
       />
 
-      <Separator />
+      {isCloud() && (
+        <>
+          <Separator />
 
-      {/* Plan & Usage */}
-      <div className="rounded-2xl border border-border bg-white p-5 dark:bg-card">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-medium">Plan</h3>
-            <div className="mt-1 flex items-center gap-2">
-              <Badge variant="secondary" className="capitalize">
-                {plan}
-              </Badge>
+          {/* Plan & Usage (cloud only) */}
+          <div className="rounded-2xl border border-border bg-white p-5 dark:bg-card">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium">Plan</h3>
+                <div className="mt-1 flex items-center gap-2">
+                  <Badge variant="secondary" className="capitalize">
+                    {plan}
+                  </Badge>
+                </div>
+              </div>
+              {plan === "free" && (
+                <Button
+                  size="sm"
+                  className="bg-gradient-to-r from-emerald-400 to-emerald-600 text-white hover:from-emerald-500 hover:to-emerald-700"
+                >
+                  Upgrade to Pro
+                </Button>
+              )}
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <UsageBar label="Todos" current={currentUsage.todoCount} limit={limits.todos} />
+              <UsageBar label="Memories" current={currentUsage.memoryCount} limit={limits.memories} />
+              <UsageBar label="Projects" current={currentUsage.projectCount} limit={limits.projects} />
             </div>
           </div>
-          {plan === "free" && (
-            <Button
-              size="sm"
-              className="bg-gradient-to-r from-emerald-400 to-emerald-600 text-white hover:from-emerald-500 hover:to-emerald-700"
-            >
-              Upgrade to Pro
-            </Button>
-          )}
-        </div>
-
-        <div className="mt-6 space-y-4">
-          <UsageBar label="Todos" current={currentUsage.todoCount} limit={limits.todos} />
-          <UsageBar label="Memories" current={currentUsage.memoryCount} limit={limits.memories} />
-          <UsageBar label="Projects" current={currentUsage.projectCount} limit={limits.projects} />
-        </div>
-      </div>
+        </>
+      )}
 
       <Separator />
 

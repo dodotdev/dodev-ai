@@ -4,13 +4,14 @@ import { CheckCircle2, Circle, Clock, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn, formatRelativeTime } from "@/lib/utils"
 
-interface TodoItem {
+interface IssueItem {
   _id: string
   title: string
   description?: string
   status: "pending" | "in_progress" | "completed" | "cancelled"
   priority: "low" | "medium" | "high" | "urgent"
-  severity?: "critical" | "major" | "minor" | "trivial"
+  type: "bug" | "feature" | "improvement" | "task"
+  severity: "critical" | "major" | "minor" | "trivial"
   tags: string[]
   dueDate?: number
   createdAt: number
@@ -38,24 +39,31 @@ const priorityColors = {
   urgent: "bg-red-50 text-red-700 dark:bg-red-900/50 dark:text-red-300",
 }
 
-const severityColors: Record<string, string> = {
+const typeColors = {
+  bug: "bg-red-50 text-red-700 dark:bg-red-900/50 dark:text-red-300",
+  feature: "bg-blue-50 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300",
+  improvement: "bg-purple-50 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300",
+  task: "bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300",
+}
+
+const severityColors = {
   critical: "bg-red-50 text-red-700 dark:bg-red-900/50 dark:text-red-300",
   major: "bg-amber-50 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
   minor: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
   trivial: "bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300",
 }
 
-interface TodoListProps {
-  todos: TodoItem[]
-  onUpdate?: (id: string, data: Partial<TodoItem>) => void
+interface IssueListProps {
+  issues: IssueItem[]
+  onUpdate?: (id: string, data: Partial<IssueItem>) => void
 }
 
-export function TodoList({ todos, onUpdate }: TodoListProps) {
-  if (todos.length === 0) {
+export function IssueList({ issues, onUpdate }: IssueListProps) {
+  if (issues.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <Circle className="mb-3 size-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">No todos yet</p>
+        <p className="text-sm text-muted-foreground">No issues yet</p>
         <p className="mt-1 text-xs text-muted-foreground">
           Create one from the MCP server or the form above
         </p>
@@ -65,24 +73,24 @@ export function TodoList({ todos, onUpdate }: TodoListProps) {
 
   return (
     <div className="divide-y divide-border rounded-2xl border border-border bg-white dark:bg-card">
-      {todos.map((todo) => {
-        const StatusIcon = statusIcons[todo.status]
+      {issues.map((issue) => {
+        const StatusIcon = statusIcons[issue.status]
         return (
           <div
-            key={todo._id}
+            key={issue._id}
             className="flex items-start gap-3 p-4 transition-colors hover:bg-surface-hover"
           >
             <button
               type="button"
-              className={cn("mt-0.5 shrink-0", statusColors[todo.status])}
+              className={cn("mt-0.5 shrink-0", statusColors[issue.status])}
               onClick={() => {
-                if (todo.status === "completed") {
-                  onUpdate?.(todo._id, { status: "pending" })
+                if (issue.status === "completed") {
+                  onUpdate?.(issue._id, { status: "pending" })
                 } else {
-                  onUpdate?.(todo._id, { status: "completed" })
+                  onUpdate?.(issue._id, { status: "completed" })
                 }
               }}
-              aria-label={todo.status === "completed" ? "Mark as pending" : "Mark as complete"}
+              aria-label={issue.status === "completed" ? "Reopen issue" : "Close issue"}
             >
               <StatusIcon className="size-5" />
             </button>
@@ -91,33 +99,37 @@ export function TodoList({ todos, onUpdate }: TodoListProps) {
               <p
                 className={cn(
                   "text-sm font-medium",
-                  todo.status === "completed" && "text-muted-foreground line-through"
+                  issue.status === "completed" && "text-muted-foreground line-through"
                 )}
               >
-                {todo.title}
+                {issue.title}
               </p>
-              {todo.description && (
+              {issue.description && (
                 <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
-                  {todo.description}
+                  {issue.description}
                 </p>
               )}
 
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <Badge
                   variant="secondary"
-                  className={cn("text-[10px]", priorityColors[todo.priority])}
+                  className={cn("text-[10px]", typeColors[issue.type])}
                 >
-                  {todo.priority}
+                  {issue.type}
                 </Badge>
-                {todo.severity && (
-                  <Badge
-                    variant="secondary"
-                    className={cn("text-[10px]", severityColors[todo.severity])}
-                  >
-                    {todo.severity}
-                  </Badge>
-                )}
-                {todo.tags.map((tag) => (
+                <Badge
+                  variant="secondary"
+                  className={cn("text-[10px]", severityColors[issue.severity])}
+                >
+                  {issue.severity}
+                </Badge>
+                <Badge
+                  variant="secondary"
+                  className={cn("text-[10px]", priorityColors[issue.priority])}
+                >
+                  {issue.priority}
+                </Badge>
+                {issue.tags.map((tag) => (
                   <Badge key={tag} variant="outline" className="text-[10px]">
                     {tag}
                   </Badge>
@@ -126,7 +138,7 @@ export function TodoList({ todos, onUpdate }: TodoListProps) {
             </div>
 
             <span className="shrink-0 text-xs text-muted-foreground">
-              {formatRelativeTime(todo.updatedAt)}
+              {formatRelativeTime(issue.updatedAt)}
             </span>
           </div>
         )

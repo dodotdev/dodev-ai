@@ -21,7 +21,7 @@ export function getCurrentPeriod(): string {
 export async function incrementUsage(
   ctx: MutationCtx,
   userId: Id<"users">,
-  field: "todoCount" | "memoryCount" | "projectCount" | "apiCalls"
+  field: "todoCount" | "memoryCount" | "projectCount" | "issueCount" | "apiCalls"
 ): Promise<void> {
   const period = getCurrentPeriod()
 
@@ -32,7 +32,7 @@ export async function incrementUsage(
 
   if (existing) {
     await ctx.db.patch(existing._id, {
-      [field]: existing[field] + 1,
+      [field]: (existing[field] ?? 0) + 1,
     })
   } else {
     await ctx.db.insert("usage", {
@@ -41,6 +41,7 @@ export async function incrementUsage(
       todoCount: field === "todoCount" ? 1 : 0,
       memoryCount: field === "memoryCount" ? 1 : 0,
       projectCount: field === "projectCount" ? 1 : 0,
+      issueCount: field === "issueCount" ? 1 : 0,
       apiCalls: field === "apiCalls" ? 1 : 0,
     })
   }
