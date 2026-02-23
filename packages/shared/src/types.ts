@@ -7,6 +7,12 @@ export type StatusCategory = TodoStatus
 /** Priority levels for todos */
 export type TodoPriority = "low" | "medium" | "high" | "urgent"
 
+/** Severity levels (shared by todos and issues) */
+export type Severity = "critical" | "major" | "minor" | "trivial"
+
+/** Issue type categories */
+export type IssueType = "bug" | "feature" | "improvement" | "task"
+
 /** Lifecycle status of a project */
 export type ProjectLifecycle = "active" | "paused" | "completed" | "archived"
 
@@ -96,6 +102,31 @@ export interface Todo {
   description?: string
   status: TodoStatus
   priority: TodoPriority
+  severity?: Severity
+  dueDate?: number
+  tags: string[]
+  completedAt?: number
+  statusId?: string
+  labelIds?: string[]
+  assigneeId?: string
+  estimate?: string
+  cycleId?: string
+  createdAt: number
+  updatedAt: number
+}
+
+/** Issue as returned from Convex */
+export interface Issue {
+  _id: string
+  userId: string
+  projectId?: string
+  number?: number
+  title: string
+  description?: string
+  status: TodoStatus
+  priority: TodoPriority
+  type: IssueType
+  severity: Severity
   dueDate?: number
   tags: string[]
   completedAt?: number
@@ -131,6 +162,7 @@ export interface Project {
   description?: string
   status: ProjectLifecycle
   todoCounter: number
+  issueCounter: number
   metadata?: Record<string, unknown>
   statuses: WorkflowStatus[]
   labels: ProjectLabel[]
@@ -180,6 +212,7 @@ export interface Usage {
   todoCount: number
   memoryCount: number
   projectCount: number
+  issueCount: number
   apiCalls: number
 }
 

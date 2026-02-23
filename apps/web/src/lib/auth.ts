@@ -1,4 +1,4 @@
-import { withAuth } from "@workos-inc/authkit-nextjs"
+import { isSelfHosted } from "./mode"
 
 export interface AuthUser {
   id: string
@@ -7,10 +7,21 @@ export interface AuthUser {
 }
 
 /**
- * Get the current authenticated user from WorkOS session.
+ * Get the current authenticated user.
+ * In cloud mode, uses WorkOS session.
+ * In self-hosted mode, returns a synthetic user (real Convex user is resolved in dashboard layout).
  */
 export async function getUser(): Promise<AuthUser | null> {
+  if (isSelfHosted()) {
+    return {
+      id: "self-hosted",
+      email: "local@self-hosted",
+      name: "Local User",
+    }
+  }
+
   try {
+    const { withAuth } = await import("@workos-inc/authkit-nextjs")
     const { user } = await withAuth()
     if (!user) return null
 

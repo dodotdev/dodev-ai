@@ -59,7 +59,7 @@ export function Hero() {
                 asChild
               >
                 <Link href="/auth/sign-in">
-                  Get Started Free
+                  Join the Waitlist
                   <ArrowRight className="ml-1 size-4" />
                 </Link>
               </Button>
@@ -76,7 +76,7 @@ export function Hero() {
             </div>
 
             <p className="mt-4 text-sm text-muted-foreground/70">
-              Free forever for self-hosted. No credit card required.
+              Sign up to reserve your spot. Free forever for self-hosted.
             </p>
           </motion.div>
 

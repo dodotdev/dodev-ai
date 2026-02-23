@@ -1,5 +1,9 @@
 import { redirect } from "next/navigation"
 import { getUser } from "@/lib/auth"
+import { isCloud, isSelfHosted } from "@/lib/mode"
+import { getSelfHostedUser } from "@/lib/self-hosted-auth"
+import { getConvexClient } from "@/lib/convex"
+import { api } from "@domcp/convex/api"
 import { DashboardProviders } from "@/components/providers/dashboard-providers"
 
 export const metadata = {
@@ -7,10 +11,43 @@ export const metadata = {
 }
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const user = await getUser()
+  if (isSelfHosted()) {
+    const convexUser = await getSelfHostedUser()
+    if (!convexUser) {
+      throw new Error("Failed to resolve self-hosted user. Check DOMCP_API_KEY.")
+    }
+    return (
+      <DashboardProviders
+        workosUserId={convexUser.workosUserId}
+        email={convexUser.email}
+        name={convexUser.name}
+      >
+        {children}
+      </DashboardProviders>
+    )
+  }
 
+  // Cloud mode: existing logic
+  const user = await getUser()
   if (!user) {
     redirect("/auth/sign-in")
+  }
+
+  const convex = getConvexClient()
+  let convexUser = await convex.query(api.users.getByWorkosId, {
+    workosUserId: user.id,
+  })
+
+  if (!convexUser) {
+    convexUser = await convex.mutation(api.users.createOrUpdateFromWorkOS, {
+      workosUserId: user.id,
+      email: user.email,
+      name: user.name,
+    })
+  }
+
+  if (!convexUser || (convexUser.role !== "approved" && convexUser.role !== "admin")) {
+    redirect("/waitlisted")
   }
 
   return (

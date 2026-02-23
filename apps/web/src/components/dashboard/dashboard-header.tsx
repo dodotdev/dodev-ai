@@ -25,15 +25,26 @@ export function DashboardHeader() {
           <div className="flex-1" />
 
           {/* Right side actions */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
+            <a
+              href="https://x.com/dodotdev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+              aria-label="Follow @dodotdev on X"
+            >
+              <svg className="size-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+            </a>
             <a
               href="https://github.com/dodotdev/domcp-ai"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+              aria-label="GitHub"
             >
               <Github className="size-4" />
-              <span className="hidden sm:inline">Docs</span>
             </a>
 
             <ThemeToggle />

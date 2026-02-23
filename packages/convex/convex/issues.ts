@@ -8,11 +8,14 @@ export const create = mutation({
     apiKeyHash: v.string(),
     title: v.string(),
     description: v.optional(v.string()),
-    priority: v.optional(
-      v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("urgent"))
+    type: v.optional(
+      v.union(v.literal("bug"), v.literal("feature"), v.literal("improvement"), v.literal("task"))
     ),
     severity: v.optional(
       v.union(v.literal("critical"), v.literal("major"), v.literal("minor"), v.literal("trivial"))
+    ),
+    priority: v.optional(
+      v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("urgent"))
     ),
     projectId: v.optional(v.id("projects")),
     dueDate: v.optional(v.number()),
@@ -25,7 +28,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    await checkQuota(ctx, user, "todos")
+    await checkQuota(ctx, user, "issues")
 
     // Derive base status category from statusId if provided
     let status: "pending" | "in_progress" | "completed" | "cancelled" = "pending"
@@ -38,24 +41,25 @@ export const create = mutation({
       }
     }
 
-    // Auto-increment project todo counter for issue number
-    let todoNumber: number | undefined
+    // Auto-increment project issue counter for issue number
+    let issueNumber: number | undefined
     if (project) {
-      const nextNumber = (project.todoCounter ?? 0) + 1
-      todoNumber = nextNumber
-      await ctx.db.patch(project._id, { todoCounter: nextNumber })
+      const nextNumber = (project.issueCounter ?? 0) + 1
+      issueNumber = nextNumber
+      await ctx.db.patch(project._id, { issueCounter: nextNumber })
     }
 
     const now = Date.now()
-    const id = await ctx.db.insert("todos", {
+    const id = await ctx.db.insert("issues", {
       userId: user._id,
       projectId: args.projectId,
-      number: todoNumber,
+      number: issueNumber,
       title: args.title,
       description: args.description,
       status,
       priority: args.priority ?? "medium",
-      severity: args.severity,
+      type: args.type ?? "task",
+      severity: args.severity ?? "minor",
       dueDate: args.dueDate,
       tags: args.tags ?? [],
       statusId: args.statusId,
@@ -67,7 +71,7 @@ export const create = mutation({
       updatedAt: now,
     })
 
-    await incrementUsage(ctx, user._id, "todoCount")
+    await incrementUsage(ctx, user._id, "issueCount")
     return await ctx.db.get(id)
   },
 })
@@ -75,7 +79,7 @@ export const create = mutation({
 export const update = mutation({
   args: {
     apiKeyHash: v.string(),
-    id: v.id("todos"),
+    id: v.id("issues"),
     title: v.optional(v.string()),
     description: v.optional(v.string()),
     status: v.optional(
@@ -89,14 +93,11 @@ export const update = mutation({
     priority: v.optional(
       v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("urgent"))
     ),
+    type: v.optional(
+      v.union(v.literal("bug"), v.literal("feature"), v.literal("improvement"), v.literal("task"))
+    ),
     severity: v.optional(
-      v.union(
-        v.literal("critical"),
-        v.literal("major"),
-        v.literal("minor"),
-        v.literal("trivial"),
-        v.null()
-      )
+      v.union(v.literal("critical"), v.literal("major"), v.literal("minor"), v.literal("trivial"))
     ),
     dueDate: v.optional(v.union(v.number(), v.null())),
     tags: v.optional(v.array(v.string())),
@@ -109,8 +110,8 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const todo = await ctx.db.get(args.id)
-    if (!todo || todo.userId !== user._id) {
+    const issue = await ctx.db.get(args.id)
+    if (!issue || issue.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
 
@@ -124,10 +125,9 @@ export const update = mutation({
         updates.statusId = undefined
       } else {
         updates.statusId = args.statusId
-        // Look up project to derive category
         const projectId = args.projectId !== undefined
           ? (args.projectId ?? undefined)
-          : todo.projectId
+          : issue.projectId
         if (projectId) {
           const project = await ctx.db.get(projectId)
           if (project) {
@@ -141,14 +141,15 @@ export const update = mutation({
       }
     }
 
-    // Direct status override (backward compat for old MCP clients)
+    // Direct status override
     if (args.status !== undefined && args.statusId === undefined) {
       updates.status = args.status
       if (args.status === "completed") updates.completedAt = Date.now()
     }
 
     if (args.priority !== undefined) updates.priority = args.priority
-    if (args.severity !== undefined) updates.severity = args.severity ?? undefined
+    if (args.type !== undefined) updates.type = args.type
+    if (args.severity !== undefined) updates.severity = args.severity
     if (args.dueDate !== undefined) updates.dueDate = args.dueDate ?? undefined
     if (args.tags !== undefined) updates.tags = args.tags
     if (args.projectId !== undefined) updates.projectId = args.projectId ?? undefined
@@ -165,12 +166,12 @@ export const update = mutation({
 export const remove = mutation({
   args: {
     apiKeyHash: v.string(),
-    id: v.id("todos"),
+    id: v.id("issues"),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const todo = await ctx.db.get(args.id)
-    if (!todo || todo.userId !== user._id) {
+    const issue = await ctx.db.get(args.id)
+    if (!issue || issue.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
     await ctx.db.delete(args.id)
@@ -184,6 +185,8 @@ export const list = query({
     projectId: v.optional(v.id("projects")),
     status: v.optional(v.string()),
     priority: v.optional(v.string()),
+    type: v.optional(v.string()),
+    severity: v.optional(v.string()),
     search: v.optional(v.string()),
     limit: v.optional(v.number()),
   },
@@ -192,8 +195,8 @@ export const list = query({
     const limit = Math.min(args.limit ?? 20, 100)
 
     if (args.search) {
-      return await ctx.db
-        .query("todos")
+      const results = await ctx.db
+        .query("issues")
         .withSearchIndex("search_title_description", (q) => {
           let search = q.search("title", args.search!)
           search = search.eq("userId", user._id)
@@ -201,50 +204,59 @@ export const list = query({
           return search
         })
         .take(limit)
+
+      return results
+        .filter((i) => !args.type || i.type === args.type)
+        .filter((i) => !args.severity || i.severity === args.severity)
     }
 
     // Index-based query
-    let todoQuery
+    let issueQuery
     if (args.projectId && args.status) {
-      todoQuery = ctx.db.query("todos").withIndex("by_user_project_status", (q) =>
+      issueQuery = ctx.db.query("issues").withIndex("by_user_project_status", (q) =>
         q
           .eq("userId", user._id)
           .eq("projectId", args.projectId!)
           .eq("status", args.status as "pending" | "in_progress" | "completed" | "cancelled")
       )
     } else if (args.projectId) {
-      todoQuery = ctx.db
-        .query("todos")
+      issueQuery = ctx.db
+        .query("issues")
         .withIndex("by_user_project", (q) =>
           q.eq("userId", user._id).eq("projectId", args.projectId!)
         )
     } else if (args.status) {
-      todoQuery = ctx.db
-        .query("todos")
+      issueQuery = ctx.db
+        .query("issues")
         .withIndex("by_user_status", (q) =>
           q
             .eq("userId", user._id)
             .eq("status", args.status as "pending" | "in_progress" | "completed" | "cancelled")
         )
     } else {
-      todoQuery = ctx.db.query("todos").withIndex("by_user", (q) => q.eq("userId", user._id))
+      issueQuery = ctx.db.query("issues").withIndex("by_user", (q) => q.eq("userId", user._id))
     }
 
-    return await todoQuery.order("desc").take(limit)
+    const results = await issueQuery.order("desc").take(limit)
+
+    // Client-side filter for type/severity
+    return results
+      .filter((i) => !args.type || i.type === args.type)
+      .filter((i) => !args.severity || i.severity === args.severity)
   },
 })
 
 export const get = query({
   args: {
     apiKeyHash: v.string(),
-    id: v.id("todos"),
+    id: v.id("issues"),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const todo = await ctx.db.get(args.id)
-    if (!todo || todo.userId !== user._id) {
+    const issue = await ctx.db.get(args.id)
+    if (!issue || issue.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
-    return todo
+    return issue
   },
 })

@@ -79,6 +79,12 @@ export default function DashboardPage() {
           <h2 className="mb-4 text-lg font-semibold">Quick Actions</h2>
           <div className="space-y-3">
             <Button variant="outline" className="w-full justify-start" asChild>
+              <Link href="/dashboard/issues">
+                <Plus className="mr-2 size-4" />
+                New Issue
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full justify-start" asChild>
               <Link href="/dashboard/todos">
                 <Plus className="mr-2 size-4" />
                 New Todo

@@ -23,6 +23,7 @@ export const getCurrentUsage = query({
         todoCount: 0,
         memoryCount: 0,
         projectCount: 0,
+        issueCount: 0,
         apiCalls: 0,
       }
     }

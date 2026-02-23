@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   env: {
     NEXT_PUBLIC_APP_VERSION: rootPkg.version,
+    NEXT_PUBLIC_DOMCP_MODE: process.env.WORKOS_CLIENT_ID ? "cloud" : "self-hosted",
   },
 }
 

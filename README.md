@@ -19,8 +19,9 @@ DoMCP gives AI agents persistent memory and task tracking across sessions and pr
 AI agents are powerful but forgetful. Every new session starts from scratch — no memory of what was decided, what's pending, or what was learned. DoMCP fixes this by giving agents a persistent brain:
 
 - **Todos** — Track tasks across sessions. An agent can pick up exactly where it left off.
+- **Issues** — Track bugs, features, and improvements with type and severity.
 - **Memories** — Store decisions, context, and learnings. "We chose Postgres because..." is never lost.
-- **Projects** — Organize work across multiple codebases and initiatives.
+- **Projects** — Organize work across multiple codebases with Linear-like config: custom statuses, labels, members, estimates, and sprint cycles.
 
 ```
 You: "What's left to do on the auth system?"
@@ -32,13 +33,14 @@ Agent: *checks DoMCP* "3 pending tasks: implement refresh tokens,
 
 ## Features
 
-- **18 MCP tools** for managing todos, memories, and projects
+- **31 MCP tools** across 7 categories (todos, issues, memories, projects, config, cycles, context)
+- **Linear-like project management** — custom workflow statuses, labels, team members, estimate scales, sprint cycles
+- **AI personas** — per-project system prompts that shape how agents interact with your project
 - **Real-time sync** — Dashboard updates instantly when agents make changes (powered by Convex)
 - **Cross-agent** — Works with any MCP client (Claude Code, Cursor, Windsurf, custom agents)
-- **Project-scoped** — Organize todos and memories by project
-- **Context tool** — One call to get the full picture: active project, pending todos, recent memories
+- **Context tool** — One call to get the full picture: active project, pending todos, recent memories, config, and active cycle
 - **Self-hosted** — Run locally with Docker, bring your own Convex deployment
-- **Cloud option** — Or just connect to [domcp.ai](https://domcp.ai) for a managed experience
+- **Cloud option** — Or just connect to [domcp.ai](https://domcp.ai) for a managed experience (planned)
 
 ## Quick Start
 
@@ -115,18 +117,29 @@ Then configure your MCP client to use the installed binary.
 
 ## MCP Tools
 
-### Todos
+### Todos (6)
 
 | Tool | Description |
 |------|-------------|
-| `create_todo` | Create a todo with title, description, priority, project, due date |
+| `create_todo` | Create a todo with title, priority, severity, project, due date, labels, assignee, estimate, cycle |
 | `update_todo` | Update any field on a todo |
 | `complete_todo` | Mark a todo as done |
-| `list_todos` | List and filter todos by project, status, priority |
-| `delete_todo` | Remove a todo |
+| `list_todos` | List and filter todos by project, status, priority, severity, search |
 | `get_todo` | Get details of a specific todo |
+| `delete_todo` | Remove a todo |
 
-### Memories
+### Issues (6)
+
+| Tool | Description |
+|------|-------------|
+| `create_issue` | Create a bug, feature, improvement, or task with severity and priority |
+| `update_issue` | Update any field on an issue |
+| `close_issue` | Mark an issue as completed |
+| `list_issues` | List and filter issues by project, status, type, severity, priority, search |
+| `get_issue` | Get details of a specific issue |
+| `delete_issue` | Remove an issue |
+
+### Memories (5)
 
 | Tool | Description |
 |------|-------------|
@@ -136,36 +149,60 @@ Then configure your MCP client to use the installed binary.
 | `update_memory` | Update a memory |
 | `delete_memory` | Remove a memory |
 
-### Projects
+### Projects (6)
 
 | Tool | Description |
 |------|-------------|
-| `create_project` | Create a new project |
-| `list_projects` | List all projects |
-| `get_project` | Project details with todo/memory counts |
+| `create_project` | Create a project (auto-provisions workflow statuses, estimate scale) |
+| `list_projects` | List projects with optional stats |
+| `get_project` | Project details with full config |
 | `update_project` | Update project info |
 | `archive_project` | Archive a completed project |
 | `set_active_project` | Set default project for subsequent calls |
 
-### Context
+### Config (7)
 
 | Tool | Description |
 |------|-------------|
-| `get_context` | Get active project, pending todos, and recent memories in one call |
+| `update_project_statuses` | Replace all workflow statuses (each maps to a base category) |
+| `add_project_label` | Add a colored label |
+| `remove_project_label` | Remove a label |
+| `add_project_member` | Add a team member |
+| `remove_project_member` | Remove a member |
+| `update_estimate_scale` | Set estimation scale (points, t-shirt, hours) |
+| `update_project_persona` | Set or clear the AI persona for the project |
+
+### Cycles (5)
+
+| Tool | Description |
+|------|-------------|
+| `create_cycle` | Create a sprint/iteration cycle |
+| `list_cycles` | List cycles for a project |
+| `get_cycle` | Get cycle details |
+| `update_cycle` | Update cycle name, dates, status |
+| `delete_cycle` | Delete a cycle |
+
+### Context (1)
+
+| Tool | Description |
+|------|-------------|
+| `get_context` | Session bootstrapper: active project, pending todos, recent memories, config, persona, active cycle |
+
+See [docs/MCP_TOOLS.md](docs/MCP_TOOLS.md) for full parameter specifications.
 
 ## Architecture
 
 DoMCP is a monorepo with three main packages:
 
 ```
-domcp/
-├── apps/web/              # Next.js — landing, docs, dashboard
+domcp-ai/
+├── apps/web/              # Next.js 15 — landing, docs, dashboard
 ├── packages/mcp-server/   # MCP server (npm + Docker)
-├── packages/convex/       # Convex schema and functions
-└── packages/shared/       # Shared types
+├── packages/convex/       # Convex schema and functions (8 tables, 46 exported functions)
+└── packages/shared/       # Shared types (15 interfaces, plan constants, defaults)
 ```
 
-**Tech stack:** TypeScript, Convex, Next.js 15, WorkOS AuthKit, Stripe, Tailwind + shadcn/ui, Docker, Turborepo.
+**Tech stack:** TypeScript, Convex, Next.js 15, WorkOS AuthKit, Stripe, Tailwind CSS v4 + shadcn/ui, Biome, Docker, Turborepo.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full architecture document.
 
@@ -177,8 +214,9 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full architecture docum
 |---|---|---|---|
 | Projects | 1 | Unlimited | Unlimited |
 | Todos | 100 | Unlimited | Unlimited |
+| Issues | 200 | Unlimited | Unlimited |
 | Memories | 50 | Unlimited | Unlimited |
-| Memory search | Basic | Vector search | Vector search |
+| Memory search | Full-text | Vector search | Vector search |
 | Rate limit | 60/min | 600/min | 2000/min |
 | Team members | 1 | 1 | 10 |
 | Data retention | 30 days | Unlimited | Unlimited |
@@ -188,22 +226,26 @@ Self-hosted is always free and unlimited.
 ## Development
 
 ```bash
-# Prerequisites: Node.js 20+, pnpm 9+
+# Prerequisites: Node.js 20+, pnpm 10+
 
 # Install dependencies
 pnpm install
 
 # Start Convex dev server
-pnpm --filter @domcp/convex dev
+pnpm dev:convex
 
 # Start MCP server in dev mode
-pnpm --filter @domcp/mcp-server dev
+pnpm dev:mcp
 
 # Start web app
-pnpm --filter @domcp/web dev
+pnpm dev:web
 
-# Run all in parallel
-pnpm dev
+# Start web + Convex together
+pnpm dev:all
+
+# Lint and typecheck
+pnpm check
+pnpm typecheck
 ```
 
 ## Contributing

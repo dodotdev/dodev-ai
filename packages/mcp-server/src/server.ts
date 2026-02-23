@@ -6,6 +6,7 @@ import { contextTools, handleContextTool } from "./tools/context.js"
 import { cycleTools, handleCycleTool } from "./tools/cycles.js"
 import { handleMemoryTool, memoryTools } from "./tools/memories.js"
 import { handleProjectTool, projectTools } from "./tools/projects.js"
+import { handleIssueTool, issueTools } from "./tools/issues.js"
 import { handleTodoTool, todoTools } from "./tools/todos.js"
 
 const require = createRequire(import.meta.url)
@@ -13,6 +14,7 @@ const { version } = require("../../package.json") as { version: string }
 
 const allTools = [
   ...todoTools,
+  ...issueTools,
   ...memoryTools,
   ...projectTools,
   ...contextTools,
@@ -21,6 +23,7 @@ const allTools = [
 ]
 
 const todoToolNames = new Set(todoTools.map((t) => t.name))
+const issueToolNames = new Set(issueTools.map((t) => t.name))
 const memoryToolNames = new Set(memoryTools.map((t) => t.name))
 const projectToolNames = new Set(projectTools.map((t) => t.name))
 const contextToolNames = new Set(contextTools.map((t) => t.name))
@@ -55,6 +58,8 @@ export function createServer(): Server {
 
       if (todoToolNames.has(name)) {
         result = await handleTodoTool(name, toolArgs)
+      } else if (issueToolNames.has(name)) {
+        result = await handleIssueTool(name, toolArgs)
       } else if (memoryToolNames.has(name)) {
         result = await handleMemoryTool(name, toolArgs)
       } else if (projectToolNames.has(name)) {

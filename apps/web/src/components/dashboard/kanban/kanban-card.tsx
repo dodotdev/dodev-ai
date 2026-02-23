@@ -23,6 +23,8 @@ export interface KanbanTodo {
   description?: string
   status: "pending" | "in_progress" | "completed" | "cancelled"
   priority: "low" | "medium" | "high" | "urgent"
+  type?: "bug" | "feature" | "improvement" | "task"
+  severity?: "critical" | "major" | "minor" | "trivial"
   tags: string[]
   dueDate?: number
   number?: number
@@ -44,6 +46,20 @@ const priorityColors = {
   medium: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
   high: "bg-amber-50 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
   urgent: "bg-red-50 text-red-700 dark:bg-red-900/50 dark:text-red-300",
+}
+
+const typeColors: Record<string, string> = {
+  bug: "bg-red-50 text-red-700 dark:bg-red-900/50 dark:text-red-300",
+  feature: "bg-blue-50 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300",
+  improvement: "bg-purple-50 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300",
+  task: "bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300",
+}
+
+const severityColors: Record<string, string> = {
+  critical: "bg-red-50 text-red-700 dark:bg-red-900/50 dark:text-red-300",
+  major: "bg-amber-50 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
+  minor: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
+  trivial: "bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300",
 }
 
 interface KanbanCardProps {
@@ -116,6 +132,24 @@ export function KanbanCard({ todo, isDragOverlay }: KanbanCardProps) {
         >
           {todo.priority}
         </Badge>
+
+        {todo.type && (
+          <Badge
+            variant="secondary"
+            className={cn("text-[10px] px-1.5 py-0", typeColors[todo.type])}
+          >
+            {todo.type}
+          </Badge>
+        )}
+
+        {todo.severity && (
+          <Badge
+            variant="secondary"
+            className={cn("text-[10px] px-1.5 py-0", severityColors[todo.severity])}
+          >
+            {todo.severity}
+          </Badge>
+        )}
 
         {todo.estimate && (
           <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-mono">

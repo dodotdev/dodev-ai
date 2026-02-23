@@ -3,9 +3,9 @@ import Link from "next/link"
 
 const links = {
   Product: [
-    { href: "#features", label: "Features" },
-    { href: "#pricing", label: "Pricing" },
-    { href: "#how-it-works", label: "How It Works" },
+    { href: "/#features", label: "Features" },
+    { href: "/#pricing", label: "Pricing" },
+    { href: "/#how-it-works", label: "How It Works" },
   ],
   Resources: [
     { href: "https://github.com/dodotdev/domcp-ai", label: "Documentation" },
