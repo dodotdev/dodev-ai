@@ -19,9 +19,7 @@ export default function ProjectLayout({ children }: { children: React.ReactNode 
       <nav className="flex gap-1 border-b border-border">
         {tabs.map((tab) => {
           const href = `${base}${tab.href}`
-          const isActive = tab.href === ""
-            ? pathname === base
-            : pathname.startsWith(href)
+          const isActive = tab.href === "" ? pathname === base : pathname.startsWith(href)
 
           return (
             <Link

@@ -3,9 +3,7 @@ import type { MutationCtx } from "../_generated/server"
 
 /** Generate a prefixed config ID (e.g., "st_a1b2c3d4") */
 export function generateConfigId(prefix: string): string {
-  const hex = Array.from({ length: 8 }, () =>
-    Math.floor(Math.random() * 16).toString(16)
-  ).join("")
+  const hex = Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16)).join("")
   return `${prefix}_${hex}`
 }
 

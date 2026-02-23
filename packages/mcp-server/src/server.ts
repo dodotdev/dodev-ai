@@ -1,12 +1,12 @@
-import { createRequire } from "module"
 import { Server } from "@modelcontextprotocol/sdk/server/index.js"
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js"
+import { createRequire } from "module"
 import { configTools, handleConfigTool } from "./tools/config.js"
 import { contextTools, handleContextTool } from "./tools/context.js"
 import { cycleTools, handleCycleTool } from "./tools/cycles.js"
+import { handleIssueTool, issueTools } from "./tools/issues.js"
 import { handleMemoryTool, memoryTools } from "./tools/memories.js"
 import { handleProjectTool, projectTools } from "./tools/projects.js"
-import { handleIssueTool, issueTools } from "./tools/issues.js"
 import { handleTodoTool, todoTools } from "./tools/todos.js"
 
 const require = createRequire(import.meta.url)

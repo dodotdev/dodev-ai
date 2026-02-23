@@ -21,7 +21,15 @@ interface KanbanColumnProps {
   onQuickAdd?: (title: string) => void
 }
 
-export function KanbanColumn({ id, title, icon: Icon, color, hexColor, todos, onQuickAdd }: KanbanColumnProps) {
+export function KanbanColumn({
+  id,
+  title,
+  icon: Icon,
+  color,
+  hexColor,
+  todos,
+  onQuickAdd,
+}: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id })
   const [quickAddValue, setQuickAddValue] = useState("")
 
@@ -42,10 +50,7 @@ export function KanbanColumn({ id, title, icon: Icon, color, hexColor, todos, on
     >
       {/* Column header */}
       <div className="flex items-center gap-2 border-b border-border px-3 py-2.5">
-        <Icon
-          className={cn("size-4", color)}
-          style={hexColor ? { color: hexColor } : undefined}
-        />
+        <Icon className={cn("size-4", color)} style={hexColor ? { color: hexColor } : undefined} />
         <span className="text-sm font-semibold">{title}</span>
         <Badge variant="secondary" className="ml-auto text-[10px]">
           {todos.length}

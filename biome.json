@@ -47,7 +47,18 @@
       },
       "suspicious": {
         "noExplicitAny": "warn",
-        "noImplicitAnyLet": "off"
+        "noImplicitAnyLet": "off",
+        "noArrayIndexKey": "off"
+      },
+      "nursery": {
+        "useUniqueElementIds": "off"
+      },
+      "a11y": {
+        "useAnchorContent": "warn",
+        "noSvgWithoutTitle": "off"
+      },
+      "performance": {
+        "noImgElement": "warn"
       }
     }
   },

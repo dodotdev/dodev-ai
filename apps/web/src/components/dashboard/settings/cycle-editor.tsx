@@ -5,7 +5,6 @@ import { useMutation } from "convex/react"
 import { Calendar, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useAuth } from "@/components/providers/auth-provider"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -48,11 +47,11 @@ function formatDate(timestamp: number): string {
   })
 }
 
-function toDateInputValue(timestamp: number): string {
+function _toDateInputValue(timestamp: number): string {
   return new Date(timestamp).toISOString().split("T")[0]
 }
 
-function statusColor(status: string): string {
+function _statusColor(status: string): string {
   switch (status) {
     case "active":
       return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
@@ -138,7 +137,11 @@ export function CycleEditor({ projectId, cycles }: CycleEditorProps) {
     setUpdatingId(cycleId)
     setError(null)
     try {
-      await updateCycle({ apiKeyHash, id: cycleId as never, status: newStatusValue as "upcoming" | "active" | "completed" })
+      await updateCycle({
+        apiKeyHash,
+        id: cycleId as never,
+        status: newStatusValue as "upcoming" | "active" | "completed",
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update cycle")
     } finally {
@@ -176,9 +179,7 @@ export function CycleEditor({ projectId, cycles }: CycleEditorProps) {
               <DialogTitle>Create Cycle</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">
-              {error && dialogOpen && (
-                <p className="text-sm text-destructive">{error}</p>
-              )}
+              {error && dialogOpen && <p className="text-sm text-destructive">{error}</p>}
               <div className="space-y-1">
                 <Label htmlFor="cycle-name">Name</Label>
                 <Input
@@ -236,17 +237,12 @@ export function CycleEditor({ projectId, cycles }: CycleEditorProps) {
         </Dialog>
       </div>
 
-      {error && !dialogOpen && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      {error && !dialogOpen && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Existing cycles */}
       <div className="space-y-2">
         {cycles.map((cycle) => (
-          <div
-            key={cycle._id}
-            className="flex items-center gap-3 rounded-md border px-3 py-3"
-          >
+          <div key={cycle._id} className="flex items-center gap-3 rounded-md border px-3 py-3">
             <Calendar className="size-4 shrink-0 text-muted-foreground" />
 
             <div className="flex-1">

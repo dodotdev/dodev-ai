@@ -4,9 +4,9 @@ import { api } from "@domcp/convex/api"
 import { useMutation, useQuery } from "convex/react"
 import { Loader2, Search } from "lucide-react"
 import { useState } from "react"
-import { useAuth } from "@/components/providers/auth-provider"
 import { MemoryForm } from "@/components/dashboard/memory-form"
 import { MemoryGrid } from "@/components/dashboard/memory-grid"
+import { useAuth } from "@/components/providers/auth-provider"
 import { Input } from "@/components/ui/input"
 
 export default function MemoriesPage() {

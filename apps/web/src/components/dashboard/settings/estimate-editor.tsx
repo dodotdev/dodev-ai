@@ -94,7 +94,12 @@ export function EstimateEditor({ projectId, estimateScale }: EstimateEditorProps
     setIsSaving(true)
     setError(null)
     try {
-      await updateEstimateScale({ apiKeyHash, projectId: projectId as never, type: type as "points" | "tshirt" | "hours", values: trimmedValues })
+      await updateEstimateScale({
+        apiKeyHash,
+        projectId: projectId as never,
+        type: type as "points" | "tshirt" | "hours",
+        values: trimmedValues,
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save estimate scale")
     } finally {
@@ -106,9 +111,7 @@ export function EstimateEditor({ projectId, estimateScale }: EstimateEditorProps
     <div className="space-y-4">
       <Label className="text-base font-semibold">Estimate Scale</Label>
 
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Scale type selector */}
       <div className="space-y-1">

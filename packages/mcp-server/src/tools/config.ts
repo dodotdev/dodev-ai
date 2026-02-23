@@ -93,7 +93,7 @@ export const configTools: Tool[] = [
   {
     name: "update_estimate_scale",
     description:
-      'Update the effort estimation scale for a project. If the scale type changes, clears existing estimates from todos.',
+      "Update the effort estimation scale for a project. If the scale type changes, clears existing estimates from todos.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -106,7 +106,8 @@ export const configTools: Tool[] = [
         values: {
           type: "array",
           items: { type: "string" },
-          description: 'Scale values (e.g. ["1","2","3","5","8","13","21"] or ["XS","S","M","L","XL"])',
+          description:
+            'Scale values (e.g. ["1","2","3","5","8","13","21"] or ["XS","S","M","L","XL"])',
         },
       },
       required: ["projectId", "type", "values"],
@@ -122,8 +123,7 @@ export const configTools: Tool[] = [
         projectId: { type: "string", description: "The project ID" },
         systemPrompt: {
           type: ["string", "null"],
-          description:
-            "System prompt text for the AI persona (max 10,000 chars), or null to clear",
+          description: "System prompt text for the AI persona (max 10,000 chars), or null to clear",
         },
       },
       required: ["projectId"],

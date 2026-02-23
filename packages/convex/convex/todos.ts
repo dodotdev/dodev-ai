@@ -125,9 +125,8 @@ export const update = mutation({
       } else {
         updates.statusId = args.statusId
         // Look up project to derive category
-        const projectId = args.projectId !== undefined
-          ? (args.projectId ?? undefined)
-          : todo.projectId
+        const projectId =
+          args.projectId !== undefined ? (args.projectId ?? undefined) : todo.projectId
         if (projectId) {
           const project = await ctx.db.get(projectId)
           if (project) {

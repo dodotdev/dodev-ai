@@ -4,8 +4,8 @@ import { api } from "@domcp/convex/api"
 import { PLAN_LIMITS } from "@domcp/shared"
 import { useMutation, useQuery } from "convex/react"
 import { Loader2 } from "lucide-react"
-import { useAuth } from "@/components/providers/auth-provider"
 import { ApiKeyDisplay } from "@/components/dashboard/api-key-display"
+import { useAuth } from "@/components/providers/auth-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -14,10 +14,7 @@ import { isCloud } from "@/lib/mode"
 export default function SettingsPage() {
   const { user, apiKeyHash, isLoading: authLoading } = useAuth()
 
-  const usage = useQuery(
-    api.usage.getCurrentUsage,
-    apiKeyHash ? { apiKeyHash } : "skip"
-  )
+  const usage = useQuery(api.usage.getCurrentUsage, apiKeyHash ? { apiKeyHash } : "skip")
 
   const regenerateApiKey = useMutation(api.users.regenerateApiKey)
 
@@ -51,10 +48,7 @@ export default function SettingsPage() {
       </div>
 
       {/* API Key */}
-      <ApiKeyDisplay
-        apiKey={user.apiKey}
-        onRegenerate={handleRegenerate}
-      />
+      <ApiKeyDisplay apiKey={user.apiKey} onRegenerate={handleRegenerate} />
 
       {isCloud() && (
         <>
@@ -83,8 +77,16 @@ export default function SettingsPage() {
 
             <div className="mt-6 space-y-4">
               <UsageBar label="Todos" current={currentUsage.todoCount} limit={limits.todos} />
-              <UsageBar label="Memories" current={currentUsage.memoryCount} limit={limits.memories} />
-              <UsageBar label="Projects" current={currentUsage.projectCount} limit={limits.projects} />
+              <UsageBar
+                label="Memories"
+                current={currentUsage.memoryCount}
+                limit={limits.memories}
+              />
+              <UsageBar
+                label="Projects"
+                current={currentUsage.projectCount}
+                limit={limits.projects}
+              />
             </div>
           </div>
         </>

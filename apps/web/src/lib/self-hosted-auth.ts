@@ -1,5 +1,5 @@
-import { getConvexClient } from "./convex"
 import { api } from "@domcp/convex/api"
+import { getConvexClient } from "./convex"
 
 export async function getSelfHostedUser() {
   const convex = getConvexClient()

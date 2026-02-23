@@ -50,7 +50,12 @@ export function LabelEditor({ projectId, labels }: LabelEditorProps) {
     setIsAdding(true)
     setError(null)
     try {
-      await addLabel({ apiKeyHash, projectId: projectId as never, name: trimmedName, color: newColor })
+      await addLabel({
+        apiKeyHash,
+        projectId: projectId as never,
+        name: trimmedName,
+        color: newColor,
+      })
       setNewName("")
       setNewColor("#3b82f6")
     } catch (err) {
@@ -78,17 +83,12 @@ export function LabelEditor({ projectId, labels }: LabelEditorProps) {
     <div className="space-y-4">
       <Label className="text-base font-semibold">Labels</Label>
 
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Existing labels */}
       <div className="space-y-2">
         {labels.map((label) => (
-          <div
-            key={label.id}
-            className="flex items-center gap-3 rounded-md border px-3 py-2"
-          >
+          <div key={label.id} className="flex items-center gap-3 rounded-md border px-3 py-2">
             <span
               className="size-3 shrink-0 rounded-full"
               style={{ backgroundColor: label.color }}

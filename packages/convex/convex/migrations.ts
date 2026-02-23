@@ -56,7 +56,7 @@ export const backfillProjectConfig = internalMutation({
         if (!usedStubs.has(userId)) usedStubs.set(userId, new Set())
         const userStubs = usedStubs.get(userId)!
 
-        let stub = deriveStub(project.name).replace(/[^A-Z0-9]/g, "") || "PRJ"
+        const stub = deriveStub(project.name).replace(/[^A-Z0-9]/g, "") || "PRJ"
         let candidate = stub
         let suffix = 1
         while (userStubs.has(candidate)) {

@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server"
 import type { NextFetchEvent, NextMiddleware, NextRequest } from "next/server"
+import { NextResponse } from "next/server"
 
 const isCloud = !!process.env.WORKOS_CLIENT_ID
 

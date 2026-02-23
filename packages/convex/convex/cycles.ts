@@ -8,9 +8,7 @@ export const create = mutation({
     projectId: v.id("projects"),
     name: v.string(),
     description: v.optional(v.string()),
-    status: v.optional(
-      v.union(v.literal("upcoming"), v.literal("active"), v.literal("completed"))
-    ),
+    status: v.optional(v.union(v.literal("upcoming"), v.literal("active"), v.literal("completed"))),
     startDate: v.number(),
     endDate: v.number(),
   },
@@ -65,9 +63,7 @@ export const list = query({
 
     return await ctx.db
       .query("cycles")
-      .withIndex("by_user_project", (q) =>
-        q.eq("userId", user._id).eq("projectId", args.projectId)
-      )
+      .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.projectId))
       .collect()
   },
 })
@@ -93,9 +89,7 @@ export const update = mutation({
     id: v.id("cycles"),
     name: v.optional(v.string()),
     description: v.optional(v.union(v.string(), v.null())),
-    status: v.optional(
-      v.union(v.literal("upcoming"), v.literal("active"), v.literal("completed"))
-    ),
+    status: v.optional(v.union(v.literal("upcoming"), v.literal("active"), v.literal("completed"))),
     startDate: v.optional(v.number()),
     endDate: v.optional(v.number()),
   },
@@ -134,10 +128,7 @@ export const remove = mutation({
     const todos = await ctx.db
       .query("todos")
       .withIndex("by_user_project_cycle", (q) =>
-        q
-          .eq("userId", user._id)
-          .eq("projectId", cycle.projectId)
-          .eq("cycleId", args.id)
+        q.eq("userId", user._id).eq("projectId", cycle.projectId).eq("cycleId", args.id)
       )
       .collect()
 

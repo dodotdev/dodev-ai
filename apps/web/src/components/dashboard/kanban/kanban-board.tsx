@@ -1,15 +1,15 @@
 "use client"
 
 import {
+  closestCorners,
   DndContext,
+  type DragEndEvent,
   DragOverlay,
+  type DragStartEvent,
   KeyboardSensor,
   PointerSensor,
-  closestCorners,
   useSensor,
   useSensors,
-  type DragEndEvent,
-  type DragStartEvent,
 } from "@dnd-kit/core"
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable"
 import { CheckCircle2, Circle, Clock, X } from "lucide-react"
@@ -34,10 +34,34 @@ const fallbackColumns: {
   color: string
   category: TodoStatus
 }[] = [
-  { id: "pending", title: "Pending", icon: Circle, color: "text-amber-500 dark:text-amber-400", category: "pending" },
-  { id: "in_progress", title: "In Progress", icon: Clock, color: "text-blue-500 dark:text-cyan-400", category: "in_progress" },
-  { id: "completed", title: "Completed", icon: CheckCircle2, color: "text-emerald-500 dark:text-emerald-400", category: "completed" },
-  { id: "cancelled", title: "Cancelled", icon: X, color: "text-zinc-400 dark:text-red-400", category: "cancelled" },
+  {
+    id: "pending",
+    title: "Pending",
+    icon: Circle,
+    color: "text-amber-500 dark:text-amber-400",
+    category: "pending",
+  },
+  {
+    id: "in_progress",
+    title: "In Progress",
+    icon: Clock,
+    color: "text-blue-500 dark:text-cyan-400",
+    category: "in_progress",
+  },
+  {
+    id: "completed",
+    title: "Completed",
+    icon: CheckCircle2,
+    color: "text-emerald-500 dark:text-emerald-400",
+    category: "completed",
+  },
+  {
+    id: "cancelled",
+    title: "Cancelled",
+    icon: X,
+    color: "text-zinc-400 dark:text-red-400",
+    category: "cancelled",
+  },
 ]
 
 const categoryIcons: Record<TodoStatus, typeof Circle> = {
@@ -65,13 +89,15 @@ export function KanbanBoard({ todos, statuses, onStatusChange, onQuickAdd }: Kan
   // Build columns from workflow statuses or fallback to hardcoded
   const columns = useMemo(() => {
     if (statuses && statuses.length > 0) {
-      return [...statuses].sort((a, b) => a.position - b.position).map((s) => ({
-        id: s.id,
-        title: s.name,
-        icon: categoryIcons[s.category],
-        hexColor: s.color,
-        category: s.category,
-      }))
+      return [...statuses]
+        .sort((a, b) => a.position - b.position)
+        .map((s) => ({
+          id: s.id,
+          title: s.name,
+          icon: categoryIcons[s.category],
+          hexColor: s.color,
+          category: s.category,
+        }))
     }
     return fallbackColumns.map((col) => ({
       id: col.id,
@@ -150,11 +176,7 @@ export function KanbanBoard({ todos, statuses, onStatusChange, onQuickAdd }: Kan
     if (targetCol.id === currentColId) return
 
     const isCustom = statuses && statuses.length > 0
-    onStatusChange(
-      todoId,
-      targetCol.category,
-      isCustom ? targetCol.id : undefined
-    )
+    onStatusChange(todoId, targetCol.category, isCustom ? targetCol.id : undefined)
   }
 
   return (
@@ -164,7 +186,10 @@ export function KanbanBoard({ todos, statuses, onStatusChange, onQuickAdd }: Kan
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid gap-4 pb-4" style={{ gridTemplateColumns: `repeat(${visibleColumns.length}, minmax(0, 1fr))` }}>
+      <div
+        className="grid gap-4 pb-4"
+        style={{ gridTemplateColumns: `repeat(${visibleColumns.length}, minmax(0, 1fr))` }}
+      >
         {visibleColumns.map((col) => (
           <KanbanColumn
             key={col.id}

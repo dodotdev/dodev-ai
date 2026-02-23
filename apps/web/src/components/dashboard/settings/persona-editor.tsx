@@ -86,9 +86,7 @@ export function PersonaEditor({ projectId, persona }: PersonaEditorProps) {
         This prompt is injected into every tool call context.
       </p>
 
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {successMessage && (
         <p className="text-sm text-emerald-600 dark:text-emerald-400">{successMessage}</p>
@@ -109,9 +107,7 @@ export function PersonaEditor({ projectId, persona }: PersonaEditorProps) {
         <div className="flex items-center justify-between">
           <span
             className={`text-xs ${
-              isOverLimit
-                ? "font-medium text-destructive"
-                : "text-muted-foreground"
+              isOverLimit ? "font-medium text-destructive" : "text-muted-foreground"
             }`}
           >
             {characterCount.toLocaleString()} / {MAX_PROMPT_LENGTH.toLocaleString()} characters
@@ -130,10 +126,7 @@ export function PersonaEditor({ projectId, persona }: PersonaEditorProps) {
           <RotateCcw className="mr-1 size-4" />
           {isClearing ? "Clearing..." : "Clear"}
         </Button>
-        <Button
-          onClick={handleSave}
-          disabled={isSaving || isOverLimit || !hasChanges}
-        >
+        <Button onClick={handleSave} disabled={isSaving || isOverLimit || !hasChanges}>
           {isSaving ? "Saving..." : "Save Persona"}
         </Button>
       </div>

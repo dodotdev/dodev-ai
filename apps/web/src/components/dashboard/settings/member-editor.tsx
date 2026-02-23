@@ -62,7 +62,12 @@ export function MemberEditor({ projectId, members }: MemberEditorProps) {
     setIsAdding(true)
     setError(null)
     try {
-      await addMember({ apiKeyHash, projectId: projectId as never, name: trimmedName, role: trimmedRole })
+      await addMember({
+        apiKeyHash,
+        projectId: projectId as never,
+        name: trimmedName,
+        role: trimmedRole,
+      })
       setNewName("")
       setNewRole("")
     } catch (err) {
@@ -90,17 +95,12 @@ export function MemberEditor({ projectId, members }: MemberEditorProps) {
     <div className="space-y-4">
       <Label className="text-base font-semibold">Members</Label>
 
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Existing members */}
       <div className="space-y-2">
         {members.map((member) => (
-          <div
-            key={member.id}
-            className="flex items-center gap-3 rounded-md border px-3 py-2"
-          >
+          <div key={member.id} className="flex items-center gap-3 rounded-md border px-3 py-2">
             {/* Avatar */}
             {member.avatarUrl ? (
               <img
@@ -137,9 +137,7 @@ export function MemberEditor({ projectId, members }: MemberEditorProps) {
         ))}
 
         {members.length === 0 && (
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            No members added yet.
-          </p>
+          <p className="py-4 text-center text-sm text-muted-foreground">No members added yet.</p>
         )}
       </div>
 

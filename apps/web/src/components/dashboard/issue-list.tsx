@@ -111,10 +111,7 @@ export function IssueList({ issues, onUpdate }: IssueListProps) {
               )}
 
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <Badge
-                  variant="secondary"
-                  className={cn("text-[10px]", typeColors[issue.type])}
-                >
+                <Badge variant="secondary" className={cn("text-[10px]", typeColors[issue.type])}>
                   {issue.type}
                 </Badge>
                 <Badge

@@ -86,7 +86,14 @@ export function ProjectForm({ onSubmit }: ProjectFormProps) {
               <Input
                 id="stub"
                 value={stub}
-                onChange={(e) => setStub(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5))}
+                onChange={(e) =>
+                  setStub(
+                    e.target.value
+                      .toUpperCase()
+                      .replace(/[^A-Z0-9]/g, "")
+                      .slice(0, 5)
+                  )
+                }
                 placeholder={deriveStub(name) || "ABC"}
                 className="w-20 text-center font-mono uppercase"
                 maxLength={5}
@@ -95,7 +102,9 @@ export function ProjectForm({ onSubmit }: ProjectFormProps) {
           </div>
           {previewStub && (
             <p className="text-xs text-muted-foreground">
-              Issues will be numbered <span className="font-mono font-medium text-foreground">{previewStub}-1</span>, <span className="font-mono font-medium text-foreground">{previewStub}-2</span>, ...
+              Issues will be numbered{" "}
+              <span className="font-mono font-medium text-foreground">{previewStub}-1</span>,{" "}
+              <span className="font-mono font-medium text-foreground">{previewStub}-2</span>, ...
             </p>
           )}
           <div className="space-y-1.5">

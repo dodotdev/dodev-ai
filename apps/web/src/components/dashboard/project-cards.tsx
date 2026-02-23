@@ -80,10 +80,12 @@ export function ProjectCards({ projects, onArchive }: ProjectCardsProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={(e) => {
-                  e.preventDefault()
-                  onArchive?.(project._id)
-                }}>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.preventDefault()
+                    onArchive?.(project._id)
+                  }}
+                >
                   Archive
                 </DropdownMenuItem>
               </DropdownMenuContent>

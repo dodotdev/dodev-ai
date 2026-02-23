@@ -58,9 +58,7 @@ export const updateStatuses = mutation({
     // Clear orphaned statusId refs on todos
     const todos = await ctx.db
       .query("todos")
-      .withIndex("by_user_project", (q) =>
-        q.eq("userId", user._id).eq("projectId", args.projectId)
-      )
+      .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.projectId))
       .collect()
 
     for (const todo of todos) {
@@ -122,9 +120,7 @@ export const removeLabel = mutation({
     // Clear labelIds refs from todos
     const todos = await ctx.db
       .query("todos")
-      .withIndex("by_user_project", (q) =>
-        q.eq("userId", user._id).eq("projectId", args.projectId)
-      )
+      .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.projectId))
       .collect()
 
     for (const todo of todos) {
@@ -225,9 +221,7 @@ export const removeMember = mutation({
     // Clear assigneeId refs from todos
     const todos = await ctx.db
       .query("todos")
-      .withIndex("by_user_project", (q) =>
-        q.eq("userId", user._id).eq("projectId", args.projectId)
-      )
+      .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.projectId))
       .collect()
 
     for (const todo of todos) {
@@ -263,9 +257,7 @@ export const updateMember = mutation({
         ...m,
         ...(args.name !== undefined ? { name: args.name } : {}),
         ...(args.role !== undefined ? { role: args.role } : {}),
-        ...(args.avatarUrl !== undefined
-          ? { avatarUrl: args.avatarUrl ?? undefined }
-          : {}),
+        ...(args.avatarUrl !== undefined ? { avatarUrl: args.avatarUrl ?? undefined } : {}),
       }
     })
 
