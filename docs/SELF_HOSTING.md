@@ -1,6 +1,6 @@
-# Self-Hosting TodoMCP
+# Self-Hosting DoMCP
 
-This guide walks you through running TodoMCP on your own infrastructure. Self-hosted TodoMCP is completely free with no feature limits beyond vector search (which requires an embedding API).
+This guide walks you through running DoMCP on your own infrastructure. Self-hosted DoMCP is completely free with no feature limits beyond vector search (which requires an embedding API).
 
 ## Prerequisites
 
@@ -12,8 +12,8 @@ This guide walks you through running TodoMCP on your own infrastructure. Self-ho
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/dodotdev/todomcp.git
-cd todomcp
+git clone https://github.com/dodotdev/domcp-ai.git
+cd domcp
 ```
 
 ### 2. Set up Convex
@@ -41,28 +41,28 @@ Edit `.env`:
 CONVEX_URL=https://your-deployment-123.convex.cloud
 
 # Generated in step 4
-TODOMCP_API_KEY=
+DOMCP_API_KEY=
 ```
 
 ### 4. Generate an API key
 
 ```bash
-docker compose run --rm todomcp generate-key
+docker compose -f docker/docker-compose.yml run --rm domcp generate-key
 ```
 
 This outputs an API key and stores its hash in your Convex database. Add the key to your `.env`:
 
 ```env
-TODOMCP_API_KEY=tdm_sk_abc123...
+DOMCP_API_KEY=domcp_sk_abc123...
 ```
 
 ### 5. Start the server
 
 ```bash
-docker compose up -d
+docker compose -f docker/docker-compose.yml up -d
 ```
 
-The MCP server is now running. By default it operates in **stdio mode** (for direct MCP client connections). Optionally enable the SSE endpoint on port 3100 for HTTP-based connections.
+The MCP server is now running. By default it operates in **stdio mode** (for direct MCP client connections). Optionally enable the Streamable HTTP endpoint on port 3100 for HTTP-based connections.
 
 ### 6. Configure your MCP client
 
@@ -72,11 +72,11 @@ The MCP server is now running. By default it operates in **stdio mode** (for dir
 // ~/.claude/claude_code_config.json
 {
   "mcpServers": {
-    "todomcp": {
+    "domcp": {
       "command": "docker",
-      "args": ["exec", "-i", "todomcp", "node", "dist/index.js"],
+      "args": ["exec", "-i", "domcp", "node", "dist/index.js"],
       "env": {
-        "TODOMCP_API_KEY": "tdm_sk_abc123..."
+        "DOMCP_API_KEY": "domcp_sk_abc123..."
       }
     }
   }
@@ -88,13 +88,13 @@ The MCP server is now running. By default it operates in **stdio mode** (for dir
 ```json
 {
   "mcpServers": {
-    "todomcp": {
+    "domcp": {
       "command": "npx",
-      "args": ["-y", "@todomcp/mcp-server"],
+      "args": ["-y", "@domcp/mcp-server"],
       "env": {
         "CONVEX_URL": "https://your-deployment-123.convex.cloud",
-        "TODOMCP_API_KEY": "tdm_sk_abc123...",
-        "TODOMCP_MODE": "self-hosted"
+        "DOMCP_API_KEY": "domcp_sk_abc123...",
+        "DOMCP_MODE": "self-hosted"
       }
     }
   }
@@ -106,8 +106,8 @@ The MCP server is now running. By default it operates in **stdio mode** (for dir
 If you prefer not to use Docker:
 
 ```bash
-git clone https://github.com/dodotdev/todomcp.git
-cd todomcp
+git clone https://github.com/dodotdev/domcp-ai.git
+cd domcp
 pnpm install
 pnpm build
 
@@ -120,15 +120,15 @@ cd ../..
 node packages/mcp-server/dist/cli.js generate-key
 
 # Run
-CONVEX_URL=https://... TODOMCP_API_KEY=tdm_sk_... node packages/mcp-server/dist/index.js
+CONVEX_URL=https://... DOMCP_API_KEY=domcp_sk_... node packages/mcp-server/dist/index.js
 ```
 
 ## Option C: npm global install
 
 ```bash
-npm install -g @todomcp/mcp-server
-todomcp generate-key
-todomcp serve
+npm install -g @domcp/mcp-server
+domcp generate-key
+domcp serve
 ```
 
 ## Enabling Vector Search (Optional)
@@ -146,15 +146,15 @@ With vector search enabled, `search_memories` will use cosine similarity for mor
 ## Updating
 
 ```bash
-cd todomcp
+cd domcp
 git pull
-docker compose pull
-docker compose up -d
+docker compose -f docker/docker-compose.yml pull
+docker compose -f docker/docker-compose.yml up -d
 ```
 
 Or if using npm:
 ```bash
-npm update -g @todomcp/mcp-server
+npm update -g @domcp/mcp-server
 ```
 
 ## Data Backup
@@ -167,10 +167,10 @@ Your data lives in your Convex deployment. Convex provides:
 ## Troubleshooting
 
 **"UNAUTHORIZED" errors:**
-Regenerate your API key with `todomcp generate-key` and update your `.env` and MCP client config.
+Regenerate your API key with `domcp generate-key` and update your `.env` and MCP client config.
 
 **Convex connection issues:**
 Verify your `CONVEX_URL` is correct and that your deployment is active at [dashboard.convex.dev](https://dashboard.convex.dev).
 
 **MCP client can't connect:**
-Ensure the MCP server process is running. Check logs with `docker compose logs todomcp`.
+Ensure the MCP server process is running. Check logs with `docker compose -f docker/docker-compose.yml logs domcp`.

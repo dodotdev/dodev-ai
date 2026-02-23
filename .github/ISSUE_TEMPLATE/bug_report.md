@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a bug in TodoMCP
+about: Report a bug in DoMCP
 title: "[Bug] "
 labels: bug
 ---
@@ -24,7 +24,7 @@ What actually happens.
 
 ## Environment
 
-- TodoMCP version:
+- DoMCP version:
 - Mode: self-hosted / cloud
 - MCP client: Claude Code / Cursor / Other
 - OS:

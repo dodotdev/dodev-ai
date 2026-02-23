@@ -1,21 +1,21 @@
-# Contributing to TodoMCP
+# Contributing to DoMCP
 
-Thanks for your interest in contributing to TodoMCP! This document covers how to get started.
+Thanks for your interest in contributing to DoMCP! This document covers how to get started.
 
 ## Development Setup
 
 ### Prerequisites
 
 - Node.js 20+
-- pnpm 9+
+- pnpm 10+
 - A Convex account (free at [convex.dev](https://convex.dev))
 
 ### Getting Started
 
 ```bash
 # Clone the repo
-git clone https://github.com/dodotdev/todomcp.git
-cd todomcp
+git clone https://github.com/dodotdev/domcp-ai.git
+cd domcp
 
 # Install dependencies
 pnpm install
@@ -28,21 +28,21 @@ npx convex dev  # This starts the Convex dev server
 # Start the MCP server in dev mode
 cd packages/mcp-server
 pnpm dev
-
-# Start the web app
-cd apps/web
-pnpm dev
 ```
 
-### Monorepo Structure
+### Monorepo Structure (Phase 1)
 
 ```
-todomcp/
-├── apps/web/              # Next.js web app
-├── packages/mcp-server/   # MCP server
-├── packages/convex/       # Convex schema + functions
-├── packages/shared/       # Shared types
-└── docs/                  # Documentation
+domcp/
+├── packages/
+│   ├── mcp-server/        # MCP server (npm-publishable + Dockerfile)
+│   ├── convex/            # Convex schema + functions
+│   └── shared/            # Shared types and validators
+├── docker/                # Docker Compose for self-hosting
+├── docs/                  # Design docs (architecture, schema, tool specs)
+├── turbo.json             # Turborepo config
+├── biome.json             # Biome linter/formatter config
+└── package.json           # Root workspace
 ```
 
 ## Making Changes
@@ -70,15 +70,25 @@ refactor: extract auth middleware
 1. Fork the repo and create your branch from `main`
 2. Make your changes
 3. Add tests if applicable
-4. Ensure `pnpm lint` and `pnpm test` pass
+4. Ensure `pnpm check` and `pnpm test` pass
 5. Open a PR with a clear description of the change
 
 ## Code Style
 
 - TypeScript strict mode
-- ESLint + Prettier (configured in the repo)
+- Biome (configured in biome.json)
 - Prefer explicit types over inference for function signatures
 - Use Convex validators (`v.string()`, etc.) for all function args
+
+## Linting and Formatting
+
+```bash
+# Check for lint and formatting issues
+pnpm check
+
+# Auto-fix lint and formatting issues
+pnpm check:fix
+```
 
 ## Testing
 
@@ -87,7 +97,7 @@ refactor: extract auth middleware
 pnpm test
 
 # Run tests for a specific package
-pnpm --filter @todomcp/mcp-server test
+pnpm --filter @domcp/mcp-server test
 
 # Run Convex function tests
 cd packages/convex

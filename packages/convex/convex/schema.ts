@@ -1,0 +1,195 @@
+import { defineSchema, defineTable } from "convex/server"
+import { v } from "convex/values"
+
+export default defineSchema({
+  users: defineTable({
+    // Identity
+    workosUserId: v.string(),
+    email: v.string(),
+    name: v.optional(v.string()),
+
+    // API access
+    apiKey: v.string(),
+    apiKeyHash: v.string(),
+
+    // Billing
+    plan: v.union(v.literal("free"), v.literal("pro"), v.literal("team")),
+    stripeCustomerId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
+
+    // Settings
+    settings: v.object({
+      defaultProjectId: v.optional(v.id("projects")),
+      timezone: v.optional(v.string()),
+    }),
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_workos_id", ["workosUserId"])
+    .index("by_email", ["email"])
+    .index("by_api_key_hash", ["apiKeyHash"])
+    .index("by_stripe_customer", ["stripeCustomerId"]),
+
+  projects: defineTable({
+    userId: v.id("users"),
+    name: v.string(),
+    stub: v.string(),
+    description: v.optional(v.string()),
+    status: v.union(
+      v.literal("active"),
+      v.literal("paused"),
+      v.literal("completed"),
+      v.literal("archived")
+    ),
+    todoCounter: v.number(),
+    metadata: v.optional(v.any()),
+
+    // Project config
+    statuses: v.array(
+      v.object({
+        id: v.string(),
+        name: v.string(),
+        category: v.union(
+          v.literal("pending"),
+          v.literal("in_progress"),
+          v.literal("completed"),
+          v.literal("cancelled")
+        ),
+        color: v.string(),
+        position: v.number(),
+      })
+    ),
+    labels: v.array(
+      v.object({
+        id: v.string(),
+        name: v.string(),
+        color: v.string(),
+      })
+    ),
+    members: v.array(
+      v.object({
+        id: v.string(),
+        name: v.string(),
+        role: v.string(),
+        avatarUrl: v.optional(v.string()),
+      })
+    ),
+    estimateScale: v.object({
+      type: v.union(v.literal("points"), v.literal("tshirt"), v.literal("hours")),
+      values: v.array(v.string()),
+    }),
+    persona: v.optional(
+      v.object({
+        systemPrompt: v.string(),
+      })
+    ),
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_status", ["userId", "status"])
+    .index("by_user_stub", ["userId", "stub"]),
+
+  todos: defineTable({
+    userId: v.id("users"),
+    projectId: v.optional(v.id("projects")),
+    number: v.optional(v.number()),
+    title: v.string(),
+    description: v.optional(v.string()),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("in_progress"),
+      v.literal("completed"),
+      v.literal("cancelled")
+    ),
+    priority: v.union(
+      v.literal("low"),
+      v.literal("medium"),
+      v.literal("high"),
+      v.literal("urgent")
+    ),
+    dueDate: v.optional(v.number()),
+    tags: v.array(v.string()),
+    completedAt: v.optional(v.number()),
+
+    // Linear-like fields
+    statusId: v.optional(v.string()),
+    labelIds: v.optional(v.array(v.string())),
+    assigneeId: v.optional(v.string()),
+    estimate: v.optional(v.string()),
+    cycleId: v.optional(v.id("cycles")),
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_status", ["userId", "status"])
+    .index("by_user_project", ["userId", "projectId"])
+    .index("by_user_project_status", ["userId", "projectId", "status"])
+    .index("by_user_priority", ["userId", "priority"])
+    .index("by_user_due_date", ["userId", "dueDate"])
+    .index("by_user_project_cycle", ["userId", "projectId", "cycleId"])
+    .searchIndex("search_title_description", {
+      searchField: "title",
+      filterFields: ["userId", "projectId", "status"],
+    }),
+
+  memories: defineTable({
+    userId: v.id("users"),
+    projectId: v.optional(v.id("projects")),
+    content: v.string(),
+    summary: v.optional(v.string()),
+    tags: v.array(v.string()),
+    source: v.optional(v.string()),
+
+    // Vector embedding for semantic search (cloud Pro/Team only)
+    embedding: v.optional(v.array(v.float64())),
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_project", ["userId", "projectId"])
+    .index("by_user_created", ["userId", "createdAt"])
+    .searchIndex("search_content", {
+      searchField: "content",
+      filterFields: ["userId", "projectId"],
+    })
+    .vectorIndex("by_embedding", {
+      vectorField: "embedding",
+      dimensions: 1536,
+      filterFields: ["userId", "projectId"],
+    }),
+
+  cycles: defineTable({
+    userId: v.id("users"),
+    projectId: v.id("projects"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    status: v.union(v.literal("upcoming"), v.literal("active"), v.literal("completed")),
+    startDate: v.number(),
+    endDate: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user_project", ["userId", "projectId"])
+    .index("by_user_project_status", ["userId", "projectId", "status"]),
+
+  sessions: defineTable({
+    userId: v.id("users"),
+    agentId: v.string(),
+    activeProjectId: v.optional(v.id("projects")),
+    lastActiveAt: v.number(),
+  }).index("by_user_agent", ["userId", "agentId"]),
+
+  usage: defineTable({
+    userId: v.id("users"),
+    period: v.string(),
+    todoCount: v.number(),
+    memoryCount: v.number(),
+    projectCount: v.number(),
+    apiCalls: v.number(),
+  }).index("by_user_period", ["userId", "period"]),
+})

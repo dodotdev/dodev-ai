@@ -1,27 +1,32 @@
 {
-  "name": "todomcp",
-  "version": "0.1.0",
+  "name": "domcp",
+  "version": "0.0.5",
   "private": true,
   "description": "AI-native task and memory management via the Model Context Protocol",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dodotdev/todomcp.git"
+    "url": "https://github.com/dodotdev/domcp-ai.git"
   },
-  "homepage": "https://todomcp.ai",
+  "homepage": "https://domcp.ai",
   "license": "MIT",
   "scripts": {
-    "dev": "turbo dev",
+    "dev:all": "lsof -ti:5031 | xargs kill -9 2>/dev/null || true; pkill -f 'convex dev' 2>/dev/null || true; turbo run dev --ui=tui --concurrency=20 --filter=@domcp/web --filter=@domcp/convex",
+    "dev:web": "lsof -ti:5031 | xargs kill -9 2>/dev/null || true; turbo run dev --ui=tui --concurrency=20 --filter=@domcp/web",
+    "dev:convex": "pkill -f 'convex dev' 2>/dev/null || true; pnpm --filter @domcp/convex dev",
+    "dev:mcp": "pnpm --filter @domcp/mcp-server dev",
     "build": "turbo build",
-    "lint": "turbo lint",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "typecheck": "turbo typecheck",
     "test": "turbo test",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+    "generate-key": "pnpm --filter @domcp/mcp-server generate-key"
   },
   "devDependencies": {
-    "prettier": "^3.2.0",
-    "turbo": "^2.3.0",
-    "typescript": "^5.7.0"
+    "@biomejs/biome": "2.0.5",
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.0"
   },
-  "packageManager": "pnpm@9.15.0",
+  "packageManager": "pnpm@10.12.1",
   "engines": {
     "node": ">=20.0.0"
   }

@@ -1,0 +1,37 @@
+{
+  "name": "@domcp/mcp-server",
+  "version": "0.0.5",
+  "type": "module",
+  "description": "DoMCP MCP server — AI-native task and memory management",
+  "license": "MIT",
+  "bin": {
+    "domcp": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "generate-key": "tsx src/cli.ts generate-key"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@domcp/shared": "workspace:*",
+    "convex": "^1.31.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0"
+  }
+}

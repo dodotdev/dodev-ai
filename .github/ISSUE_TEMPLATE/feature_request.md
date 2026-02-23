@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest a feature for TodoMCP
+about: Suggest a feature for DoMCP
 title: "[Feature] "
 labels: enhancement
 ---

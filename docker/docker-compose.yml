@@ -1,21 +1,21 @@
 services:
-  todomcp:
-    image: ghcr.io/dodotdev/todomcp:latest
+  domcp:
+    image: ghcr.io/dodotdev/domcp-ai:latest
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: todomcp
+    container_name: domcp
     restart: unless-stopped
     environment:
       - CONVEX_URL=${CONVEX_URL}
-      - TODOMCP_API_KEY=${TODOMCP_API_KEY}
-      - TODOMCP_MODE=${TODOMCP_MODE:-self-hosted}
+      - DOMCP_API_KEY=${DOMCP_API_KEY}
+      - DOMCP_MODE=${DOMCP_MODE:-self-hosted}
       - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     ports:
       - "3100:3100" # SSE endpoint (optional, for HTTP-based MCP clients)
     volumes:
-      - todomcp-data:/app/data
+      - domcp-data:/app/data
 
 volumes:
-  todomcp-data:
+  domcp-data:

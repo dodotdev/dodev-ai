@@ -8,12 +8,13 @@ dist/
 out/
 .turbo/
 
-# Environment
+# Environment files
 .env
 .env.local
-.env.production.local
+.env.*.local
 
 # Convex
+convex/_generated/
 .convex/
 
 # IDE
@@ -37,3 +38,15 @@ coverage/
 
 # Docker
 docker-compose.override.yml
+
+# Claude Code (local dev tool config)
+.claude
+
+# Shell dotfiles (container artifacts)
+.bash_logout
+.bashrc
+.profile
+
+# Temporary / cache directories
+tmp/
+mnt/
