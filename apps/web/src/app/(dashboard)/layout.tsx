@@ -6,6 +6,8 @@ import { getConvexClient } from "@/lib/convex"
 import { api } from "@domcp/convex/api"
 import { DashboardProviders } from "@/components/providers/dashboard-providers"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = {
   title: "Dashboard",
 }
