@@ -1,11 +1,10 @@
 export type DeployMode = "cloud" | "self-hosted"
 
 export function getMode(): DeployMode {
-  // Self-hosted requires explicit opt-in. Everything else is cloud.
+  if (process.env.NEXT_PUBLIC_DOMCP_MODE === "cloud") return "cloud"
   if (process.env.NEXT_PUBLIC_DOMCP_MODE === "self-hosted") return "self-hosted"
-  if (process.env.DOMCP_SELF_HOSTED === "true") return "self-hosted"
 
-  return "cloud"
+  return "self-hosted"
 }
 
 export function isCloud(): boolean {
