@@ -3,6 +3,8 @@ import { getUser } from "@/lib/auth"
 import { getConvexClient } from "@/lib/convex"
 import { api } from "@domcp/convex/api"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = {
   title: "You're on the Waitlist - DoMCP",
 }
