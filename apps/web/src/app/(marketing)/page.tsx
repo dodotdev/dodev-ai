@@ -1,10 +1,10 @@
+import { BeforeAfter } from "@/components/marketing/before-after"
 import { Features } from "@/components/marketing/features"
 import { Hero } from "@/components/marketing/hero"
 import { HowItWorks } from "@/components/marketing/how-it-works"
-import { OpenSource } from "@/components/marketing/open-source"
 import { Pricing } from "@/components/marketing/pricing"
+import { SeeItInAction } from "@/components/marketing/see-it-in-action"
 import { SocialProof } from "@/components/marketing/social-proof"
-import { ToolShowcase } from "@/components/marketing/tool-showcase"
 import { Waitlist } from "@/components/marketing/waitlist"
 
 export default function HomePage() {
@@ -12,12 +12,12 @@ export default function HomePage() {
     <>
       <Hero />
       <SocialProof />
+      <BeforeAfter />
       <Features />
       <HowItWorks />
-      <ToolShowcase />
+      <SeeItInAction />
       <Pricing />
       <Waitlist />
-      <OpenSource />
     </>
   )
 }

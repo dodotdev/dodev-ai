@@ -6,7 +6,7 @@ export const contextTools: Tool[] = [
   {
     name: "get_context",
     description:
-      "Get a comprehensive summary of the current state. Designed to be called once at the start of an agent session to provide full context: active project, pending todos, recent memories, project list, project config (workflow statuses, labels, members, estimate scale), AI persona system prompt, and active cycle.",
+      "CALL THIS FIRST at the start of every session. Returns everything you need to get oriented: active project, pending todos, recent memories, project list, project config (workflow statuses, labels, members, estimate scale), AI persona instructions, and active cycle. This is your primary way to load context from previous sessions — it includes the most relevant stored memories so you can pick up where you or another agent left off.",
     inputSchema: {
       type: "object" as const,
       properties: {

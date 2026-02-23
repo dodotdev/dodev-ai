@@ -14,14 +14,14 @@ const plans = [
     description: "Self-hosted. Your infrastructure, your data.",
     features: [
       "1 project",
-      "100 todos",
+      "100 todos & 200 issues",
       "50 memories",
-      "Full-text search",
+      "31 MCP tools",
       "Docker & npx install",
       "Community support",
     ],
-    cta: "Start Free",
-    href: "/auth/sign-in",
+    cta: "Contact Us",
+    href: "mailto:team@do.dev",
     highlighted: false,
   },
   {
@@ -31,14 +31,14 @@ const plans = [
     description: "Cloud hosted. Unlimited everything.",
     features: [
       "Unlimited projects",
-      "Unlimited todos",
+      "Unlimited todos & issues",
       "Unlimited memories",
       "Vector search (semantic)",
       "Cloud hosted MCP server",
       "Priority support",
     ],
-    cta: "Subscribe",
-    href: "/auth/sign-in",
+    cta: "Contact Us",
+    href: "mailto:team@do.dev",
     highlighted: true,
   },
   {
@@ -62,10 +62,7 @@ const plans = [
 
 export function Pricing() {
   return (
-    <section
-      id="pricing"
-      className="border-t border-emerald-200/60 bg-emerald-50/60 py-24 sm:py-32 dark:border-border dark:bg-muted/30"
-    >
+    <section id="pricing" className="py-24 sm:py-32">
       <div className="mx-auto max-w-6xl px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -94,15 +91,16 @@ export function Pricing() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.1 }}
+              whileHover={{ y: -4 }}
               className={cn(
-                "relative overflow-hidden rounded-xl border p-6",
+                "relative overflow-hidden rounded-xl border p-6 transition-shadow hover:shadow-lg",
                 plan.highlighted
                   ? "border-emerald-500/30 bg-gradient-to-b from-emerald-500/[0.06] to-transparent dark:from-emerald-500/[0.08]"
                   : "border-border bg-card"
               )}
             >
               {plan.highlighted && (
-                <div className="absolute -right-12 top-6 rotate-45 bg-gradient-to-r from-emerald-400 to-emerald-600 px-12 py-1 text-xs font-medium text-white">
+                <div className="absolute -right-12 top-6 rotate-45 bg-gradient-to-r from-emerald-400 to-emerald-600 px-12 py-1 text-xs font-medium text-white shadow-sm">
                   Popular
                 </div>
               )}
