@@ -1,6 +1,6 @@
 {
   "name": "domcp",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "private": true,
   "description": "AI-native task and memory management via the Model Context Protocol",
   "repository": {
