@@ -205,3 +205,18 @@ export const regenerateApiKey = mutation({
     return await ctx.db.get(user._id)
   },
 })
+
+export const adminDeleteByWorkosId = mutation({
+  args: { workosUserId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_workos_id", (q) => q.eq("workosUserId", args.workosUserId))
+      .first()
+    if (user) {
+      await ctx.db.delete(user._id)
+      return { deleted: true, id: user._id }
+    }
+    return { deleted: false }
+  },
+})
