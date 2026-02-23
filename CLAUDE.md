@@ -126,19 +126,19 @@ Key patterns:
 - Todos and issues have Linear-like fields: `statusId`, `labelIds`, `assigneeId`, `estimate`, `cycleId`
 - Projects have auto-incrementing `todoCounter` and `issueCounter` for human-readable numbering
 
-See `docs/CONVEX_SCHEMA.md` for complete schema and function signatures.
+See `docs/CONVEX_SCHEMA.md` for complete schema and function signatures. See `docs/MEMORY.md` for the memory architecture design (semantic search, hybrid search, embedding generation, consolidation, and phased implementation plan).
 
 ## MCP Tools
 
-31 tools across 7 categories — see `docs/MCP_TOOLS.md` for full spec:
+31 tools across 7 categories (34 planned after Phase 1) — see `docs/MCP_TOOLS.md` for full spec:
 
 - **Todos** (6): `create_todo`, `update_todo`, `complete_todo`, `list_todos`, `get_todo`, `delete_todo`
 - **Issues** (6): `create_issue`, `update_issue`, `close_issue`, `list_issues`, `get_issue`, `delete_issue`
 - **Memories** (5): `add_memory`, `search_memories`, `list_memories`, `update_memory`, `delete_memory`
-- **Projects** (6): `create_project`, `list_projects`, `get_project`, `update_project`, `archive_project`, `set_active_project`
+- **Projects** (6 → 9 after Phase 1): `create_project`, `list_projects`, `get_project`, `update_project`, `archive_project`, `set_active_project`. Planned: `link_project`, `unlink_project`, `update_memory_settings`
 - **Config** (7): `update_project_statuses`, `add_project_label`, `remove_project_label`, `add_project_member`, `remove_project_member`, `update_estimate_scale`, `update_project_persona`
 - **Cycles** (5): `create_cycle`, `list_cycles`, `get_cycle`, `update_cycle`, `delete_cycle`
-- **Context** (1): `get_context` — session bootstrapper returning active project, pending todos, recent memories, project config, and active cycle
+- **Context** (1): `get_context` — session bootstrapper returning active project, pending todos, recent memories, project config, and active cycle. Phase 1 will add workspace auto-detection (resolve project from git remote or workspace path), type-prioritized memory loading, and memory settings in the response.
 
 Conventions: All tools return JSON. Timestamps are Unix ms. IDs are opaque Convex document IDs.
 

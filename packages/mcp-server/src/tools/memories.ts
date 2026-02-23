@@ -6,23 +6,30 @@ export const memoryTools: Tool[] = [
   {
     name: "add_memory",
     description:
-      "Store a new memory. Memories are pieces of context, decisions, learnings, or notes that persist across sessions.",
+      "Store important information for recall in future sessions. You should call this PROACTIVELY whenever you: discover facts about the codebase or infrastructure, make or observe architectural decisions, learn user preferences or conventions, encounter non-obvious behavior or gotchas, or resolve a tricky bug (store what caused it and how it was fixed). Don't wait to be asked — if something would be useful to know next time, store it now. Each memory should be a single, self-contained piece of knowledge. Prefer many small focused memories over fewer large ones.",
     inputSchema: {
       type: "object" as const,
       properties: {
         content: {
           type: "string",
-          description: "The memory content (max 10,000 chars)",
+          description:
+            "The memory content. Be specific and include context — write it so a future agent with no prior knowledge can understand and act on it. Max 10,000 chars.",
         },
         tags: {
           type: "array",
           items: { type: "string" },
-          description: 'Tags for categorization (e.g. ["architecture", "decision"])',
+          description:
+            'Tags for categorization. Use consistent, lowercase tags (e.g. ["architecture", "database", "decision", "preference", "debugging", "deploy", "gotcha"]). Max 20 tags.',
         },
-        projectId: { type: "string", description: "Associate with a project" },
+        projectId: {
+          type: "string",
+          description:
+            "Associate with a specific project. Omit for user-global memories (preferences, cross-project knowledge).",
+        },
         source: {
           type: "string",
-          description: 'Where this memory came from (e.g. "claude-code", "cursor", "manual")',
+          description:
+            'Identifies which agent stored this memory (e.g. "claude-code", "cursor", "windsurf", "manual"). Always set this so memories can be traced back to their origin.',
         },
       },
       required: ["content"],
@@ -30,20 +37,29 @@ export const memoryTools: Tool[] = [
   },
   {
     name: "search_memories",
-    description: "Search memories by content using full-text search.",
+    description:
+      "Search stored memories for relevant context. Call this BEFORE starting work on any task to check what you already know — previous decisions, known gotchas, user preferences, and past learnings can save significant time and avoid repeating mistakes. Use natural language queries describing what you need (e.g. 'database connection issues' or 'deploy process'). Also searches across project-scoped and global memories by default.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        query: { type: "string", description: "Search query (full-text search)" },
-        projectId: { type: "string", description: "Scope search to a project" },
+        query: {
+          type: "string",
+          description:
+            "Natural language search query. Describe what you're looking for conceptually — don't just use keywords. E.g. 'How is authentication configured?' rather than 'auth config'.",
+        },
+        projectId: {
+          type: "string",
+          description:
+            "Scope search to a specific project. Both project-scoped and global memories are searched by default.",
+        },
         tags: {
           type: "array",
           items: { type: "string" },
-          description: "Filter by tags",
+          description: "Filter results to memories with any of these tags (OR logic).",
         },
         limit: {
           type: "number",
-          description: "Max results (1-50). Default: 10",
+          description: "Max results (1-50). Default: 10. Use higher limits when exploring a broad topic.",
         },
       },
       required: ["query"],
@@ -51,39 +67,48 @@ export const memoryTools: Tool[] = [
   },
   {
     name: "list_memories",
-    description: "List recent memories, optionally filtered by project or tags.",
+    description:
+      "List recent memories in chronological order. Use this to review what's been stored recently, audit memory quality, or browse memories by project or tag. For finding specific information, prefer search_memories instead.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        projectId: { type: "string", description: "Filter by project" },
+        projectId: {
+          type: "string",
+          description: "Filter to memories in a specific project. Omit to list all memories.",
+        },
         tags: {
           type: "array",
           items: { type: "string" },
-          description: "Filter by tags",
+          description: "Filter to memories with any of these tags (OR logic).",
         },
         limit: {
           type: "number",
-          description: "Max results (1-100). Default: 20",
+          description: "Max results (1-100). Default: 20.",
         },
       },
     },
   },
   {
     name: "update_memory",
-    description: "Update a memory's content or tags.",
+    description:
+      "Update a memory when information changes or becomes more complete. Use this to correct outdated facts, add detail to a sparse memory, or re-tag memories for better organization. Prefer updating over creating duplicates — if a memory about the same topic already exists, update it rather than adding a new one.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        id: { type: "string", description: "The memory ID" },
-        content: { type: "string", description: "New content" },
+        id: { type: "string", description: "The memory ID to update." },
+        content: {
+          type: "string",
+          description: "New content. Only provide if changing the content.",
+        },
         tags: {
           type: "array",
           items: { type: "string" },
-          description: "Replace tags",
+          description: "Replace all tags. Only provide if changing tags.",
         },
         projectId: {
           type: ["string", "null"],
-          description: "Move to a different project, or null to unscope",
+          description:
+            "Move to a different project, or null to make it global. Only provide if changing project scope.",
         },
       },
       required: ["id"],
@@ -91,11 +116,12 @@ export const memoryTools: Tool[] = [
   },
   {
     name: "delete_memory",
-    description: "Delete a memory.",
+    description:
+      "Permanently delete a memory. Use sparingly — only for memories that are clearly wrong, duplicated, or no longer relevant. When in doubt, update the memory instead of deleting it.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        id: { type: "string", description: "The memory ID" },
+        id: { type: "string", description: "The memory ID to delete." },
       },
       required: ["id"],
     },

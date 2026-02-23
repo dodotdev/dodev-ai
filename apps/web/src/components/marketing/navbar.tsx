@@ -1,9 +1,10 @@
 "use client"
 
-import { ListTodo, LogOut, Menu, Settings, User, X } from "lucide-react"
+import { ListTodo, LogOut, Menu, Settings, Star, X } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -19,7 +20,6 @@ const navLinks = [
   { href: "/#features", label: "Features" },
   { href: "/#how-it-works", label: "How It Works" },
   { href: "/#pricing", label: "Pricing" },
-  { href: "https://github.com/dodotdev/domcp-ai", label: "Docs" },
 ]
 
 interface NavbarProps {
@@ -29,11 +29,24 @@ interface NavbarProps {
 export function Navbar({ user }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [starCount, setStarCount] = useState<string | null>(null)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
+  }, [])
+
+  useEffect(() => {
+    fetch("https://api.github.com/repos/dodotdev/domcp-ai")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.stargazers_count != null) {
+          const count = data.stargazers_count
+          setStarCount(count >= 1000 ? `${(count / 1000).toFixed(1)}k` : String(count))
+        }
+      })
+      .catch(() => {})
   }, [])
 
   const initials = user?.name
@@ -43,7 +56,24 @@ export function Navbar({ user }: NavbarProps) {
         .join("")
         .toUpperCase()
         .slice(0, 2)
-    : user?.email?.[0]?.toUpperCase() ?? "?"
+    : (user?.email?.[0]?.toUpperCase() ?? "?")
+
+  const githubLink = (
+    <a
+      href="https://github.com/dodotdev/domcp-ai"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+    >
+      GitHub
+      {starCount && (
+        <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-semibold">
+          <Star className="mr-0.5 size-2.5 fill-current" />
+          {starCount}
+        </Badge>
+      )}
+    </a>
+  )
 
   return (
     <header
@@ -72,6 +102,7 @@ export function Navbar({ user }: NavbarProps) {
               {link.label}
             </Link>
           ))}
+          {githubLink}
         </div>
 
         <div className="hidden items-center gap-1 md:flex">
@@ -80,11 +111,11 @@ export function Navbar({ user }: NavbarProps) {
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
-            aria-label="Follow @dodotdev on X"
           >
             <svg className="size-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
             </svg>
+            <span className="sr-only">Follow @dodotdev on X</span>
           </a>
           <ThemeToggle />
           {user ? (
@@ -159,17 +190,32 @@ export function Navbar({ user }: NavbarProps) {
                 {link.label}
               </Link>
             ))}
+            <a
+              href="https://github.com/dodotdev/domcp-ai"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              onClick={() => setMobileOpen(false)}
+            >
+              GitHub
+              {starCount && (
+                <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-semibold">
+                  <Star className="mr-0.5 size-2.5 fill-current" />
+                  {starCount}
+                </Badge>
+              )}
+            </a>
             <div className="flex items-center gap-2 pt-4">
               <a
                 href="https://x.com/dodotdev"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
-                aria-label="Follow @dodotdev on X"
               >
                 <svg className="size-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>
+                <span className="sr-only">Follow @dodotdev on X</span>
               </a>
               <ThemeToggle />
               {user ? (

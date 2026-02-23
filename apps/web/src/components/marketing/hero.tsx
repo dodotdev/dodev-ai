@@ -5,17 +5,30 @@ import { ArrowRight, Github } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
-const configSnippet = `{
-  "mcpServers": {
-    "domcp": {
-      "command": "npx",
-      "args": ["@domcp/mcp-server"],
-      "env": {
-        "DOMCP_API_KEY": "domcp_sk_..."
-      }
-    }
-  }
-}`
+const terminalLines = [
+  { type: "prompt", text: "Session 1", delay: 0 },
+  {
+    type: "input",
+    text: '> "Remember: auth uses JWT with RS256 and 24h token expiry"',
+    delay: 0.3,
+  },
+  { type: "output", text: "", delay: 0.8 },
+  { type: "success", text: '  Memory saved to project "backend-api"', delay: 1.0 },
+  { type: "spacer", text: "", delay: 1.3 },
+  { type: "prompt", text: "Session 2 (new context window)", delay: 1.6 },
+  { type: "input", text: '> "What auth approach are we using?"', delay: 1.9 },
+  { type: "output", text: "", delay: 2.4 },
+  {
+    type: "recall",
+    text: "  Found memory: JWT with RS256, 24h token expiry",
+    delay: 2.6,
+  },
+  {
+    type: "output",
+    text: '  Applied to project "backend-api" — 2 related memories loaded',
+    delay: 2.9,
+  },
+]
 
 export function Hero() {
   return (
@@ -40,16 +53,18 @@ export function Hero() {
             </div>
 
             <h1 className="text-5xl font-bold leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl">
-              Give your AI
+              Your AI has
+              <br />
+              amnesia.
               <br />
               <span className="bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
-                a memory.
+                Let&apos;s fix that.
               </span>
             </h1>
 
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground">
-              Open-source task and memory management for Claude Code, Cursor, Windsurf, and any
-              MCP-compatible AI agent. Persistent, cross-session awareness.
+              Persistent task and memory management for Claude Code, Cursor, Windsurf, and any
+              MCP-compatible agent. Your AI remembers across every session.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
@@ -70,17 +85,17 @@ export function Hero() {
                   rel="noopener noreferrer"
                 >
                   <Github className="mr-1 size-4" />
-                  View on GitHub
+                  Star on GitHub
                 </a>
               </Button>
             </div>
 
             <p className="mt-4 text-sm text-muted-foreground/70">
-              Sign up to reserve your spot. Free forever for self-hosted.
+              Free forever for self-hosted. No credit card required.
             </p>
           </motion.div>
 
-          {/* Code snippet — stays dark in both themes */}
+          {/* Animated Terminal */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -88,29 +103,62 @@ export function Hero() {
             className="relative"
           >
             <div className="relative overflow-hidden rounded-xl border border-border bg-code-bg shadow-2xl shadow-black/10 dark:shadow-emerald-500/5">
+              {/* Terminal chrome */}
               <div className="flex items-center gap-2 border-b border-white/[0.06] px-4 py-3">
-                <div className="size-3 rounded-full bg-white/10" />
-                <div className="size-3 rounded-full bg-white/10" />
-                <div className="size-3 rounded-full bg-white/10" />
-                <span className="ml-3 text-xs text-zinc-500">claude_code_config.json</span>
+                <div className="size-3 rounded-full bg-red-500/70" />
+                <div className="size-3 rounded-full bg-yellow-500/70" />
+                <div className="size-3 rounded-full bg-green-500/70" />
+                <span className="ml-3 text-xs text-zinc-500">Terminal — DoMCP</span>
               </div>
 
-              <pre className="overflow-x-auto p-6 font-mono text-sm leading-relaxed">
-                <code className="text-zinc-400">{configSnippet}</code>
-              </pre>
+              {/* Terminal content */}
+              <div className="relative min-h-[320px] p-6 font-mono text-sm leading-relaxed">
+                {terminalLines.map((line) => (
+                  <motion.div
+                    key={`${line.type}-${line.delay}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3, delay: line.delay }}
+                  >
+                    {line.type === "spacer" ? (
+                      <div className="h-4" />
+                    ) : line.type === "prompt" ? (
+                      <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-emerald-500/70">
+                        {line.text}
+                      </p>
+                    ) : line.type === "input" ? (
+                      <p className="text-zinc-300">{line.text}</p>
+                    ) : line.type === "success" ? (
+                      <p className="text-emerald-400">{line.text}</p>
+                    ) : line.type === "recall" ? (
+                      <p className="text-emerald-400">{line.text}</p>
+                    ) : line.text ? (
+                      <p className="text-zinc-500">{line.text}</p>
+                    ) : null}
+                  </motion.div>
+                ))}
 
-              <div className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-br from-emerald-500/5 to-emerald-600/5" />
+                {/* Blinking cursor */}
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 3.2 }}
+                  className="mt-2 inline-block h-4 w-2 bg-emerald-400"
+                  style={{ animation: "blink 1s step-end infinite" }}
+                />
+
+                {/* Gradient overlay */}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-emerald-600/5" />
+              </div>
             </div>
 
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
+              transition={{ duration: 0.5, delay: 3.5 }}
               className="absolute -bottom-4 -right-4 rounded-lg border border-border bg-background px-4 py-2 shadow-xl"
             >
-              <p className="text-xs text-muted-foreground">
-                That&apos;s it. Your AI now remembers.
-              </p>
+              <p className="text-xs text-muted-foreground">Your AI now remembers. Always.</p>
             </motion.div>
           </motion.div>
         </div>

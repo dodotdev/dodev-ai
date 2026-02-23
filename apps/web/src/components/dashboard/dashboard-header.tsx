@@ -1,6 +1,6 @@
 "use client"
 
-import { Github, ListTodo, Menu, X } from "lucide-react"
+import { Github, Home, ListTodo, Menu, X } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -48,6 +48,14 @@ export function DashboardHeader() {
             </a>
 
             <ThemeToggle />
+
+            <Link
+              href="/"
+              className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+              aria-label="Homepage"
+            >
+              <Home className="size-4" />
+            </Link>
 
             {/* Mobile menu button */}
             <button

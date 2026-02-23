@@ -6,30 +6,25 @@ const steps = [
   {
     number: "01",
     title: "Install",
-    description: "One command to get the MCP server running. Via npx, Docker, or global install.",
-    code: `npx @domcp/mcp-server@latest`,
+    description: "One command. No account required.",
+    code: "npx @domcp/mcp-server@latest",
   },
   {
     number: "02",
     title: "Configure",
-    description: "Add DoMCP to your AI agent's MCP configuration. Works with any MCP client.",
+    description: "Add to your AI agent's MCP config.",
     code: `{
-  "mcpServers": {
-    "domcp": {
-      "command": "npx",
-      "args": ["@domcp/mcp-server"]
-    }
+  "domcp": {
+    "command": "npx",
+    "args": ["@domcp/mcp-server"]
   }
 }`,
   },
   {
     number: "03",
-    title: "Use",
-    description:
-      "Your AI agent now has persistent todos, memories, and project context across sessions.",
-    code: `> "Remember: auth uses JWT tokens with 24h expiry"
-
-✓ Memory saved to project "backend-api"
+    title: "Done",
+    description: "Your AI now has persistent memory.",
+    code: `✓ Memory saved to "backend-api"
 ✓ 3 related memories found`,
   },
 ]
@@ -38,7 +33,7 @@ export function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="border-t border-emerald-200/60 bg-emerald-50/60 py-24 sm:py-32 dark:border-border dark:bg-muted/30"
+      className="border-y border-emerald-200/60 bg-emerald-50/60 py-24 sm:py-32 dark:border-border dark:bg-muted/30"
     >
       <div className="mx-auto max-w-2xl px-6">
         <motion.div
@@ -49,9 +44,9 @@ export function HowItWorks() {
           className="text-center"
         >
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Up and running in{" "}
+            60 seconds to an AI that{" "}
             <span className="bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
-              under a minute
+              never forgets
             </span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
@@ -79,7 +74,7 @@ export function HowItWorks() {
                       {step.description}
                     </p>
                     <div className="mt-4 overflow-hidden rounded-lg border border-border bg-code-bg">
-                      <pre className="overflow-x-auto p-4 font-mono text-xs leading-relaxed text-zinc-400">
+                      <pre className="p-3 font-mono text-xs leading-relaxed text-zinc-400">
                         <code>{step.code}</code>
                       </pre>
                     </div>

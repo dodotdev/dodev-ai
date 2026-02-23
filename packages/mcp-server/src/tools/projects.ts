@@ -5,7 +5,8 @@ import { api, getConvexClient } from "../convex-client.js"
 export const projectTools: Tool[] = [
   {
     name: "create_project",
-    description: "Create a new project.",
+    description:
+      "Create a new project to organize todos, issues, and memories for a codebase or initiative. After creating, call link_project to associate the current workspace so the project is auto-detected in future sessions.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -87,7 +88,7 @@ export const projectTools: Tool[] = [
   {
     name: "set_active_project",
     description:
-      "Set the active project for this session. Subsequent tool calls that accept projectId will default to this project.",
+      "Manually set the active project for this session. Usually not needed — if the workspace is linked to a project via link_project, it's auto-detected by get_context. Use this only when working outside a linked workspace or switching projects mid-session.",
     inputSchema: {
       type: "object" as const,
       properties: {

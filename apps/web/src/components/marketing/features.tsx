@@ -5,52 +5,58 @@ import { Brain, CheckSquare, Code2, FolderOpen, RefreshCw, Server } from "lucide
 
 const features = [
   {
-    title: "Todos",
-    description: "Create, update, and track tasks with priorities, due dates, and tags.",
+    title: "Todos & Issues",
+    description:
+      "Create, update, and track tasks and issues with priorities, severity, due dates, labels, and sprint cycles — just like Linear.",
     icon: CheckSquare,
-    large: true,
-    gradient: "from-emerald-500/10 to-emerald-600/5 dark:from-emerald-500/20 dark:to-emerald-600/5",
+    borderColor: "border-l-emerald-500",
+    iconColor: "text-emerald-500",
   },
   {
-    title: "Memories",
-    description: "Store context, decisions, and learnings your AI can recall later.",
+    title: "Persistent Memories",
+    description:
+      "Store architectural decisions, debugging insights, and project context your AI recalls automatically in future sessions.",
     icon: Brain,
-    large: true,
-    gradient: "from-emerald-500/10 to-emerald-600/5 dark:from-emerald-500/20 dark:to-emerald-600/5",
+    borderColor: "border-l-violet-500",
+    iconColor: "text-violet-500",
   },
   {
-    title: "Projects",
-    description: "Organize todos and memories by project with contextual awareness.",
+    title: "Project Context",
+    description:
+      "Every session starts with full context — active todos, recent memories, project config, and active cycle loaded automatically.",
     icon: FolderOpen,
-    large: false,
-    gradient: "from-cyan-500/10 to-cyan-600/5 dark:from-cyan-500/20 dark:to-cyan-600/5",
+    borderColor: "border-l-blue-500",
+    iconColor: "text-blue-500",
   },
   {
-    title: "Cross-Session",
-    description: "Persistent state that survives restarts and context windows.",
+    title: "Sprint Cycles",
+    description:
+      "Plan and track work in time-boxed cycles. Assign todos to sprints and monitor progress across sessions.",
     icon: RefreshCw,
-    large: false,
-    gradient: "from-emerald-500/10 to-emerald-600/5 dark:from-emerald-500/20 dark:to-emerald-600/5",
+    borderColor: "border-l-amber-500",
+    iconColor: "text-amber-500",
   },
   {
-    title: "Self-Hosted",
-    description: "Run on your own infrastructure. Your data stays yours.",
+    title: "Self-Hosted First",
+    description:
+      "Run on your own infrastructure with Docker or npx. Your data stays on your machines. No account required.",
     icon: Server,
-    large: false,
-    gradient: "from-amber-500/10 to-amber-600/5 dark:from-amber-500/20 dark:to-amber-600/5",
+    borderColor: "border-l-cyan-500",
+    iconColor: "text-cyan-500",
   },
   {
-    title: "Open Source",
-    description: "MIT licensed. Fully transparent. Community driven.",
+    title: "Open Protocol",
+    description:
+      "Built on the Model Context Protocol standard. Works with any MCP-compatible client, present and future.",
     icon: Code2,
-    large: false,
-    gradient: "from-rose-500/10 to-rose-600/5 dark:from-rose-500/20 dark:to-rose-600/5",
+    borderColor: "border-l-rose-500",
+    iconColor: "text-rose-500",
   },
 ]
 
 export function Features() {
   return (
-    <section id="features" className="py-24 sm:py-32">
+    <section id="features" className="bg-zinc-950 py-24 text-zinc-50 sm:py-32">
       <div className="mx-auto max-w-6xl px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -60,18 +66,18 @@ export function Features() {
           className="text-center"
         >
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Everything your AI needs to
+            31+ tools.{" "}
             <span className="bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
-              {" "}
-              stay organized
+              Zero forgotten context.
             </span>
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            18 MCP tools across 4 categories. Built for persistent AI workflows.
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-zinc-400">
+            Todos, issues, memories, projects, cycles, and config — all through the Model Context
+            Protocol.
           </p>
         </motion.div>
 
-        <div className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, i) => {
             const Icon = feature.icon
             return (
@@ -80,24 +86,17 @@ export function Features() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.1 }}
-                className={`group relative overflow-hidden rounded-xl border border-border bg-card p-6 transition-all hover:border-border hover:shadow-md dark:hover:bg-surface-hover ${
-                  feature.large ? "sm:col-span-2" : ""
-                }`}
+                transition={{ duration: 0.4, delay: i * 0.08 }}
+                className={`group rounded-xl border border-zinc-800 border-l-4 ${feature.borderColor} bg-zinc-900/50 p-6 transition-colors hover:border-zinc-700 hover:bg-zinc-900`}
               >
-                <div
-                  className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 transition-opacity group-hover:opacity-100`}
-                />
-
-                <div className="relative">
-                  <div className="mb-4 flex size-10 items-center justify-center rounded-lg border border-border bg-muted/50">
-                    <Icon className="size-5 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-lg font-semibold">{feature.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    {feature.description}
-                  </p>
-                </div>
+                <motion.div
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  className={`mb-4 flex size-10 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-800/50 ${feature.iconColor}`}
+                >
+                  <Icon className="size-5" />
+                </motion.div>
+                <h3 className="text-lg font-semibold text-zinc-100">{feature.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">{feature.description}</p>
               </motion.div>
             )
           })}
