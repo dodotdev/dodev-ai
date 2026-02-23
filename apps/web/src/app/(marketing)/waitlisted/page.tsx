@@ -20,37 +20,42 @@ async function sendWaitlistEmail(email: string, name?: string) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin:0;padding:0;background-color:#09090b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#09090b;padding:40px 20px;">
+<body style="margin:0;padding:0;background-color:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:40px 20px;">
     <tr>
       <td align="center">
-        <table width="560" cellpadding="0" cellspacing="0" style="background-color:#18181b;border-radius:12px;border:1px solid #27272a;overflow:hidden;">
+        <table width="560" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;border:1px solid #e4e4e7;overflow:hidden;">
           <tr>
             <td style="padding:32px 40px 24px;text-align:center;">
-              <h1 style="margin:0;font-size:24px;font-weight:700;color:#ffffff;">
-                <span style="color:#34d399;">DoMCP</span>
+              <h1 style="margin:0;font-size:24px;font-weight:700;color:#18181b;">
+                <span style="color:#059669;">DoMCP</span>
               </h1>
             </td>
           </tr>
           <tr>
             <td style="padding:0 40px 32px;">
-              <h2 style="margin:0 0 16px;font-size:20px;font-weight:600;color:#ffffff;">
+              <h2 style="margin:0 0 16px;font-size:20px;font-weight:600;color:#18181b;">
                 You're on the list!
               </h2>
-              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#a1a1aa;">
+              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#3f3f46;">
                 ${greeting}
               </p>
-              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#a1a1aa;">
+              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#3f3f46;">
                 Thanks for signing up for early access to DoMCP &mdash; the open-source AI task and memory management system built on the Model Context Protocol.
               </p>
-              <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#a1a1aa;">
+              <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#3f3f46;">
                 We're setting things up and will let you know when your account is ready. In the meantime, follow us on X to stay in the loop.
               </p>
               <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
                 <tr>
-                  <td style="background:linear-gradient(to right,#34d399,#059669);border-radius:8px;">
-                    <a href="https://x.com/dodotdev" target="_blank" style="display:inline-block;padding:12px 28px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">
-                      Follow @dodotdev on X
+                  <td align="center" style="padding-right:24px;">
+                    <a href="https://x.com/dodotdev" target="_blank" style="font-size:14px;font-weight:500;color:#3f3f46;text-decoration:none;">
+                      <img src="https://cdn.simpleicons.org/x/3f3f46" alt="X" width="16" height="16" style="display:inline-block;vertical-align:middle;margin-right:6px;" />@dodotdev
+                    </a>
+                  </td>
+                  <td align="center">
+                    <a href="https://github.com/dodotdev/domcp-ai" target="_blank" style="font-size:14px;font-weight:500;color:#3f3f46;text-decoration:none;">
+                      <img src="https://cdn.simpleicons.org/github/3f3f46" alt="GitHub" width="16" height="16" style="display:inline-block;vertical-align:middle;margin-right:6px;" />GitHub
                     </a>
                   </td>
                 </tr>
@@ -58,8 +63,8 @@ async function sendWaitlistEmail(email: string, name?: string) {
             </td>
           </tr>
           <tr>
-            <td style="padding:24px 40px;border-top:1px solid #27272a;text-align:center;">
-              <p style="margin:0;font-size:12px;color:#52525b;">
+            <td style="padding:24px 40px;border-top:1px solid #e4e4e7;text-align:center;">
+              <p style="margin:0;font-size:12px;color:#a1a1aa;">
                 domcp.ai &middot; Open Source &middot; MIT Licensed
               </p>
             </td>
