@@ -219,6 +219,7 @@ export interface User {
   stripeSubscriptionId?: string
   settings: UserSettings
   memorySettings?: UserMemorySettings
+  itemCounter?: number
   createdAt: number
   updatedAt: number
 }

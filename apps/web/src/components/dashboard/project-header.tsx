@@ -4,7 +4,7 @@ import { api } from "@domcp/convex/api"
 import { useMutation, useQuery } from "convex/react"
 import { Archive, Loader2, Settings, Trash2 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { CycleEditor } from "@/components/dashboard/settings/cycle-editor"
 import { EstimateEditor } from "@/components/dashboard/settings/estimate-editor"
 import { LabelEditor } from "@/components/dashboard/settings/label-editor"
@@ -39,10 +39,17 @@ type TabKey = (typeof TABS)[number]["key"]
 
 export function ProjectHeader() {
   const { id } = useParams<{ id: string }>()
+  const router = useRouter()
   const { apiKeyHash } = useAuth()
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const project = useQuery(api.projects.get, apiKeyHash ? { apiKeyHash, id: id as never } : "skip")
+
+  useEffect(() => {
+    if (project === null) {
+      router.replace("/dashboard")
+    }
+  }, [project, router])
 
   if (!project) return null
 
@@ -61,11 +68,7 @@ export function ProjectHeader() {
       </div>
 
       {settingsOpen && (
-        <ProjectSettingsModal
-          projectId={id}
-          open={settingsOpen}
-          onOpenChange={setSettingsOpen}
-        />
+        <ProjectSettingsModal projectId={id} open={settingsOpen} onOpenChange={setSettingsOpen} />
       )}
     </>
   )

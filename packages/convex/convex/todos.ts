@@ -38,19 +38,15 @@ export const create = mutation({
       }
     }
 
-    // Auto-increment project todo counter for issue number
-    let todoNumber: number | undefined
-    if (project) {
-      const nextNumber = (project.todoCounter ?? 0) + 1
-      todoNumber = nextNumber
-      await ctx.db.patch(project._id, { todoCounter: nextNumber })
-    }
+    // Auto-increment global item counter
+    const nextNumber = (user.itemCounter ?? 0) + 1
+    await ctx.db.patch(user._id, { itemCounter: nextNumber })
 
     const now = Date.now()
     const id = await ctx.db.insert("todos", {
       userId: user._id,
       projectId: args.projectId,
-      number: todoNumber,
+      number: nextNumber,
       title: args.title,
       description: args.description,
       status,

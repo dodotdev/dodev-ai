@@ -2,55 +2,25 @@
 
 import { api } from "@domcp/convex/api"
 import { useMutation, useQuery } from "convex/react"
-import { Loader2, Search } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { useParams } from "next/navigation"
-import { useState } from "react"
 import { IssueForm } from "@/components/dashboard/issue-form"
-import { IssueList } from "@/components/dashboard/issue-list"
+import { LinearListView, type ListItem } from "@/components/dashboard/linear-list-view"
 import { useAuth } from "@/components/providers/auth-provider"
-import { Input } from "@/components/ui/input"
-import { cn } from "@/lib/utils"
-
-type StatusFilter = "all" | "pending" | "in_progress" | "completed"
-type TypeFilter = "all" | "bug" | "feature" | "improvement" | "task"
-
-const statusFilters: { value: StatusFilter; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "pending", label: "Pending" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "completed", label: "Completed" },
-]
-
-const typeFilters: { value: TypeFilter; label: string }[] = [
-  { value: "all", label: "All Types" },
-  { value: "bug", label: "Bugs" },
-  { value: "feature", label: "Features" },
-  { value: "improvement", label: "Improvements" },
-  { value: "task", label: "Tasks" },
-]
 
 export default function ProjectIssuesPage() {
   const { id } = useParams<{ id: string }>()
   const { apiKeyHash, isLoading: authLoading } = useAuth()
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all")
-  const [search, setSearch] = useState("")
+
+  const project = useQuery(api.projects.get, apiKeyHash ? { apiKeyHash, id: id as never } : "skip")
 
   const issues = useQuery(
     api.issues.list,
-    apiKeyHash
-      ? {
-          apiKeyHash,
-          projectId: id as never,
-          status: statusFilter !== "all" ? statusFilter : undefined,
-          type: typeFilter !== "all" ? typeFilter : undefined,
-          limit: 50,
-        }
-      : "skip"
+    apiKeyHash ? { apiKeyHash, projectId: id as never, limit: 100 } : "skip"
   )
 
-  const createIssue = useMutation(api.issues.create)
   const updateIssue = useMutation(api.issues.update)
+  const createIssue = useMutation(api.issues.create)
 
   if (authLoading || !apiKeyHash) {
     return (
@@ -58,6 +28,28 @@ export default function ProjectIssuesPage() {
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     )
+  }
+
+  if (project === undefined || issues === undefined) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  const projectStatuses = project?.statuses ?? []
+  const projectLabels = project?.labels ?? []
+  const projectMembers = project?.members ?? []
+
+  async function handleStatusChange(issueId: string, newStatus: string, statusId?: string) {
+    if (!apiKeyHash) return
+    await updateIssue({
+      apiKeyHash,
+      id: issueId as never,
+      status: newStatus as "pending" | "in_progress" | "completed" | "cancelled",
+      ...(statusId ? { statusId } : {}),
+    })
   }
 
   async function handleCreate(data: {
@@ -89,21 +81,15 @@ export default function ProjectIssuesPage() {
     })
   }
 
-  async function handleUpdate(issueId: string, data: { status?: string }) {
-    if (!apiKeyHash) return
-    await updateIssue({
-      apiKeyHash,
-      id: issueId as never,
-      status: data.status as "pending" | "in_progress" | "completed" | "cancelled",
-    })
-  }
+  // Resolve labels and assignees for display
+  const labelMap = new Map(projectLabels.map((l) => [l.id, l]))
+  const memberMap = new Map(projectMembers.map((m) => [m.id, m]))
+  const projectStub = project?.stub
 
-  const filtered = (issues ?? [])
-    .filter((issue) => {
-      if (search && !issue.title.toLowerCase().includes(search.toLowerCase())) return false
-      return true
-    })
-    .map((i) => ({
+  const mapped: ListItem[] = (issues ?? []).map((i) => {
+    const raw = i as Record<string, unknown>
+    const issueNumber = raw.number as number | undefined
+    return {
       _id: i._id as string,
       title: i.title,
       description: i.description,
@@ -113,12 +99,24 @@ export default function ProjectIssuesPage() {
       severity: i.severity,
       tags: i.tags,
       dueDate: i.dueDate,
+      number: issueNumber,
+      statusId: raw.statusId as string | undefined,
+      labelIds: raw.labelIds as string[] | undefined,
+      assigneeId: raw.assigneeId as string | undefined,
+      estimate: raw.estimate as string | undefined,
+      cycleId: raw.cycleId as string | undefined,
       createdAt: i.createdAt,
       updatedAt: i.updatedAt,
-    }))
+      issueId: projectStub && issueNumber ? `${projectStub}-${issueNumber}` : undefined,
+      resolvedLabels: (raw.labelIds as string[] | undefined)
+        ?.map((lid) => labelMap.get(lid))
+        .filter(Boolean) as Array<{ id: string; name: string; color: string }> | undefined,
+      resolvedAssignee: raw.assigneeId ? memberMap.get(raw.assigneeId as string) : undefined,
+    }
+  })
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold tracking-tight">Issues</h1>
@@ -129,54 +127,12 @@ export default function ProjectIssuesPage() {
         <IssueForm onSubmit={handleCreate} />
       </div>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search issues..."
-            className="pl-10"
-          />
-        </div>
-        <div className="flex gap-1 rounded-lg border border-border bg-surface p-1">
-          {statusFilters.map((sf) => (
-            <button
-              key={sf.value}
-              type="button"
-              onClick={() => setStatusFilter(sf.value)}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                statusFilter === sf.value
-                  ? "bg-white/10 text-white"
-                  : "text-muted-foreground hover:text-muted-foreground"
-              )}
-            >
-              {sf.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex gap-1 rounded-lg border border-border bg-surface p-1 w-fit">
-        {typeFilters.map((tf) => (
-          <button
-            key={tf.value}
-            type="button"
-            onClick={() => setTypeFilter(tf.value)}
-            className={cn(
-              "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-              typeFilter === tf.value
-                ? "bg-white/10 text-white"
-                : "text-muted-foreground hover:text-muted-foreground"
-            )}
-          >
-            {tf.label}
-          </button>
-        ))}
-      </div>
-
-      <IssueList issues={filtered} onUpdate={handleUpdate} />
+      <LinearListView
+        items={mapped}
+        statuses={projectStatuses}
+        onStatusChange={handleStatusChange}
+        emptyMessage="No issues yet. Create one from the MCP server or the form above."
+      />
     </div>
   )
 }

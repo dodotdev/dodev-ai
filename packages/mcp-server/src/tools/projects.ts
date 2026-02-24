@@ -126,11 +126,14 @@ export async function handleProjectTool(
         includeStats: args.includeStats as boolean | undefined,
       })
 
-    case "get_project":
-      return await client.query(api.projects.get, {
+    case "get_project": {
+      const project = await client.query(api.projects.get, {
         apiKeyHash,
         id: args.id as string,
       })
+      if (!project) throw new Error("Project not found")
+      return project
+    }
 
     case "update_project":
       return await client.mutation(api.projects.update, {

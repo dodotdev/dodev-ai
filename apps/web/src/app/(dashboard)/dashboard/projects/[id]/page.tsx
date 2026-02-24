@@ -4,11 +4,11 @@ import { api } from "@domcp/convex/api"
 import { useMutation, useQuery } from "convex/react"
 import { Loader2, Plus } from "lucide-react"
 import { useParams } from "next/navigation"
-import { KanbanBoard } from "@/components/dashboard/kanban/kanban-board"
+import { LinearListView, type ListItem } from "@/components/dashboard/linear-list-view"
 import { TodoForm } from "@/components/dashboard/todo-form"
 import { useAuth } from "@/components/providers/auth-provider"
 
-export default function ProjectKanbanPage() {
+export default function ProjectTodosPage() {
   const { id } = useParams<{ id: string }>()
   const { apiKeyHash, isLoading: authLoading } = useAuth()
 
@@ -52,17 +52,6 @@ export default function ProjectKanbanPage() {
     })
   }
 
-  async function handleQuickAdd(title: string, status: string, statusId?: string) {
-    if (!apiKeyHash) return
-    await createTodo({
-      apiKeyHash,
-      title,
-      projectId: id as never,
-      ...(statusId ? { statusId } : {}),
-      ...(status !== "pending" && !statusId ? { status: status as never } : {}),
-    })
-  }
-
   async function handleCreate(data: {
     title: string
     description?: string
@@ -88,12 +77,12 @@ export default function ProjectKanbanPage() {
     })
   }
 
-  // Resolve labels and assignees for display on kanban cards
+  // Resolve labels and assignees for display
   const labelMap = new Map(projectLabels.map((l) => [l.id, l]))
   const memberMap = new Map(projectMembers.map((m) => [m.id, m]))
   const projectStub = project?.stub
 
-  const mapped = (todos ?? []).map((t) => {
+  const mapped: ListItem[] = (todos ?? []).map((t) => {
     const raw = t as Record<string, unknown>
     const todoNumber = raw.number as number | undefined
     return {
@@ -146,11 +135,11 @@ export default function ProjectKanbanPage() {
         />
       </div>
 
-      <KanbanBoard
-        todos={mapped}
+      <LinearListView
+        items={mapped}
         statuses={projectStatuses}
         onStatusChange={handleStatusChange}
-        onQuickAdd={handleQuickAdd}
+        emptyMessage="No todos yet. Create one from the MCP server or the form above."
       />
     </div>
   )

@@ -38,6 +38,9 @@ export default defineSchema({
       })
     ),
 
+    // Global item counter (shared across all todos, issues, projects)
+    itemCounter: v.optional(v.number()),
+
     createdAt: v.number(),
     updatedAt: v.number(),
   })

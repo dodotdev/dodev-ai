@@ -159,7 +159,7 @@ export const get = query({
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
     const project = await ctx.db.get(args.id)
     if (!project || project.userId !== user._id) {
-      throw new ConvexError("NOT_FOUND")
+      return null
     }
     return project
   },
