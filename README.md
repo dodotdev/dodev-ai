@@ -33,7 +33,7 @@ Agent: *checks DoMCP* "3 pending tasks: implement refresh tokens,
 
 ## Features
 
-- **31 MCP tools** across 7 categories (todos, issues, memories, projects, config, cycles, context)
+- **35 MCP tools** across 8 categories (todos, issues, memories, projects, config, cycles, context, linking)
 - **Linear-like project management** — custom workflow statuses, labels, team members, estimate scales, sprint cycles
 - **AI personas** — per-project system prompts that shape how agents interact with your project
 - **Real-time sync** — Dashboard updates instantly when agents make changes (powered by Convex)
@@ -182,13 +182,35 @@ Then configure your MCP client to use the installed binary.
 | `update_cycle` | Update cycle name, dates, status |
 | `delete_cycle` | Delete a cycle |
 
-### Context (1)
+### Context (2)
 
 | Tool | Description |
 |------|-------------|
 | `get_context` | Session bootstrapper: active project, pending todos, recent memories, config, persona, active cycle |
+| `get_setup_instructions` | Get tailored CLAUDE.md instructions for configuring AI agents to use DoMCP proactively |
+
+### Linking (3)
+
+| Tool | Description |
+|------|-------------|
+| `link_project` | Link a workspace path or git repo to a project for auto-detection. Returns CLAUDE.md setup instructions. |
+| `unlink_project` | Remove a workspace or git repo link from a project |
+| `update_memory_settings` | Configure memory behavior (auto-capture, default tags, embedding provider) |
 
 See [docs/MCP_TOOLS.md](docs/MCP_TOOLS.md) for full parameter specifications.
+
+## CLAUDE.md Integration
+
+DoMCP works best when AI agents know to use it proactively. The `get_setup_instructions` tool generates a tailored CLAUDE.md section for any project:
+
+```
+You: "Set up DoMCP for this project"
+Agent: *calls get_setup_instructions* → gets markdown with session start behavior,
+       memory management, todo/issue tracking, and project-specific context
+Agent: *adds the section to CLAUDE.md* → every future session uses DoMCP automatically
+```
+
+This also happens automatically when you call `link_project` — the response includes setup instructions and a hint to add them to CLAUDE.md.
 
 ## Architecture
 

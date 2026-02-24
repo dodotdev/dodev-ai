@@ -11,6 +11,22 @@ export const createFromApiKey = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now()
+
+    // Upsert: if user with this workosUserId exists, update their API key
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_workos_id", (q) => q.eq("workosUserId", args.workosUserId))
+      .unique()
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        apiKey: args.apiKey,
+        apiKeyHash: args.apiKeyHash,
+        updatedAt: now,
+      })
+      return await ctx.db.get(existing._id)
+    }
+
     const id = await ctx.db.insert("users", {
       workosUserId: args.workosUserId,
       email: args.email,

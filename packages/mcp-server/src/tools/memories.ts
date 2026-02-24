@@ -31,6 +31,17 @@ export const memoryTools: Tool[] = [
           description:
             'Identifies which agent stored this memory (e.g. "claude-code", "cursor", "windsurf", "manual"). Always set this so memories can be traced back to their origin.',
         },
+        type: {
+          type: "string",
+          enum: ["fact", "decision", "preference", "context", "learning"],
+          description:
+            'Classify the memory type. "fact" for codebase/infrastructure facts, "decision" for architectural or design decisions, "preference" for user preferences/conventions, "context" for project context/background, "learning" for lessons learned or gotchas.',
+        },
+        importance: {
+          type: "number",
+          description:
+            "How important this memory is (0.0-1.0). Higher importance memories are prioritized in search results. Default: unset (treated as normal).",
+        },
       },
       required: ["content"],
     },
@@ -38,7 +49,7 @@ export const memoryTools: Tool[] = [
   {
     name: "search_memories",
     description:
-      "Search stored memories for relevant context. Call this BEFORE starting work on any task to check what you already know — previous decisions, known gotchas, user preferences, and past learnings can save significant time and avoid repeating mistakes. Use natural language queries describing what you need (e.g. 'database connection issues' or 'deploy process'). Also searches across project-scoped and global memories by default.",
+      "Search stored memories for relevant context. Call this BEFORE starting work on any task to check what you already know — previous decisions, known gotchas, user preferences, and past learnings can save significant time and avoid repeating mistakes. Supports keyword search, semantic search (understands meaning), and hybrid mode (combines both). Use natural language queries describing what you need.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -61,6 +72,22 @@ export const memoryTools: Tool[] = [
           type: "number",
           description:
             "Max results (1-50). Default: 10. Use higher limits when exploring a broad topic.",
+        },
+        type: {
+          type: "string",
+          enum: ["fact", "decision", "preference", "context", "learning"],
+          description: "Filter to a specific memory type.",
+        },
+        mode: {
+          type: "string",
+          enum: ["keyword", "semantic", "hybrid"],
+          description:
+            'Search mode. "keyword" uses full-text search, "semantic" uses AI embeddings to understand meaning, "hybrid" (default) combines both for best results. Falls back to keyword if embeddings are unavailable.',
+        },
+        globalScope: {
+          type: "boolean",
+          description:
+            "When true and projectId is set, also include global (non-project) memories. Default: false.",
         },
       },
       required: ["query"],
@@ -86,6 +113,11 @@ export const memoryTools: Tool[] = [
           type: "number",
           description: "Max results (1-100). Default: 20.",
         },
+        type: {
+          type: "string",
+          enum: ["fact", "decision", "preference", "context", "learning"],
+          description: "Filter to a specific memory type.",
+        },
       },
     },
   },
@@ -110,6 +142,15 @@ export const memoryTools: Tool[] = [
           type: ["string", "null"],
           description:
             "Move to a different project, or null to make it global. Only provide if changing project scope.",
+        },
+        type: {
+          type: "string",
+          enum: ["fact", "decision", "preference", "context", "learning"],
+          description: "Change the memory type classification.",
+        },
+        importance: {
+          type: "number",
+          description: "Update importance (0.0-1.0).",
         },
       },
       required: ["id"],
@@ -144,16 +185,37 @@ export async function handleMemoryTool(
         tags: args.tags as string[] | undefined,
         projectId: args.projectId as string | undefined,
         source: args.source as string | undefined,
+        type: args.type as string | undefined,
+        importance: args.importance as number | undefined,
       })
 
-    case "search_memories":
+    case "search_memories": {
+      const mode = (args.mode as string) ?? "hybrid"
+
+      // Use hybrid search action for semantic/hybrid modes
+      if (mode === "semantic" || mode === "hybrid") {
+        return await client.action(api.memories.hybridSearch, {
+          apiKeyHash,
+          query: args.query as string,
+          projectId: args.projectId as string | undefined,
+          tags: args.tags as string[] | undefined,
+          limit: args.limit as number | undefined,
+          type: args.type as string | undefined,
+          mode: mode as "keyword" | "semantic" | "hybrid",
+          globalScope: args.globalScope as boolean | undefined,
+        })
+      }
+
+      // Keyword-only: use the query (faster, no embedding needed)
       return await client.query(api.memories.search, {
         apiKeyHash,
         query: args.query as string,
         projectId: args.projectId as string | undefined,
         tags: args.tags as string[] | undefined,
         limit: args.limit as number | undefined,
+        type: args.type as string | undefined,
       })
+    }
 
     case "list_memories":
       return await client.query(api.memories.listMemories, {
@@ -161,6 +223,7 @@ export async function handleMemoryTool(
         projectId: args.projectId as string | undefined,
         tags: args.tags as string[] | undefined,
         limit: args.limit as number | undefined,
+        type: args.type as string | undefined,
       })
 
     case "update_memory":
@@ -170,6 +233,8 @@ export async function handleMemoryTool(
         content: args.content as string | undefined,
         tags: args.tags as string[] | undefined,
         projectId: args.projectId as string | null | undefined,
+        type: args.type as string | undefined,
+        importance: args.importance as number | undefined,
       })
 
     case "delete_memory":

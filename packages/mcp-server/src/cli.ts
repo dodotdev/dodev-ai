@@ -48,7 +48,7 @@ async function handleGenerateKey() {
   try {
     const client = getConvexClient()
     await client.mutation(api.users.createFromApiKey, {
-      workosUserId: `self-hosted-${Date.now()}`,
+      workosUserId: "self-hosted",
       email: "self-hosted@domcp.local",
       apiKey,
       apiKeyHash,

@@ -45,9 +45,10 @@ interface TodoFormData {
 interface TodoFormProps {
   onSubmit: (data: TodoFormData) => void
   projectConfig?: ProjectConfig
+  trigger?: React.ReactNode
 }
 
-export function TodoForm({ onSubmit, projectConfig }: TodoFormProps) {
+export function TodoForm({ onSubmit, projectConfig, trigger }: TodoFormProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -103,13 +104,15 @@ export function TodoForm({ onSubmit, projectConfig }: TodoFormProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          size="sm"
-          className="bg-gradient-to-r from-emerald-400 to-emerald-600 text-white hover:from-emerald-500 hover:to-emerald-700"
-        >
-          <Plus className="mr-1 size-4" />
-          New Todo
-        </Button>
+        {trigger ?? (
+          <Button
+            size="sm"
+            className="bg-gradient-to-r from-emerald-400 to-emerald-600 text-white hover:from-emerald-500 hover:to-emerald-700"
+          >
+            <Plus className="mr-1 size-4" />
+            New Todo
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>

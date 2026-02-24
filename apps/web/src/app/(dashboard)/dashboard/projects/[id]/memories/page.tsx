@@ -3,6 +3,7 @@
 import { api } from "@domcp/convex/api"
 import { useMutation, useQuery } from "convex/react"
 import { Loader2, Search } from "lucide-react"
+import { useParams } from "next/navigation"
 import { useState } from "react"
 import { MemoryForm } from "@/components/dashboard/memory-form"
 import { MemoryGrid } from "@/components/dashboard/memory-grid"
@@ -25,22 +26,26 @@ const MEMORY_TYPES = [
   { value: "learning", label: "Learning" },
 ] as const
 
-export default function MemoriesPage() {
+export default function ProjectMemoriesPage() {
+  const { id } = useParams<{ id: string }>()
   const { apiKeyHash, isLoading: authLoading } = useAuth()
   const [search, setSearch] = useState("")
   const [typeFilter, setTypeFilter] = useState("all")
 
   const typeArg = typeFilter !== "all" ? typeFilter : undefined
 
-  // Use search query when there's a search term, otherwise list all
   const searchResults = useQuery(
     api.memories.search,
-    apiKeyHash && search.length >= 2 ? { apiKeyHash, query: search, globalOnly: true, type: typeArg as any } : "skip"
+    apiKeyHash && search.length >= 2
+      ? { apiKeyHash, query: search, projectId: id as never, type: typeArg as any }
+      : "skip"
   )
 
   const allMemories = useQuery(
     api.memories.listMemories,
-    apiKeyHash && search.length < 2 ? { apiKeyHash, globalOnly: true, type: typeArg as any } : "skip"
+    apiKeyHash && search.length < 2
+      ? { apiKeyHash, projectId: id as never, type: typeArg as any }
+      : "skip"
   )
 
   const addMemory = useMutation(api.memories.add)
@@ -68,6 +73,7 @@ export default function MemoriesPage() {
       source: data.source || "web-dashboard",
       type: data.type as any,
       importance: data.importance,
+      projectId: id as never,
     })
   }
 
@@ -89,9 +95,9 @@ export default function MemoriesPage() {
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Memories</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Context and decisions your AI agent can recall
+          <h1 className="text-lg font-semibold tracking-tight">Memories</h1>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Context and decisions scoped to this project
           </p>
         </div>
         <MemoryForm onSubmit={handleCreate} />

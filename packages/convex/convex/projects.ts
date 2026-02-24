@@ -219,24 +219,219 @@ export const archive = mutation({
   },
 })
 
+export const remove = mutation({
+  args: {
+    apiKeyHash: v.string(),
+    id: v.id("projects"),
+  },
+  handler: async (ctx, args) => {
+    const user = await authenticateApiKey(ctx, args.apiKeyHash)
+    const project = await ctx.db.get(args.id)
+    if (!project || project.userId !== user._id) {
+      throw new ConvexError("NOT_FOUND")
+    }
+
+    // Delete all project data
+    const todos = await ctx.db
+      .query("todos")
+      .withIndex("by_user_project", (q) =>
+        q.eq("userId", user._id).eq("projectId", args.id)
+      )
+      .collect()
+    for (const todo of todos) await ctx.db.delete(todo._id)
+
+    const issues = await ctx.db
+      .query("issues")
+      .withIndex("by_user_project", (q) =>
+        q.eq("userId", user._id).eq("projectId", args.id)
+      )
+      .collect()
+    for (const issue of issues) await ctx.db.delete(issue._id)
+
+    const memories = await ctx.db
+      .query("memories")
+      .withIndex("by_user_project", (q) =>
+        q.eq("userId", user._id).eq("projectId", args.id)
+      )
+      .collect()
+    for (const memory of memories) await ctx.db.delete(memory._id)
+
+    const cycles = await ctx.db
+      .query("cycles")
+      .withIndex("by_user_project", (q) =>
+        q.eq("userId", user._id).eq("projectId", args.id)
+      )
+      .collect()
+    for (const cycle of cycles) await ctx.db.delete(cycle._id)
+
+    await ctx.db.delete(args.id)
+    return { deleted: true, id: args.id }
+  },
+})
+
+// --- Project linking for workspace auto-detection ---
+
+/** Normalize a repo URL: strip protocol, trailing .git, lowercase */
+function normalizeRepoUrl(url: string): string {
+  return url
+    .replace(/^https?:\/\//, "")
+    .replace(/^git@([^:]+):/, "$1/")
+    .replace(/\.git$/, "")
+    .toLowerCase()
+}
+
+export const linkProject = mutation({
+  args: {
+    apiKeyHash: v.string(),
+    projectId: v.id("projects"),
+    path: v.optional(v.string()),
+    repo: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await authenticateApiKey(ctx, args.apiKeyHash)
+    const project = await ctx.db.get(args.projectId)
+    if (!project || project.userId !== user._id) {
+      throw new ConvexError("NOT_FOUND")
+    }
+
+    const updates: Record<string, unknown> = { updatedAt: Date.now() }
+
+    if (args.path) {
+      const paths = project.linkedPaths ?? []
+      if (!paths.includes(args.path)) {
+        updates.linkedPaths = [...paths, args.path]
+      }
+    }
+
+    if (args.repo) {
+      const normalized = normalizeRepoUrl(args.repo)
+      const repos = project.linkedRepos ?? []
+      if (!repos.includes(normalized)) {
+        updates.linkedRepos = [...repos, normalized]
+      }
+    }
+
+    await ctx.db.patch(args.projectId, updates)
+    return await ctx.db.get(args.projectId)
+  },
+})
+
+export const unlinkProject = mutation({
+  args: {
+    apiKeyHash: v.string(),
+    projectId: v.id("projects"),
+    path: v.optional(v.string()),
+    repo: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await authenticateApiKey(ctx, args.apiKeyHash)
+    const project = await ctx.db.get(args.projectId)
+    if (!project || project.userId !== user._id) {
+      throw new ConvexError("NOT_FOUND")
+    }
+
+    const updates: Record<string, unknown> = { updatedAt: Date.now() }
+
+    if (args.path) {
+      updates.linkedPaths = (project.linkedPaths ?? []).filter((p) => p !== args.path)
+    }
+
+    if (args.repo) {
+      const normalized = normalizeRepoUrl(args.repo)
+      updates.linkedRepos = (project.linkedRepos ?? []).filter((r) => r !== normalized)
+    }
+
+    await ctx.db.patch(args.projectId, updates)
+    return await ctx.db.get(args.projectId)
+  },
+})
+
+export const resolveProjectByWorkspace = query({
+  args: {
+    apiKeyHash: v.string(),
+    repoUrl: v.optional(v.string()),
+    workspacePath: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await authenticateApiKey(ctx, args.apiKeyHash)
+    if (!args.repoUrl && !args.workspacePath) return null
+
+    const projects = await ctx.db
+      .query("projects")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) => q.neq(q.field("status"), "archived"))
+      .collect()
+
+    const normalizedRepo = args.repoUrl ? normalizeRepoUrl(args.repoUrl) : null
+
+    for (const project of projects) {
+      // Check repo match first (more specific)
+      if (normalizedRepo && project.linkedRepos?.includes(normalizedRepo)) {
+        return project
+      }
+      // Check path match
+      if (args.workspacePath && project.linkedPaths?.includes(args.workspacePath)) {
+        return project
+      }
+    }
+
+    return null
+  },
+})
+
 export const getContext = query({
   args: {
     apiKeyHash: v.string(),
     projectId: v.optional(v.id("projects")),
     todoLimit: v.optional(v.number()),
     memoryLimit: v.optional(v.number()),
+    workspacePath: v.optional(v.string()),
+    repoUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
     const todoLimit = args.todoLimit ?? 10
     const memoryLimit = args.memoryLimit ?? 5
 
-    // Get active project
-    const activeProject = args.projectId
-      ? await ctx.db.get(args.projectId)
-      : user.settings.defaultProjectId
-        ? await ctx.db.get(user.settings.defaultProjectId)
-        : null
+    // Resolve project: explicit > workspace detection > default
+    let activeProject = null
+    let workspaceInfo:
+      | { detectedPath?: string; detectedRepo?: string; resolvedProjectId?: string }
+      | undefined
+
+    if (args.projectId) {
+      activeProject = await ctx.db.get(args.projectId)
+    } else if (args.repoUrl || args.workspacePath) {
+      // Try workspace-based auto-detection
+      const normalizedRepo = args.repoUrl ? normalizeRepoUrl(args.repoUrl) : null
+
+      const allProjects = await ctx.db
+        .query("projects")
+        .withIndex("by_user", (q) => q.eq("userId", user._id))
+        .filter((q) => q.neq(q.field("status"), "archived"))
+        .collect()
+
+      for (const project of allProjects) {
+        if (normalizedRepo && project.linkedRepos?.includes(normalizedRepo)) {
+          activeProject = project
+          break
+        }
+        if (args.workspacePath && project.linkedPaths?.includes(args.workspacePath)) {
+          activeProject = project
+          break
+        }
+      }
+
+      workspaceInfo = {
+        detectedPath: args.workspacePath,
+        detectedRepo: args.repoUrl,
+        resolvedProjectId: activeProject?._id,
+      }
+    }
+
+    if (!activeProject && user.settings.defaultProjectId) {
+      activeProject = await ctx.db.get(user.settings.defaultProjectId)
+    }
 
     // Get pending todos (scoped to project if active)
     let pendingTodos
@@ -244,7 +439,7 @@ export const getContext = query({
       pendingTodos = await ctx.db
         .query("todos")
         .withIndex("by_user_project_status", (q) =>
-          q.eq("userId", user._id).eq("projectId", activeProject._id).eq("status", "pending")
+          q.eq("userId", user._id).eq("projectId", activeProject!._id).eq("status", "pending")
         )
         .order("desc")
         .take(todoLimit)
@@ -262,23 +457,42 @@ export const getContext = query({
       .withIndex("by_user_status", (q) => q.eq("userId", user._id).eq("status", "in_progress"))
       .collect()
 
-    // Get recent memories
-    let recentMemories
-    if (activeProject) {
-      recentMemories = await ctx.db
+    // Get memories — project-scoped + global
+    const allUserMemories = await ctx.db
+      .query("memories")
+      .withIndex("by_user_created", (q) => q.eq("userId", user._id))
+      .order("desc")
+      .take(memoryLimit * 3)
+
+    let projectMemories = activeProject
+      ? allUserMemories.filter((m) => m.projectId === activeProject._id).slice(0, memoryLimit)
+      : []
+
+    // If project memories are sparse, also query directly
+    if (activeProject && projectMemories.length < memoryLimit) {
+      const directProjectMemories = await ctx.db
         .query("memories")
         .withIndex("by_user_project", (q) =>
-          q.eq("userId", user._id).eq("projectId", activeProject._id)
+          q.eq("userId", user._id).eq("projectId", activeProject!._id)
         )
         .order("desc")
         .take(memoryLimit)
-    } else {
-      recentMemories = await ctx.db
-        .query("memories")
-        .withIndex("by_user_created", (q) => q.eq("userId", user._id))
-        .order("desc")
-        .take(memoryLimit)
+      // Merge and deduplicate
+      const seen = new Set(projectMemories.map((m) => m._id))
+      for (const m of directProjectMemories) {
+        if (!seen.has(m._id)) {
+          projectMemories.push(m)
+          seen.add(m._id)
+        }
+      }
+      projectMemories = projectMemories.slice(0, memoryLimit)
     }
+
+    const globalMemories = allUserMemories.filter((m) => !m.projectId).slice(0, memoryLimit)
+
+    const recentMemories = activeProject
+      ? [...projectMemories, ...globalMemories].slice(0, memoryLimit * 2)
+      : allUserMemories.slice(0, memoryLimit)
 
     // Get all active projects
     const projects = await ctx.db
@@ -292,7 +506,7 @@ export const getContext = query({
       activeCycle = await ctx.db
         .query("cycles")
         .withIndex("by_user_project_status", (q) =>
-          q.eq("userId", user._id).eq("projectId", activeProject._id).eq("status", "active")
+          q.eq("userId", user._id).eq("projectId", activeProject!._id).eq("status", "active")
         )
         .first()
     }
@@ -305,6 +519,10 @@ export const getContext = query({
         topPending: pendingTodos,
       },
       recentMemories,
+      memories: {
+        project: projectMemories,
+        global: globalMemories,
+      },
       projects: projects.map((p) => ({ id: p._id, name: p.name })),
       persona: activeProject?.persona,
       projectConfig: activeProject
@@ -317,6 +535,8 @@ export const getContext = query({
           }
         : undefined,
       activeCycle,
+      memorySettings: activeProject?.memorySettings,
+      workspace: workspaceInfo,
     }
   },
 })

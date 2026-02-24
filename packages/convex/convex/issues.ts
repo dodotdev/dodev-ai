@@ -182,6 +182,7 @@ export const list = query({
   args: {
     apiKeyHash: v.string(),
     projectId: v.optional(v.id("projects")),
+    globalOnly: v.optional(v.boolean()),
     status: v.optional(v.string()),
     priority: v.optional(v.string()),
     type: v.optional(v.string()),
@@ -204,9 +205,13 @@ export const list = query({
         })
         .take(limit)
 
-      return results
+      let filtered = results
         .filter((i) => !args.type || i.type === args.type)
         .filter((i) => !args.severity || i.severity === args.severity)
+      if (args.globalOnly) {
+        filtered = filtered.filter((i) => !i.projectId)
+      }
+      return filtered
     }
 
     // Index-based query
@@ -224,6 +229,12 @@ export const list = query({
         .withIndex("by_user_project", (q) =>
           q.eq("userId", user._id).eq("projectId", args.projectId!)
         )
+    } else if (args.globalOnly) {
+      issueQuery = ctx.db
+        .query("issues")
+        .withIndex("by_user_project", (q) =>
+          q.eq("userId", user._id).eq("projectId", undefined)
+        )
     } else if (args.status) {
       issueQuery = ctx.db
         .query("issues")
@@ -236,9 +247,13 @@ export const list = query({
       issueQuery = ctx.db.query("issues").withIndex("by_user", (q) => q.eq("userId", user._id))
     }
 
-    const results = await issueQuery.order("desc").take(limit)
+    let results = await issueQuery.order("desc").take(limit)
 
-    // Client-side filter for type/severity
+    // Post-filter for globalOnly + status combo and type/severity
+    if (args.globalOnly && args.status) {
+      results = results.filter((i) => i.status === args.status)
+    }
+
     return results
       .filter((i) => !args.type || i.type === args.type)
       .filter((i) => !args.severity || i.severity === args.severity)

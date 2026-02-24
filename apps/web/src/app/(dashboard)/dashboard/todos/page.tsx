@@ -29,6 +29,7 @@ export default function TodosPage() {
     apiKeyHash
       ? {
           apiKeyHash,
+          globalOnly: true,
           status: filter !== "all" ? filter : undefined,
           limit: 50,
         }

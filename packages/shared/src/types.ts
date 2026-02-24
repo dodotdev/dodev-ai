@@ -25,6 +25,28 @@ export type PlanTier = "free" | "pro" | "team"
 /** Source of a memory (which AI agent created it) */
 export type MemorySource = string
 
+/** Memory type classification */
+export type MemoryType = "fact" | "decision" | "preference" | "context" | "learning"
+
+/** Search mode for memory queries */
+export type MemorySearchMode = "keyword" | "semantic" | "hybrid"
+
+/** User-level memory settings */
+export interface UserMemorySettings {
+  autoCapture?: boolean
+  embeddingProvider?: string
+  embeddingModel?: string
+  embeddingBaseUrl?: string
+  embeddingApiKey?: string
+}
+
+/** Project-level memory settings */
+export interface ProjectMemorySettings {
+  autoCapture?: boolean
+  defaultTags?: string[]
+  memoryInstructions?: string
+}
+
 /** API key prefix */
 export const API_KEY_PREFIX = "domcp_sk_"
 
@@ -148,6 +170,8 @@ export interface Memory {
   summary?: string
   tags: string[]
   source?: MemorySource
+  type?: MemoryType
+  importance?: number
   embedding?: number[]
   createdAt: number
   updatedAt: number
@@ -169,6 +193,9 @@ export interface Project {
   members: ProjectMember[]
   estimateScale: EstimateScale
   persona?: ProjectPersona
+  linkedPaths?: string[]
+  linkedRepos?: string[]
+  memorySettings?: ProjectMemorySettings
   createdAt: number
   updatedAt: number
 }
@@ -191,6 +218,7 @@ export interface User {
   stripeCustomerId?: string
   stripeSubscriptionId?: string
   settings: UserSettings
+  memorySettings?: UserMemorySettings
   createdAt: number
   updatedAt: number
 }
@@ -236,10 +264,20 @@ export interface ContextResponse {
     topPending: Todo[]
   }
   recentMemories: Memory[]
+  memories?: {
+    project: Memory[]
+    global: Memory[]
+  }
   projects: Array<{ id: string; name: string }>
   persona?: ProjectPersona
   projectConfig?: ProjectConfig
   activeCycle?: Cycle
+  memorySettings?: ProjectMemorySettings
+  workspace?: {
+    detectedPath?: string
+    detectedRepo?: string
+    resolvedProjectId?: string
+  }
 }
 
 /** Standard error response */

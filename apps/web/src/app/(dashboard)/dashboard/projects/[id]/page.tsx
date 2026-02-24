@@ -2,8 +2,7 @@
 
 import { api } from "@domcp/convex/api"
 import { useMutation, useQuery } from "convex/react"
-import { ArrowLeft, Loader2, Settings } from "lucide-react"
-import Link from "next/link"
+import { Loader2, Plus } from "lucide-react"
 import { useParams } from "next/navigation"
 import { KanbanBoard } from "@/components/dashboard/kanban/kanban-board"
 import { TodoForm } from "@/components/dashboard/todo-form"
@@ -124,37 +123,27 @@ export default function ProjectKanbanPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard/projects"
-            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
-          >
-            <ArrowLeft className="size-5" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">{project?.name}</h1>
-            {project?.description && (
-              <p className="mt-0.5 text-sm text-muted-foreground">{project.description}</p>
-            )}
-          </div>
+        <div>
+          <h1 className="text-lg font-semibold tracking-tight">Todos</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <TodoForm
-            onSubmit={handleCreate}
-            projectConfig={{
-              statuses: projectStatuses,
-              labels: projectLabels,
-              members: projectMembers,
-              estimateScale: project?.estimateScale,
-            }}
-          />
-          <Link
-            href={`/dashboard/projects/${id}/settings`}
-            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
-          >
-            <Settings className="size-5" />
-          </Link>
-        </div>
+        <TodoForm
+          onSubmit={handleCreate}
+          projectConfig={{
+            statuses: projectStatuses,
+            labels: projectLabels,
+            members: projectMembers,
+            estimateScale: project?.estimateScale,
+          }}
+          trigger={
+            <button
+              type="button"
+              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              title="New todo"
+            >
+              <Plus className="size-4" />
+            </button>
+          }
+        />
       </div>
 
       <KanbanBoard

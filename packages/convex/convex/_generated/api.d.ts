@@ -8,11 +8,14 @@
  * @module
  */
 
+import type * as crons from "../crons.js";
 import type * as cycles from "../cycles.js";
 import type * as http from "../http.js";
 import type * as issues from "../issues.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as lib_embeddings from "../lib/embeddings.js";
 import type * as lib_utils from "../lib/utils.js";
+import type * as mcpLogs from "../mcpLogs.js";
 import type * as memories from "../memories.js";
 import type * as migrations from "../migrations.js";
 import type * as projectConfig from "../projectConfig.js";
@@ -29,11 +32,14 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  crons: typeof crons;
   cycles: typeof cycles;
   http: typeof http;
   issues: typeof issues;
   "lib/auth": typeof lib_auth;
+  "lib/embeddings": typeof lib_embeddings;
   "lib/utils": typeof lib_utils;
+  mcpLogs: typeof mcpLogs;
   memories: typeof memories;
   migrations: typeof migrations;
   projectConfig: typeof projectConfig;

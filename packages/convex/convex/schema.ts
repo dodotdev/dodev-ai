@@ -27,6 +27,17 @@ export default defineSchema({
       timezone: v.optional(v.string()),
     }),
 
+    // Memory settings (user-level defaults)
+    memorySettings: v.optional(
+      v.object({
+        autoCapture: v.optional(v.boolean()),
+        embeddingProvider: v.optional(v.string()),
+        embeddingModel: v.optional(v.string()),
+        embeddingBaseUrl: v.optional(v.string()),
+        embeddingApiKey: v.optional(v.string()),
+      })
+    ),
+
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -87,6 +98,19 @@ export default defineSchema({
     persona: v.optional(
       v.object({
         systemPrompt: v.string(),
+      })
+    ),
+
+    // Workspace linking for auto-detection
+    linkedPaths: v.optional(v.array(v.string())),
+    linkedRepos: v.optional(v.array(v.string())),
+
+    // Memory settings
+    memorySettings: v.optional(
+      v.object({
+        autoCapture: v.optional(v.boolean()),
+        defaultTags: v.optional(v.array(v.string())),
+        memoryInstructions: v.optional(v.string()),
       })
     ),
 
@@ -211,7 +235,19 @@ export default defineSchema({
     tags: v.array(v.string()),
     source: v.optional(v.string()),
 
-    // Vector embedding for semantic search (cloud Pro/Team only)
+    // Memory classification
+    type: v.optional(
+      v.union(
+        v.literal("fact"),
+        v.literal("decision"),
+        v.literal("preference"),
+        v.literal("context"),
+        v.literal("learning")
+      )
+    ),
+    importance: v.optional(v.number()), // 0.0-1.0
+
+    // Vector embedding for semantic search
     embedding: v.optional(v.array(v.float64())),
 
     createdAt: v.number(),
@@ -260,4 +296,20 @@ export default defineSchema({
     issueCount: v.number(),
     apiCalls: v.number(),
   }).index("by_user_period", ["userId", "period"]),
+
+  mcpLogs: defineTable({
+    userId: v.id("users"),
+    tool: v.string(),
+    args: v.optional(v.any()),
+    status: v.union(v.literal("ok"), v.literal("error")),
+    errorCode: v.optional(v.string()),
+    errorMessage: v.optional(v.string()),
+    durationMs: v.number(),
+    projectId: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_created", ["userId", "createdAt"])
+    .index("by_user_project", ["userId", "projectId"])
+    .index("by_created", ["createdAt"]),
 })

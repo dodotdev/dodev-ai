@@ -131,6 +131,44 @@ domcp generate-key
 domcp serve
 ```
 
+## CLAUDE.md Setup
+
+For AI agents to use DoMCP proactively in every session, add usage instructions to your project's `CLAUDE.md`.
+
+### Automatic (Recommended)
+
+After linking your project, ask the agent:
+
+```
+"Get the DoMCP setup instructions and add them to CLAUDE.md"
+```
+
+The agent will call `get_setup_instructions`, which returns a tailored markdown section, and add it to your `CLAUDE.md`.
+
+This also happens automatically when you call `link_project` — the response includes `setupInstructions` and a hint for the agent to add them.
+
+### Manual
+
+Add the following to your project's `CLAUDE.md`:
+
+```markdown
+## DoMCP Usage (MANDATORY)
+
+This project has a connected DoMCP MCP server. You MUST use it proactively:
+
+### Session Start
+- **Always** call `get_context` at the beginning of every session.
+- **Always** call `search_memories` before starting any non-trivial task.
+
+### During Work
+- **Store memories** via `add_memory` for codebase facts, decisions, preferences, and gotchas.
+- **Create todos** via `create_todo` for follow-up work.
+- **Create issues** via `create_issue` for bugs found during development.
+- **Update todos/issues** as you work — mark them `in_progress` when starting, `completed` when done.
+```
+
+Replace the generic section with output from `get_setup_instructions` to include project-specific context (name, stub, ID).
+
 ## Enabling Vector Search (Optional)
 
 By default, memory search uses Convex full-text search. For semantic/vector search, you need an embedding provider:

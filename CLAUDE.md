@@ -14,6 +14,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Shared do.dev conventions are loaded via `.claude/CLAUDE.md` (symlinked to `do-coders`).
 
+## DoMCP Usage (MANDATORY)
+
+This project has a connected DoMCP MCP server. You MUST use it proactively:
+
+### Session Start
+- **Always** call `get_context` at the beginning of every session to load the active project, pending todos, recent memories, and project config.
+- **Always** call `search_memories` before starting any non-trivial task to check for relevant past decisions, gotchas, and preferences.
+
+### During Work
+- **Store memories** proactively via `add_memory` whenever you discover facts about the codebase, make architectural decisions, learn user preferences, encounter non-obvious behavior, or resolve tricky bugs. Write each memory so a future agent with no context can understand it.
+- **Create todos** via `create_todo` for follow-up work, known issues, or tasks you can't complete right now.
+- **Create issues** via `create_issue` for bugs found during development.
+- **Update todos/issues** as you work — mark them `in_progress` when starting, `completed` when done.
+
+### Memory Best Practices
+- Use type: `"fact"` for codebase/infrastructure facts, `"decision"` for architectural choices, `"preference"` for user conventions, `"learning"` for gotchas and lessons learned.
+- Tag memories consistently with lowercase tags (e.g. `debugging`, `architecture`, `build`, `gotcha`).
+- Prefer many small focused memories over fewer large ones.
+- Update existing memories rather than creating duplicates.
+
+### Project Context
+- The active DoMCP project is **"DoMCP"** (stub: DOMCP, ID: `jd71k24g625k3dqk4xq71szmqd81qbdv`).
+- Always scope todos, issues, and memories to this project using the `projectId` parameter.
+
 ## Architecture
 
 Three core components communicate through Convex as the single source of truth:

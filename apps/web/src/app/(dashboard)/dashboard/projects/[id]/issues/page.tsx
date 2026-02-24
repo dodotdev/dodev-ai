@@ -3,6 +3,7 @@
 import { api } from "@domcp/convex/api"
 import { useMutation, useQuery } from "convex/react"
 import { Loader2, Search } from "lucide-react"
+import { useParams } from "next/navigation"
 import { useState } from "react"
 import { IssueForm } from "@/components/dashboard/issue-form"
 import { IssueList } from "@/components/dashboard/issue-list"
@@ -28,7 +29,8 @@ const typeFilters: { value: TypeFilter; label: string }[] = [
   { value: "task", label: "Tasks" },
 ]
 
-export default function IssuesPage() {
+export default function ProjectIssuesPage() {
+  const { id } = useParams<{ id: string }>()
   const { apiKeyHash, isLoading: authLoading } = useAuth()
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all")
@@ -39,7 +41,7 @@ export default function IssuesPage() {
     apiKeyHash
       ? {
           apiKeyHash,
-          globalOnly: true,
+          projectId: id as never,
           status: statusFilter !== "all" ? statusFilter : undefined,
           type: typeFilter !== "all" ? typeFilter : undefined,
           limit: 50,
@@ -79,6 +81,7 @@ export default function IssuesPage() {
       severity: data.severity as "critical" | "major" | "minor" | "trivial",
       priority: data.priority as "low" | "medium" | "high" | "urgent",
       tags: data.tags,
+      projectId: id as never,
       statusId: data.statusId,
       labelIds: data.labelIds,
       assigneeId: data.assigneeId,
@@ -86,16 +89,15 @@ export default function IssuesPage() {
     })
   }
 
-  async function handleUpdate(id: string, data: { status?: string }) {
+  async function handleUpdate(issueId: string, data: { status?: string }) {
     if (!apiKeyHash) return
     await updateIssue({
       apiKeyHash,
-      id: id as never,
+      id: issueId as never,
       status: data.status as "pending" | "in_progress" | "completed" | "cancelled",
     })
   }
 
-  // Client-side search filtering
   const filtered = (issues ?? [])
     .filter((issue) => {
       if (search && !issue.title.toLowerCase().includes(search.toLowerCase())) return false
@@ -119,15 +121,14 @@ export default function IssuesPage() {
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Issues</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="text-lg font-semibold tracking-tight">Issues</h1>
+          <p className="mt-0.5 text-xs text-muted-foreground">
             Track bugs, features, and improvements
           </p>
         </div>
         <IssueForm onSubmit={handleCreate} />
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -157,7 +158,6 @@ export default function IssuesPage() {
         </div>
       </div>
 
-      {/* Type filter */}
       <div className="flex gap-1 rounded-lg border border-border bg-surface p-1 w-fit">
         {typeFilters.map((tf) => (
           <button

@@ -304,6 +304,63 @@ export const updateEstimateScale = mutation({
   },
 })
 
+/** Update memory settings for a project or user */
+export const updateMemorySettings = mutation({
+  args: {
+    apiKeyHash: v.string(),
+    projectId: v.optional(v.id("projects")),
+    // Project-level settings
+    autoCapture: v.optional(v.boolean()),
+    defaultTags: v.optional(v.array(v.string())),
+    memoryInstructions: v.optional(v.string()),
+    // User-level settings (only when no projectId)
+    embeddingProvider: v.optional(v.string()),
+    embeddingModel: v.optional(v.string()),
+    embeddingBaseUrl: v.optional(v.string()),
+    embeddingApiKey: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await authenticateApiKey(ctx, args.apiKeyHash)
+
+    if (args.projectId) {
+      // Update project-level memory settings
+      const project = await ctx.db.get(args.projectId)
+      if (!project || project.userId !== user._id) {
+        throw new ConvexError("NOT_FOUND")
+      }
+
+      const existing = project.memorySettings ?? {}
+      const memorySettings = {
+        ...existing,
+        ...(args.autoCapture !== undefined ? { autoCapture: args.autoCapture } : {}),
+        ...(args.defaultTags !== undefined ? { defaultTags: args.defaultTags } : {}),
+        ...(args.memoryInstructions !== undefined
+          ? { memoryInstructions: args.memoryInstructions }
+          : {}),
+      }
+
+      await ctx.db.patch(args.projectId, { memorySettings, updatedAt: Date.now() })
+      return { memorySettings }
+    }
+
+    // Update user-level memory settings
+    const existing = user.memorySettings ?? {}
+    const memorySettings = {
+      ...existing,
+      ...(args.autoCapture !== undefined ? { autoCapture: args.autoCapture } : {}),
+      ...(args.embeddingProvider !== undefined
+        ? { embeddingProvider: args.embeddingProvider }
+        : {}),
+      ...(args.embeddingModel !== undefined ? { embeddingModel: args.embeddingModel } : {}),
+      ...(args.embeddingBaseUrl !== undefined ? { embeddingBaseUrl: args.embeddingBaseUrl } : {}),
+      ...(args.embeddingApiKey !== undefined ? { embeddingApiKey: args.embeddingApiKey } : {}),
+    }
+
+    await ctx.db.patch(user._id, { memorySettings, updatedAt: Date.now() })
+    return { memorySettings }
+  },
+})
+
 /** Update AI persona for a project */
 export const updatePersona = mutation({
   args: {

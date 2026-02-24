@@ -181,6 +181,7 @@ export const list = query({
   args: {
     apiKeyHash: v.string(),
     projectId: v.optional(v.id("projects")),
+    globalOnly: v.optional(v.boolean()),
     status: v.optional(v.string()),
     priority: v.optional(v.string()),
     search: v.optional(v.string()),
@@ -217,6 +218,19 @@ export const list = query({
         .withIndex("by_user_project", (q) =>
           q.eq("userId", user._id).eq("projectId", args.projectId!)
         )
+    } else if (args.globalOnly && args.status) {
+      // Global-only with status: fetch unscoped, then filter
+      todoQuery = ctx.db
+        .query("todos")
+        .withIndex("by_user_project", (q) =>
+          q.eq("userId", user._id).eq("projectId", undefined)
+        )
+    } else if (args.globalOnly) {
+      todoQuery = ctx.db
+        .query("todos")
+        .withIndex("by_user_project", (q) =>
+          q.eq("userId", user._id).eq("projectId", undefined)
+        )
     } else if (args.status) {
       todoQuery = ctx.db
         .query("todos")
@@ -229,7 +243,14 @@ export const list = query({
       todoQuery = ctx.db.query("todos").withIndex("by_user", (q) => q.eq("userId", user._id))
     }
 
-    return await todoQuery.order("desc").take(limit)
+    let results = await todoQuery.order("desc").take(limit)
+
+    // Post-filter status for globalOnly + status combo (no compound index)
+    if (args.globalOnly && args.status) {
+      results = results.filter((t) => t.status === args.status)
+    }
+
+    return results
   },
 })
 
