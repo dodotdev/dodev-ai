@@ -82,7 +82,7 @@ export function ProjectForm({ onSubmit }: ProjectFormProps) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="slug">Identifier</Label>
+              <Label htmlFor="slug">Slug</Label>
               <Input
                 id="slug"
                 value={slug}
@@ -102,9 +102,11 @@ export function ProjectForm({ onSubmit }: ProjectFormProps) {
           </div>
           {previewSlug && (
             <p className="text-xs text-muted-foreground">
-              Issues will be numbered{" "}
+              Tasks and issues will be numbered{" "}
               <span className="font-mono font-medium text-foreground">{previewSlug}-1</span>,{" "}
               <span className="font-mono font-medium text-foreground">{previewSlug}-2</span>, ...
+              <br />
+              Slugs must be unique across all users.
             </p>
           )}
           <div className="space-y-1.5">

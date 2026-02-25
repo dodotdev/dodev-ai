@@ -35,6 +35,8 @@ export default function ProjectTasksPage() {
   const createTask = useMutation(api.tasks.create)
   const deleteTask = useMutation(api.tasks.remove)
   const createComment = useMutation(api.comments.create)
+  const updateComment = useMutation(api.comments.update)
+  const deleteComment = useMutation(api.comments.remove)
   const uploadAttachments = useUploadAttachments(apiKeyHash)
 
   if (authLoading || !apiKeyHash) {
@@ -104,6 +106,16 @@ export default function ProjectTasksPage() {
       body,
       authorType: "user" as const,
     })
+  }
+
+  async function handleUpdateComment(commentId: string, body: string) {
+    if (!apiKeyHash) return
+    await updateComment({ apiKeyHash, id: commentId as never, body })
+  }
+
+  async function handleDeleteComment(commentId: string) {
+    if (!apiKeyHash) return
+    await deleteComment({ apiKeyHash, id: commentId as never })
   }
 
   async function handleUpdateItem(updates: Record<string, unknown>) {
@@ -201,6 +213,7 @@ export default function ProjectTasksPage() {
             onStatusChange={handleStatusChange}
             onItemClick={(item) => setSelectedItemId(item._id)}
             emptyMessage="No tasks yet. Create one from the MCP server or the form above."
+            storageKey={`tasks:${id}`}
           />
         }
         detailContent={
@@ -217,6 +230,8 @@ export default function ProjectTasksPage() {
               comments={comments ?? []}
               onBack={() => setSelectedItemId(null)}
               onAddComment={handleAddComment}
+              onUpdateComment={handleUpdateComment}
+              onDeleteComment={handleDeleteComment}
               onUpdateItem={handleUpdateItem}
               onDeleteItem={handleDeleteItem}
               currentIndex={currentIndex}

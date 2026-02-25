@@ -100,7 +100,7 @@ export function MemberEditor({ projectId, members }: MemberEditorProps) {
       {/* Existing members */}
       <div className="space-y-2">
         {members.map((member) => (
-          <div key={member.id} className="flex items-center gap-3 rounded-md border px-3 py-2">
+          <div key={member.id} className="flex items-center gap-3 rounded-md border border-zinc-200 dark:border-zinc-700 px-3 py-2">
             {/* Avatar */}
             {member.avatarUrl ? (
               <img

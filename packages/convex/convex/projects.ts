@@ -48,13 +48,13 @@ export const create = mutation({
     let slug = (args.slug?.trim().toUpperCase() || deriveSlug(args.name)).replace(/[^A-Z0-9]/g, "")
     if (!slug) slug = "PRJ"
 
-    // Ensure uniqueness for this user -- append a digit if taken
+    // Ensure global uniqueness -- append a digit if taken
     let candidate = slug
     let suffix = 1
     while (true) {
       const existing = await ctx.db
         .query("projects")
-        .withIndex("by_user_slug", (q) => q.eq("userId", user._id).eq("slug", candidate))
+        .withIndex("by_slug", (q) => q.eq("slug", candidate))
         .first()
       if (!existing) break
       candidate = `${slug}${suffix}`
@@ -69,8 +69,7 @@ export const create = mutation({
       slug,
       description: args.description,
       status: "active",
-      taskCounter: 0,
-      issueCounter: 0,
+      itemCounter: 0,
       metadata: args.metadata,
       statuses: DEFAULT_STATUSES.map((s) => ({
         ...s,
@@ -205,10 +204,10 @@ export const update = mutation({
     if (args.slug !== undefined) {
       const newSlug = args.slug.trim().toUpperCase().replace(/[^A-Z0-9]/g, "")
       if (!newSlug) throw new ConvexError("INVALID_SLUG")
-      // Ensure uniqueness for this user
+      // Ensure global uniqueness
       const existing = await ctx.db
         .query("projects")
-        .withIndex("by_user_slug", (q) => q.eq("userId", user._id).eq("slug", newSlug))
+        .withIndex("by_slug", (q) => q.eq("slug", newSlug))
         .first()
       if (existing && existing._id !== args.id) {
         throw new ConvexError("SLUG_ALREADY_EXISTS")

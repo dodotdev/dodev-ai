@@ -1,5 +1,21 @@
 "use client"
 
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { api } from "@dodev/convex/api"
 import { useMutation } from "convex/react"
 import { GripVertical, Plus, Trash2 } from "lucide-react"
@@ -37,6 +53,94 @@ function generateId() {
   return `status_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
+function SortableStatusRow({
+  status,
+  onUpdate,
+  onRemove,
+}: {
+  status: Status
+  onUpdate: (id: string, field: keyof Status, value: string) => void
+  onRemove: (id: string) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: status.id,
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-2 rounded-md border border-zinc-200 bg-card p-2 dark:border-zinc-700"
+    >
+      <button
+        type="button"
+        className="shrink-0 cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="size-4" />
+      </button>
+
+      {/* Color dot preview */}
+      <span
+        className="size-3 shrink-0 rounded-full"
+        style={{ backgroundColor: status.color }}
+      />
+
+      {/* Name */}
+      <Input
+        value={status.name}
+        onChange={(e) => onUpdate(status.id, "name", e.target.value)}
+        placeholder="Status name"
+        className="h-8 flex-1"
+      />
+
+      {/* Category */}
+      <Select
+        value={status.category}
+        onValueChange={(value) => onUpdate(status.id, "category", value)}
+      >
+        <SelectTrigger size="sm" className="w-36">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {CATEGORIES.map((cat) => (
+            <SelectItem key={cat} value={cat}>
+              {cat.replace("_", " ")}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {/* Color input */}
+      <input
+        type="color"
+        value={status.color}
+        onChange={(e) => onUpdate(status.id, "color", e.target.value)}
+        className="size-8 shrink-0 cursor-pointer rounded border border-zinc-200 p-0.5 dark:border-zinc-700"
+        title="Status color"
+      />
+
+      {/* Remove */}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-xs"
+        onClick={() => onRemove(status.id)}
+        title="Remove status"
+      >
+        <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
+      </Button>
+    </div>
+  )
+}
+
 export function StatusEditor({ projectId, statuses: initialStatuses }: StatusEditorProps) {
   const { apiKeyHash } = useAuth()
   const updateStatuses = useMutation(api.projectConfig.updateStatuses)
@@ -44,6 +148,28 @@ export function StatusEditor({ projectId, statuses: initialStatuses }: StatusEdi
   const [statuses, setStatuses] = useState<Status[]>(initialStatuses)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    setStatuses((prev) => {
+      const oldIndex = prev.findIndex((s) => s.id === active.id)
+      const newIndex = prev.findIndex((s) => s.id === over.id)
+      if (oldIndex === -1 || newIndex === -1) return prev
+
+      const next = [...prev]
+      const [moved] = next.splice(oldIndex, 1)
+      next.splice(newIndex, 0, moved)
+      // Reassign positions based on new order
+      return next.map((s, i) => ({ ...s, position: i }))
+    })
+  }
 
   function handleAddStatus() {
     const nextPosition = statuses.length > 0 ? Math.max(...statuses.map((s) => s.position)) + 1 : 0
@@ -128,70 +254,26 @@ export function StatusEditor({ projectId, statuses: initialStatuses }: StatusEdi
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <div className="space-y-2">
-        {statuses.map((status) => (
-          <div key={status.id} className="flex items-center gap-2 rounded-md border p-2">
-            <GripVertical className="size-4 shrink-0 text-muted-foreground" />
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={statuses.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+          <div className="space-y-2">
+            {statuses.map((status) => (
+              <SortableStatusRow
+                key={status.id}
+                status={status}
+                onUpdate={handleUpdateStatus}
+                onRemove={handleRemoveStatus}
+              />
+            ))}
 
-            {/* Color dot preview */}
-            <span
-              className="size-3 shrink-0 rounded-full"
-              style={{ backgroundColor: status.color }}
-            />
-
-            {/* Name */}
-            <Input
-              value={status.name}
-              onChange={(e) => handleUpdateStatus(status.id, "name", e.target.value)}
-              placeholder="Status name"
-              className="h-8 flex-1"
-            />
-
-            {/* Category */}
-            <Select
-              value={status.category}
-              onValueChange={(value) => handleUpdateStatus(status.id, "category", value)}
-            >
-              <SelectTrigger size="sm" className="w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat.replace("_", " ")}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Color input */}
-            <input
-              type="color"
-              value={status.color}
-              onChange={(e) => handleUpdateStatus(status.id, "color", e.target.value)}
-              className="size-8 shrink-0 cursor-pointer rounded border p-0.5"
-              title="Status color"
-            />
-
-            {/* Remove */}
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-xs"
-              onClick={() => handleRemoveStatus(status.id)}
-              title="Remove status"
-            >
-              <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
-            </Button>
+            {statuses.length === 0 && (
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                No statuses defined. Add one to get started.
+              </p>
+            )}
           </div>
-        ))}
-
-        {statuses.length === 0 && (
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            No statuses defined. Add one to get started.
-          </p>
-        )}
-      </div>
+        </SortableContext>
+      </DndContext>
 
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={isSaving}>

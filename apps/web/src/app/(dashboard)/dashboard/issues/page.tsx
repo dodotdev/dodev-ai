@@ -91,6 +91,7 @@ export default function IssuesPage() {
         items={mapped}
         onStatusChange={handleStatusChange}
         emptyMessage="No global issues yet. Create one from the MCP server or the form above."
+        storageKey="global-issues"
       />
     </div>
   )

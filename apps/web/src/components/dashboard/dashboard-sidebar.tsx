@@ -193,7 +193,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
 
                     {/* Sub-items */}
                     {isExpanded && (
-                      <div className="ml-[22px] space-y-0.5 border-l border-border pl-3">
+                      <div className="ml-[22px] space-y-1 border-l border-border py-1 pl-3">
                         {SUB_ITEMS.map((sub) => {
                           const Icon = sub.icon
                           const href = `${base}${sub.href}`
@@ -208,7 +208,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
                               href={href}
                               onClick={onNavigate}
                               className={cn(
-                                "flex items-center gap-2.5 rounded-md px-2.5 py-1 text-[13px] font-medium transition-colors",
+                                "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors",
                                 active
                                   ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                                   : "text-muted-foreground hover:bg-white hover:text-foreground dark:hover:bg-accent"

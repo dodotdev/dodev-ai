@@ -88,7 +88,7 @@ export function LabelEditor({ projectId, labels }: LabelEditorProps) {
       {/* Existing labels */}
       <div className="space-y-2">
         {labels.map((label) => (
-          <div key={label.id} className="flex items-center gap-3 rounded-md border px-3 py-2">
+          <div key={label.id} className="flex items-center gap-3 rounded-md border border-zinc-200 dark:border-zinc-700 px-3 py-2">
             <span
               className="size-3 shrink-0 rounded-full"
               style={{ backgroundColor: label.color }}
@@ -137,7 +137,7 @@ export function LabelEditor({ projectId, labels }: LabelEditorProps) {
             type="color"
             value={newColor}
             onChange={(e) => setNewColor(e.target.value)}
-            className="size-8 cursor-pointer rounded border p-0.5"
+            className="size-8 cursor-pointer rounded border border-zinc-200 dark:border-zinc-700 p-0.5"
           />
         </div>
         <Button type="submit" size="sm" disabled={isAdding}>

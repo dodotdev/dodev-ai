@@ -61,8 +61,7 @@ export default defineSchema({
       v.literal("completed"),
       v.literal("archived")
     ),
-    taskCounter: v.optional(v.number()),
-    issueCounter: v.number(),
+    itemCounter: v.optional(v.number()),
     metadata: v.optional(v.any()),
 
     // Project config
@@ -123,7 +122,8 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_status", ["userId", "status"])
-    .index("by_user_slug", ["userId", "slug"]),
+    .index("by_user_slug", ["userId", "slug"])
+    .index("by_slug", ["slug"]),
 
   tasks: defineTable({
     userId: v.id("users"),

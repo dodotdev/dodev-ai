@@ -47,6 +47,8 @@ interface ItemDetailViewProps {
   comments: Comment[]
   onBack: () => void
   onAddComment: (body: string) => Promise<void>
+  onUpdateComment?: (commentId: string, body: string) => Promise<void>
+  onDeleteComment?: (commentId: string) => Promise<void>
   onUpdateItem: (updates: Record<string, unknown>) => Promise<void>
   onDeleteItem?: () => Promise<void>
   currentIndex?: number
@@ -75,6 +77,8 @@ export function ItemDetailView({
   comments,
   onBack,
   onAddComment,
+  onUpdateComment,
+  onDeleteComment,
   onUpdateItem,
   onDeleteItem,
   currentIndex,
@@ -91,9 +95,65 @@ export function ItemDetailView({
     }
     return true
   })
+  const [commentFocused, setCommentFocused] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const [sidebarHeight, setSidebarHeight] = useState(0)
+
+  // Inline editing state
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [editTitle, setEditTitle] = useState(item.title)
+  const [editingDescription, setEditingDescription] = useState(false)
+  const [editDescription, setEditDescription] = useState(item.description ?? "")
+  const titleInputRef = useRef<HTMLTextAreaElement>(null)
+  const descriptionRef = useRef<HTMLTextAreaElement>(null)
+
+  // Sync local state when item changes (navigation)
+  useEffect(() => {
+    setEditTitle(item.title)
+    setEditDescription(item.description ?? "")
+    setEditingTitle(false)
+    setEditingDescription(false)
+  }, [item._id, item.title, item.description])
+
+  // Auto-focus inputs when entering edit mode
+  useEffect(() => {
+    if (editingTitle && titleInputRef.current) {
+      titleInputRef.current.focus()
+      titleInputRef.current.select()
+      titleInputRef.current.style.height = "auto"
+      titleInputRef.current.style.height = `${titleInputRef.current.scrollHeight}px`
+    }
+  }, [editingTitle])
+
+  useEffect(() => {
+    if (editingDescription && descriptionRef.current) {
+      descriptionRef.current.focus()
+      // Auto-size the textarea to fit content
+      descriptionRef.current.style.height = "auto"
+      descriptionRef.current.style.height = `${Math.max(descriptionRef.current.scrollHeight, 120)}px`
+    }
+  }, [editingDescription])
+
+  const saveTitle = useCallback(() => {
+    const trimmed = editTitle.trim()
+    if (trimmed && trimmed !== item.title) {
+      onUpdateItem({ title: trimmed })
+    } else {
+      setEditTitle(item.title)
+    }
+    setEditingTitle(false)
+  }, [editTitle, item.title, onUpdateItem])
+
+  const saveDescription = useCallback(() => {
+    const trimmed = editDescription.trim()
+    if (trimmed !== (item.description ?? "")) {
+      onUpdateItem({ description: trimmed || undefined })
+    } else {
+      setEditDescription(item.description ?? "")
+    }
+    setEditingDescription(false)
+  }, [editDescription, item.description, onUpdateItem])
 
   useEffect(() => {
     if (sidebarRef.current) {
@@ -114,8 +174,10 @@ export function ItemDetailView({
     try {
       await onAddComment(body)
       setCommentText("")
+      setCommentFocused(false)
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto"
+        textareaRef.current.blur()
       }
     } finally {
       setIsSubmitting(false)
@@ -235,10 +297,89 @@ export function ItemDetailView({
         <div className="flex min-w-0 flex-1 flex-col rounded-xl border border-border/60 bg-white shadow-sm dark:bg-zinc-900" style={{ height: `max(calc(100vh - 260px), ${sidebarHeight > 0 ? sidebarHeight : 400}px)` }}>
           {/* Scrollable region: title + description + comments */}
           <div className="min-h-0 flex-1 overflow-y-auto scrollbar-autohide px-4 pt-5">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">{item.title}</h1>
-            {item.description && (
-              <div className="mt-3 prose-detail">
-                <Markdown remarkPlugins={[remarkGfm]}>{item.description}</Markdown>
+            {/* Editable title */}
+            {editingTitle ? (
+              <div className="rounded-md border border-zinc-300 dark:border-zinc-600 -mx-1.5">
+                <textarea
+                  ref={titleInputRef}
+                  value={editTitle}
+                  onChange={(e) => {
+                    setEditTitle(e.target.value)
+                    e.target.style.height = "auto"
+                    e.target.style.height = `${e.target.scrollHeight}px`
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveTitle() }
+                    if (e.key === "Escape") { setEditTitle(item.title); setEditingTitle(false) }
+                  }}
+                  rows={1}
+                  className="w-full resize-none bg-transparent px-2.5 pt-2 pb-1 text-2xl font-bold tracking-tight text-foreground outline-none"
+                />
+                <div className="flex items-center justify-between px-2.5 pb-2">
+                  <span className="text-[11px] text-muted-foreground/50">Esc to cancel · Enter to save</span>
+                  <button
+                    type="button"
+                    onClick={saveTitle}
+                    disabled={!editTitle.trim()}
+                    className="shrink-0 rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background transition-opacity disabled:opacity-20"
+                  >
+                    Save Title
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <h1
+                className="cursor-text rounded-md px-1.5 py-0.5 -mx-1.5 text-2xl font-bold tracking-tight text-foreground transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                onClick={() => setEditingTitle(true)}
+                title="Click to edit"
+              >
+                {item.title}
+              </h1>
+            )}
+
+            {/* Editable description */}
+            {editingDescription ? (
+              <div className="mt-3 -mx-1.5 rounded-md border border-zinc-300 dark:border-zinc-600">
+                <textarea
+                  ref={descriptionRef}
+                  value={editDescription}
+                  onChange={(e) => {
+                    setEditDescription(e.target.value)
+                    e.target.style.height = "auto"
+                    e.target.style.height = `${Math.max(e.target.scrollHeight, 120)}px`
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") { setEditDescription(item.description ?? ""); setEditingDescription(false) }
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveDescription() }
+                  }}
+                  placeholder="Add a description... (Markdown supported)"
+                  className="w-full resize-none bg-transparent px-2.5 pt-2 pb-1 text-sm leading-relaxed text-foreground font-mono outline-none"
+                  style={{ minHeight: 120 }}
+                />
+                <div className="flex items-center justify-between px-2.5 pb-2">
+                  <span className="text-[11px] text-muted-foreground/50">Markdown · Esc to cancel · Cmd+Enter to save</span>
+                  <button
+                    type="button"
+                    onClick={saveDescription}
+                    className="shrink-0 rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background transition-opacity"
+                  >
+                    Save Description
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div
+                className="mt-3 cursor-text rounded-md px-1.5 py-1.5 -mx-1.5 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                onClick={() => setEditingDescription(true)}
+                title="Click to edit"
+              >
+                {item.description ? (
+                  <div className="prose-detail">
+                    <Markdown remarkPlugins={[remarkGfm]}>{item.description}</Markdown>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground/50 italic">Add a description...</p>
+                )}
               </div>
             )}
 
@@ -251,7 +392,14 @@ export function ItemDetailView({
                   <p className="py-6 text-center text-sm text-muted-foreground">No comments yet</p>
                 )}
                 {comments.map((comment) => (
-                  <CommentRow key={comment._id} comment={comment} userAvatarUrl={user?.avatarUrl} />
+                  <CommentRow
+                    key={comment._id}
+                    comment={comment}
+                    userAvatarUrl={user?.avatarUrl}
+                    isOwner={comment.authorType !== "agent"}
+                    onEdit={onUpdateComment ? (body) => onUpdateComment(comment._id, body) : undefined}
+                    onDelete={onDeleteComment ? () => onDeleteComment(comment._id) : undefined}
+                  />
                 ))}
               </div>
             </div>
@@ -259,30 +407,71 @@ export function ItemDetailView({
 
           {/* Pinned comment input at bottom */}
           <div className="shrink-0 border-t border-border/40 px-4 pb-4 pt-3">
-            <div className="comment-input relative flex items-end rounded-lg bg-zinc-50 focus-within:bg-white dark:bg-zinc-800 dark:focus-within:bg-zinc-800">
+            <div className={cn(
+              "comment-input relative rounded-lg bg-zinc-50 transition-all duration-200 dark:bg-zinc-800",
+              commentFocused && "bg-white dark:bg-zinc-800 ring-1 ring-ring/30"
+            )}>
               <textarea
                 ref={textareaRef}
                 value={commentText}
                 onChange={(e) => {
                   setCommentText(e.target.value)
-                  e.target.style.height = "auto"
-                  e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`
+                  if (commentFocused) {
+                    e.target.style.height = "auto"
+                    e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`
+                  }
+                }}
+                onFocus={() => {
+                  setCommentFocused(true)
+                  if (textareaRef.current) {
+                    textareaRef.current.style.height = "auto"
+                    const target = Math.max(textareaRef.current.scrollHeight, 80)
+                    textareaRef.current.style.height = `${Math.min(target, 200)}px`
+                  }
+                }}
+                onBlur={() => {
+                  if (!commentText.trim()) {
+                    setCommentFocused(false)
+                    if (textareaRef.current) {
+                      textareaRef.current.style.height = "auto"
+                    }
+                  }
                 }}
                 onKeyDown={handleKeyDown}
-                placeholder="Leave a comment..."
+                placeholder={commentFocused ? "Write a comment... (Markdown supported)" : "Leave a comment..."}
                 rows={1}
-                className="w-full resize-none bg-transparent px-3 py-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+                className={cn(
+                  "w-full resize-none bg-transparent px-3 py-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none transition-all duration-200",
+                  commentFocused && "font-mono"
+                )}
                 style={{ border: "none", outline: "none", boxShadow: "none" }}
               />
-              <button
-                type="button"
-                onClick={handleSubmitComment}
-                disabled={!commentText.trim() || isSubmitting}
-                className="absolute bottom-2 right-2 shrink-0 rounded-md bg-foreground p-1 text-background transition-opacity disabled:opacity-20"
-                title="Send comment (Cmd+Enter)"
-              >
-                <ArrowUp className="size-4" />
-              </button>
+              <div className={cn(
+                "flex items-center justify-between px-3 pb-2 transition-all duration-200",
+                commentFocused ? "opacity-100 h-auto" : "opacity-0 h-0 overflow-hidden pb-0"
+              )}>
+                <span className="text-[11px] text-muted-foreground/50">Markdown · Cmd+Enter to save</span>
+                <button
+                  type="button"
+                  onClick={handleSubmitComment}
+                  disabled={!commentText.trim() || isSubmitting}
+                  className="shrink-0 rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background transition-opacity disabled:opacity-20"
+                  title="Save comment (Cmd+Enter)"
+                >
+                  Save Comment
+                </button>
+              </div>
+              {!commentFocused && (
+                <button
+                  type="button"
+                  onClick={handleSubmitComment}
+                  disabled={!commentText.trim() || isSubmitting}
+                  className="absolute bottom-2 right-2 shrink-0 rounded-md bg-foreground p-1 text-background transition-opacity disabled:opacity-20"
+                  title="Save comment (Cmd+Enter)"
+                >
+                  <ArrowUp className="size-4" />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -655,12 +844,43 @@ function PropertySelect({
 
 // -- Comment row --
 
-function CommentRow({ comment, userAvatarUrl }: { comment: Comment; userAvatarUrl?: string }) {
+function CommentRow({
+  comment,
+  userAvatarUrl,
+  isOwner,
+  onEdit,
+  onDelete,
+}: {
+  comment: Comment
+  userAvatarUrl?: string
+  isOwner: boolean
+  onEdit?: (body: string) => Promise<void>
+  onDelete?: () => Promise<void>
+}) {
   const isAgent = comment.authorType === "agent"
   const authorName = comment.authorName ?? (isAgent ? "AI Agent" : "You")
+  const [editing, setEditing] = useState(false)
+  const [editBody, setEditBody] = useState(comment.body)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const editRef = useRef<HTMLTextAreaElement>(null)
+
+  const handleSaveEdit = useCallback(async () => {
+    const trimmed = editBody.trim()
+    if (!trimmed || trimmed === comment.body) {
+      setEditBody(comment.body)
+      setEditing(false)
+      return
+    }
+    if (onEdit) await onEdit(trimmed)
+    setEditing(false)
+  }, [editBody, comment.body, onEdit])
+
+  const handleDelete = useCallback(async () => {
+    if (onDelete) await onDelete()
+  }, [onDelete])
 
   return (
-    <div className="flex gap-3">
+    <div className="group flex gap-3">
       {isAgent ? (
         <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
           <Bot className="size-3.5" />
@@ -678,15 +898,94 @@ function CommentRow({ comment, userAvatarUrl }: { comment: Comment; userAvatarUr
       )}
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-foreground">{authorName}</span>
           <span className="text-xs text-muted-foreground">
             {formatRelativeTime(comment.createdAt)}
           </span>
+          {isOwner && !editing && onDelete && (
+            <div className="relative ml-auto">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(!confirmDelete)}
+                className="rounded-md p-1 text-red-500 opacity-0 transition-all hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 group-hover:opacity-100"
+                title="Delete comment"
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+              {confirmDelete && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setConfirmDelete(false)} />
+                  <div className="absolute right-0 z-50 mt-1 w-48 rounded-lg border border-border bg-white p-3 shadow-lg dark:bg-zinc-900">
+                    <p className="text-center text-xs font-medium text-foreground">Delete this comment?</p>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleDelete}
+                        className="flex-1 rounded-md bg-red-600 py-1 text-center text-xs font-medium text-white transition-colors hover:bg-red-700"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDelete(false)}
+                        className="flex-1 rounded-md border border-border py-1 text-center text-xs font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
-        <div className="mt-0.5 prose-comment">
-          <Markdown remarkPlugins={[remarkGfm]}>{comment.body}</Markdown>
-        </div>
+
+        {editing ? (
+          <div className="mt-1.5 rounded-md border border-zinc-300 dark:border-zinc-600">
+            <textarea
+              ref={editRef}
+              value={editBody}
+              onChange={(e) => {
+                setEditBody(e.target.value)
+                e.target.style.height = "auto"
+                e.target.style.height = `${Math.max(e.target.scrollHeight, 60)}px`
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") { setEditBody(comment.body); setEditing(false) }
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSaveEdit() }
+              }}
+              className="w-full resize-none bg-transparent px-2.5 pt-2 pb-1 text-sm font-mono leading-relaxed text-foreground outline-none"
+              style={{ minHeight: 60 }}
+            />
+            <div className="flex items-center justify-between px-2.5 pb-2">
+              <span className="text-[11px] text-muted-foreground/50">Markdown · Esc to cancel · Cmd+Enter to save</span>
+              <button
+                type="button"
+                onClick={handleSaveEdit}
+                disabled={!editBody.trim()}
+                className="shrink-0 rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background transition-opacity disabled:opacity-20"
+              >
+                Save Comment
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div
+            className={cn(
+              "mt-0.5 prose-comment",
+              isOwner && onEdit && "cursor-text rounded-md px-1.5 py-0.5 -mx-1.5 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+            )}
+            onClick={isOwner && onEdit ? () => {
+              setEditing(true)
+              setEditBody(comment.body)
+              setTimeout(() => editRef.current?.focus(), 0)
+            } : undefined}
+            title={isOwner && onEdit ? "Click to edit" : undefined}
+          >
+            <Markdown remarkPlugins={[remarkGfm]}>{comment.body}</Markdown>
+          </div>
+        )}
       </div>
     </div>
   )

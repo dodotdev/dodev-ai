@@ -85,6 +85,7 @@ export default function TasksPage() {
         items={mapped}
         onStatusChange={handleStatusChange}
         emptyMessage="No global tasks yet. Create one from the MCP server or the form above."
+        storageKey="global-tasks"
       />
     </div>
   )

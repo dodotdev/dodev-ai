@@ -13,7 +13,7 @@ import {
   useSensors,
 } from "@dnd-kit/core"
 import { ChevronRight, Circle, GripVertical, Paperclip } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { cn, formatRelativeTime } from "@/lib/utils"
 
 type ItemStatus = "pending" | "in_progress" | "completed" | "cancelled"
@@ -82,6 +82,7 @@ interface LinearListViewProps {
   onStatusChange?: (itemId: string, newStatus: ItemStatus, statusId?: string) => void
   onItemClick?: (item: ListItem) => void
   emptyMessage?: string
+  storageKey?: string
 }
 
 export function LinearListView({
@@ -90,9 +91,18 @@ export function LinearListView({
   onStatusChange,
   onItemClick,
   emptyMessage = "No items yet",
+  storageKey,
 }: LinearListViewProps) {
   const [activeFilter, setActiveFilter] = useState<string>("all")
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => {
+    if (storageKey && typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(`accordion:${storageKey}`)
+        if (saved) return new Set(JSON.parse(saved))
+      } catch {}
+    }
+    return new Set()
+  })
   const [draggingId, setDraggingId] = useState<string | null>(null)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
@@ -160,7 +170,7 @@ export function LinearListView({
     return columns.filter((col) => col.id === activeFilter)
   }, [activeFilter, columns, grouped])
 
-  function toggleGroup(id: string) {
+  const toggleGroup = useCallback((id: string) => {
     setCollapsedGroups((prev) => {
       const next = new Set(prev)
       if (next.has(id)) {
@@ -168,9 +178,12 @@ export function LinearListView({
       } else {
         next.add(id)
       }
+      if (storageKey) {
+        try { localStorage.setItem(`accordion:${storageKey}`, JSON.stringify([...next])) } catch {}
+      }
       return next
     })
-  }
+  }, [storageKey])
 
   function cycleStatus(item: ListItem) {
     if (!onStatusChange) return
@@ -340,7 +353,7 @@ function DroppableGroup({
         type="button"
         onClick={onToggle}
         className={cn(
-          "flex w-full items-center gap-3 px-4 py-1.5 text-left transition-colors bg-muted hover:bg-muted/80",
+          "flex w-full items-center gap-3 px-4 py-1.5 text-left transition-colors bg-muted dark:bg-background hover:bg-muted/80 dark:hover:bg-background/80",
           isOver && isDragging && "bg-accent/40"
         )}
       >
@@ -358,7 +371,7 @@ function DroppableGroup({
         <span className="text-xs text-muted-foreground">{count}</span>
       </button>
       {!isCollapsed && count > 0 && (
-        <div className="overflow-hidden rounded-lg border border-border/40 bg-card">{children}</div>
+        <div className="overflow-hidden rounded-lg border border-border dark:border-zinc-800 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.04)] bg-card dark:bg-muted">{children}</div>
       )}
     </div>
   )
@@ -494,7 +507,7 @@ function DraggableItemRow({
       className={cn(
         "group flex items-center gap-3 px-4 py-2 transition-colors hover:bg-accent/30 hover:cursor-grab",
         isDragging && "opacity-30",
-        !isFirst && "border-t border-border"
+        !isFirst && "border-t border-border dark:border-t-zinc-800 dark:shadow-[0_-1px_0_0_rgba(255,255,255,0.04)]"
       )}
     >
       {/* Drag handle icon */}

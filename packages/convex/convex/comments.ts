@@ -115,6 +115,28 @@ export const list = query({
 })
 
 /**
+ * Update a comment's body.
+ * Validates ownership before updating.
+ */
+export const update = mutation({
+  args: {
+    apiKeyHash: v.string(),
+    id: v.id("comments"),
+    body: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await authenticateApiKey(ctx, args.apiKeyHash)
+    const comment = await ctx.db.get(args.id)
+    if (!comment || comment.userId !== user._id) {
+      throw new ConvexError("NOT_FOUND")
+    }
+
+    await ctx.db.patch(args.id, { body: args.body, updatedAt: Date.now() })
+    return await ctx.db.get(args.id)
+  },
+})
+
+/**
  * Delete a comment by ID.
  * Validates ownership before deletion.
  */

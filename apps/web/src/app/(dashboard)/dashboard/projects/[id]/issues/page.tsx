@@ -35,6 +35,8 @@ export default function ProjectIssuesPage() {
   const createIssue = useMutation(api.issues.create)
   const deleteIssue = useMutation(api.issues.remove)
   const createComment = useMutation(api.comments.create)
+  const updateComment = useMutation(api.comments.update)
+  const deleteComment = useMutation(api.comments.remove)
   const uploadAttachments = useUploadAttachments(apiKeyHash)
 
   if (authLoading || !apiKeyHash) {
@@ -108,6 +110,16 @@ export default function ProjectIssuesPage() {
       body,
       authorType: "user" as const,
     })
+  }
+
+  async function handleUpdateComment(commentId: string, body: string) {
+    if (!apiKeyHash) return
+    await updateComment({ apiKeyHash, id: commentId as never, body })
+  }
+
+  async function handleDeleteComment(commentId: string) {
+    if (!apiKeyHash) return
+    await deleteComment({ apiKeyHash, id: commentId as never })
   }
 
   async function handleUpdateItem(updates: Record<string, unknown>) {
@@ -188,6 +200,7 @@ export default function ProjectIssuesPage() {
             onStatusChange={handleStatusChange}
             onItemClick={(item) => setSelectedItemId(item._id)}
             emptyMessage="No issues yet. Create one from the MCP server or the form above."
+            storageKey={`issues:${id}`}
           />
         }
         detailContent={
@@ -204,6 +217,8 @@ export default function ProjectIssuesPage() {
               comments={comments ?? []}
               onBack={() => setSelectedItemId(null)}
               onAddComment={handleAddComment}
+              onUpdateComment={handleUpdateComment}
+              onDeleteComment={handleDeleteComment}
               onUpdateItem={handleUpdateItem}
               onDeleteItem={handleDeleteItem}
               currentIndex={currentIndex}
