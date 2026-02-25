@@ -1,7 +1,7 @@
 "use client"
 
 import {
-  ArrowUpCircle,
+  ArrowUp,
   Bot,
   Check,
   ChevronDown,
@@ -10,10 +10,11 @@ import {
   User,
   X,
 } from "lucide-react"
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import type { ListItem } from "@/components/dashboard/linear-list-view"
+import { useAuth } from "@/components/providers/auth-provider"
 import { cn, formatRelativeTime } from "@/lib/utils"
 
 interface ProjectConfig {
@@ -79,10 +80,25 @@ export function ItemDetailView({
   totalItems,
   onNavigate,
 }: ItemDetailViewProps) {
+  const { user } = useAuth()
   const [commentText, setCommentText] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const sidebarRef = useRef<HTMLDivElement>(null)
+  const [sidebarHeight, setSidebarHeight] = useState(0)
+
+  useEffect(() => {
+    if (sidebarRef.current) {
+      const ro = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setSidebarHeight(entry.contentRect.height)
+        }
+      })
+      ro.observe(sidebarRef.current)
+      return () => ro.disconnect()
+    }
+  }, [])
 
   const handleSubmitComment = useCallback(async () => {
     const body = commentText.trim()
@@ -128,7 +144,7 @@ export function ItemDetailView({
     .toUpperCase()
 
   return (
-    <div className="flex h-full min-h-[calc(100vh-200px)] flex-col p-4">
+    <div className="flex flex-col px-0 py-2">
       {/* Header breadcrumb bar */}
       <div className="mb-3 flex items-center justify-between px-1">
         <div className="flex min-w-0 items-center gap-1.5 text-sm">
@@ -190,65 +206,66 @@ export function ItemDetailView({
       </div>
 
       {/* Cards row */}
-      <div className="flex flex-1 gap-4">
-        {/* Main content area */}
-        <div className="flex min-w-0 flex-1 flex-col overflow-y-auto rounded-xl border border-border/60 bg-white shadow-sm dark:bg-zinc-900">
-          <div className="px-6 pt-6">
+      <div className="flex items-start gap-4">
+        {/* Main content area — fills viewport, scrolls internally */}
+        <div className="flex min-w-0 flex-1 flex-col rounded-xl border border-border/60 bg-white shadow-sm dark:bg-zinc-900" style={{ height: `max(calc(100vh - 260px), ${sidebarHeight > 0 ? sidebarHeight : 400}px)` }}>
+          {/* Scrollable region: title + description + comments */}
+          <div className="min-h-0 flex-1 overflow-y-auto scrollbar-autohide px-4 pt-5">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">{item.title}</h1>
             {item.description && (
               <div className="mt-3 prose-detail">
                 <Markdown remarkPlugins={[remarkGfm]}>{item.description}</Markdown>
               </div>
             )}
+
+            <div className="mt-6 border-t border-border" />
+
+            <div className="pt-4">
+              <h2 className="text-sm font-semibold text-foreground">Comments</h2>
+              <div className="mt-4 space-y-4 pb-2">
+                {comments.length === 0 && (
+                  <p className="py-6 text-center text-sm text-muted-foreground">No comments yet</p>
+                )}
+                {comments.map((comment) => (
+                  <CommentRow key={comment._id} comment={comment} userAvatarUrl={user?.avatarUrl} />
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div className="mx-6 mt-6 border-t border-border/40" />
-
-          <div className="flex flex-1 flex-col px-6 pt-4">
-            <h2 className="text-sm font-semibold text-foreground">Activity</h2>
-            <div className="mt-4 flex-1 space-y-4">
-              {comments.length === 0 && (
-                <p className="py-6 text-center text-sm text-muted-foreground">No comments yet</p>
-              )}
-              {comments.map((comment) => (
-                <CommentRow key={comment._id} comment={comment} />
-              ))}
-            </div>
-
-            <div className="sticky bottom-0 mt-4 border-t border-border/40 bg-white pb-6 pt-4 dark:bg-zinc-900">
-              <div className="flex items-end gap-2">
-                <div className="relative flex-1">
-                  <textarea
-                    ref={textareaRef}
-                    value={commentText}
-                    onChange={(e) => {
-                      setCommentText(e.target.value)
-                      e.target.style.height = "auto"
-                      e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`
-                    }}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Leave a comment..."
-                    rows={1}
-                    className="w-full resize-none rounded-lg border border-border/60 bg-zinc-50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary dark:bg-zinc-800 dark:focus:bg-zinc-800"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSubmitComment}
-                  disabled={!commentText.trim() || isSubmitting}
-                  className="shrink-0 rounded-lg p-2 text-primary transition-colors hover:bg-primary/10 disabled:opacity-30 disabled:cursor-not-allowed"
-                  title="Send comment (Cmd+Enter)"
-                >
-                  <ArrowUpCircle className="size-5" />
-                </button>
-              </div>
+          {/* Pinned comment input at bottom */}
+          <div className="shrink-0 border-t border-border/40 px-4 pb-4 pt-3">
+            <div className="comment-input relative flex items-end rounded-lg bg-zinc-50 focus-within:bg-white dark:bg-zinc-800 dark:focus-within:bg-zinc-800">
+              <textarea
+                ref={textareaRef}
+                value={commentText}
+                onChange={(e) => {
+                  setCommentText(e.target.value)
+                  e.target.style.height = "auto"
+                  e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`
+                }}
+                onKeyDown={handleKeyDown}
+                placeholder="Leave a comment..."
+                rows={1}
+                className="w-full resize-none bg-transparent px-3 py-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+                style={{ border: "none", outline: "none", boxShadow: "none" }}
+              />
+              <button
+                type="button"
+                onClick={handleSubmitComment}
+                disabled={!commentText.trim() || isSubmitting}
+                className="absolute bottom-2 right-2 shrink-0 rounded-md bg-foreground p-1 text-background transition-opacity disabled:opacity-20"
+                title="Send comment (Cmd+Enter)"
+              >
+                <ArrowUp className="size-4" />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Right sidebar — fixed width, sticky */}
-        <div className="hidden w-[260px] shrink-0 lg:block">
-          <div className="sticky top-0 overflow-y-auto rounded-xl border border-border/60 bg-white shadow-sm dark:bg-zinc-900">
+        {/* Right sidebar — fixed width */}
+        <div ref={sidebarRef} className="hidden w-[260px] shrink-0 lg:block">
+          <div className="overflow-y-auto rounded-xl border border-border/60 bg-white shadow-sm dark:bg-zinc-900">
             <div className="p-4">
               {(itemDisplayId || projectSlug) && (
                 <div className="mb-3 border-b border-border/30 pb-3">
@@ -608,22 +625,27 @@ function PropertySelect({
 
 // -- Comment row --
 
-function CommentRow({ comment }: { comment: Comment }) {
+function CommentRow({ comment, userAvatarUrl }: { comment: Comment; userAvatarUrl?: string }) {
   const isAgent = comment.authorType === "agent"
   const authorName = comment.authorName ?? (isAgent ? "AI Agent" : "You")
 
   return (
     <div className="flex gap-3">
-      <div
-        className={cn(
-          "flex size-7 shrink-0 items-center justify-center rounded-full",
-          isAgent
-            ? "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
-            : "bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"
-        )}
-      >
-        {isAgent ? <Bot className="size-3.5" /> : <User className="size-3.5" />}
-      </div>
+      {isAgent ? (
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+          <Bot className="size-3.5" />
+        </div>
+      ) : userAvatarUrl ? (
+        <img
+          src={userAvatarUrl}
+          alt={authorName}
+          className="size-7 shrink-0 rounded-full object-cover"
+        />
+      ) : (
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
+          <User className="size-3.5" />
+        </div>
+      )}
 
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">

@@ -321,13 +321,13 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
                   <CreditCard className="size-4 shrink-0" />
                   Billing
                 </Link>
-                <Link
+                <a
                   href="/auth/sign-out"
                   className="flex items-center gap-3 rounded-md py-2 pl-8 pr-2 text-sm text-muted-foreground transition-colors hover:bg-white hover:text-foreground dark:hover:bg-accent"
                 >
                   <LogOut className="size-4 shrink-0" />
                   Sign Out
-                </Link>
+                </a>
               </div>
             </div>
           </>

@@ -43,7 +43,12 @@ export function SlideView({ showDetail, listContent, detailContent }: SlideViewP
   const renderContent = showDetail ? detailContent : lastContent.current
 
   return (
-    <div className="relative" style={{ minHeight: "calc(100vh - 200px)" }}>
+    <div
+      className="relative"
+      style={{
+        minHeight: "calc(100vh - 200px)",
+      }}
+    >
       {/* List — always rendered, never transformed */}
       <div>{listContent}</div>
 
