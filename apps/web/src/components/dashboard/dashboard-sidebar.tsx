@@ -77,19 +77,27 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
     .toUpperCase()
     .slice(0, 2)
 
-  // Auto-expand the project whose sub-page is currently active
+  // Track which projects the user has manually collapsed
+  const [manuallyCollapsed, setManuallyCollapsed] = useState<Set<string>>(new Set())
+
+  // Auto-expand the project whose sub-page is currently active (unless manually collapsed)
   const activeProjectId = projects?.find((p) => pathname.startsWith(`/dashboard/projects/${p._id}`))
     ?._id as string | undefined
 
-  if (activeProjectId && !expandedProjects.has(activeProjectId)) {
+  if (activeProjectId && !expandedProjects.has(activeProjectId) && !manuallyCollapsed.has(activeProjectId)) {
     setExpandedProjects((prev) => new Set(prev).add(activeProjectId))
   }
 
   function toggleProject(id: string) {
     setExpandedProjects((prev) => {
       const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
+      if (next.has(id)) {
+        next.delete(id)
+        setManuallyCollapsed((mc) => new Set(mc).add(id))
+      } else {
+        next.add(id)
+        setManuallyCollapsed((mc) => { const n = new Set(mc); n.delete(id); return n })
+      }
       return next
     })
   }
@@ -176,7 +184,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
                       type="button"
                       onClick={() => toggleProject(id)}
                       className={cn(
-                        "flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                        "flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none",
                         isProjectActive
                           ? "text-foreground"
                           : "text-muted-foreground hover:bg-white hover:text-foreground dark:hover:bg-accent"
