@@ -6,6 +6,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  PanelRight,
   Trash2,
   User,
   X,
@@ -84,6 +85,12 @@ export function ItemDetailView({
   const [commentText, setCommentText] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showSidebar, setShowSidebar] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("detail-sidebar") !== "closed"
+    }
+    return true
+  })
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const [sidebarHeight, setSidebarHeight] = useState(0)
@@ -196,17 +203,34 @@ export function ItemDetailView({
           )}
           <button
             type="button"
+            onClick={() => {
+              const next = !showSidebar
+              setShowSidebar(next)
+              localStorage.setItem("detail-sidebar", next ? "open" : "closed")
+            }}
+            className={cn(
+              "hidden rounded-md p-1 transition-colors lg:block",
+              showSidebar
+                ? "text-muted-foreground hover:bg-accent hover:text-foreground"
+                : "bg-accent text-foreground"
+            )}
+            title={showSidebar ? "Hide sidebar" : "Show sidebar"}
+          >
+            <PanelRight className="size-4" />
+          </button>
+          <button
+            type="button"
             onClick={onBack}
             className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             title="Close"
           >
-            <X className="size-4" />
+            <X className="size-5" />
           </button>
         </div>
       </div>
 
       {/* Cards row */}
-      <div className="flex items-start gap-4">
+      <div className="flex items-start">
         {/* Main content area — fills viewport, scrolls internally */}
         <div className="flex min-w-0 flex-1 flex-col rounded-xl border border-border/60 bg-white shadow-sm dark:bg-zinc-900" style={{ height: `max(calc(100vh - 260px), ${sidebarHeight > 0 ? sidebarHeight : 400}px)` }}>
           {/* Scrollable region: title + description + comments */}
@@ -263,9 +287,15 @@ export function ItemDetailView({
           </div>
         </div>
 
-        {/* Right sidebar — fixed width */}
-        <div ref={sidebarRef} className="hidden w-[260px] shrink-0 lg:block">
-          <div className="overflow-y-auto rounded-xl border border-border/60 bg-white shadow-sm dark:bg-zinc-900">
+        {/* Right sidebar — fixed width, toggleable with slide animation */}
+        <div
+          ref={sidebarRef}
+          className={cn(
+            "hidden shrink-0 overflow-hidden transition-all duration-300 ease-in-out lg:block",
+            showSidebar ? "ml-4 w-[260px] opacity-100" : "ml-0 w-0 opacity-0"
+          )}
+        >
+          <div className="w-[260px] overflow-y-auto rounded-xl border border-border/60 bg-white shadow-sm dark:bg-zinc-900">
             <div className="p-4">
               {(itemDisplayId || projectSlug) && (
                 <div className="mb-3 border-b border-border/30 pb-3">
