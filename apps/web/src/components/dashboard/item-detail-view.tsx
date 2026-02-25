@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, ArrowUpCircle, Bot, ChevronDown, ChevronUp, User } from "lucide-react"
+import { ArrowUpCircle, Bot, ChevronDown, ChevronUp, User, X } from "lucide-react"
 import { useCallback, useRef, useState } from "react"
 import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -112,64 +112,64 @@ export function ItemDetailView({
     <div className="flex h-full min-h-[calc(100vh-200px)] flex-col p-4">
       {/* Header breadcrumb bar — above cards */}
       <div className="mb-3 flex items-center justify-between px-1">
-        <div className="flex min-w-0 items-center gap-2">
+        {/* Breadcrumb */}
+        <div className="flex min-w-0 items-center gap-1.5 text-sm">
+          {projectStub && (
+            <>
+              <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs font-medium text-muted-foreground dark:bg-zinc-800">
+                {projectStub}
+              </span>
+              <span className="shrink-0 text-muted-foreground/40">/</span>
+            </>
+          )}
+          {itemDisplayId && (
+            <>
+              <span className="shrink-0 font-mono text-xs font-medium text-muted-foreground">
+                {itemDisplayId}
+              </span>
+              <span className="shrink-0 text-muted-foreground/40">/</span>
+            </>
+          )}
+          <span className="min-w-0 truncate text-foreground">{item.title}</span>
+        </div>
+
+        {/* Navigation + Close */}
+        <div className="flex shrink-0 items-center gap-1.5">
+          {totalItems != null && totalItems > 0 && (
+            <>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {(currentIndex ?? 0) + 1} / {totalItems}
+              </span>
+              <button
+                type="button"
+                onClick={() => onNavigate?.("prev")}
+                disabled={currentIndex === 0}
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Previous item"
+              >
+                <ChevronUp className="size-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigate?.("next")}
+                disabled={currentIndex === (totalItems ?? 0) - 1}
+                className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Next item"
+              >
+                <ChevronDown className="size-4" />
+              </button>
+              <div className="mx-1 h-4 w-px bg-border" />
+            </>
+          )}
           <button
             type="button"
             onClick={onBack}
-            className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            title="Back to list"
+            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            title="Close"
           >
-            <ArrowLeft className="size-4" />
+            <X className="size-4" />
           </button>
-
-          {/* Breadcrumb */}
-          <div className="flex min-w-0 items-center gap-1.5 text-sm">
-            {projectStub && (
-              <>
-                <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs font-medium text-muted-foreground dark:bg-zinc-800">
-                  {projectStub}
-                </span>
-                <span className="shrink-0 text-muted-foreground/40">/</span>
-              </>
-            )}
-            {itemDisplayId && (
-              <>
-                <span className="shrink-0 font-mono text-xs font-medium text-muted-foreground">
-                  {itemDisplayId}
-                </span>
-                <span className="shrink-0 text-muted-foreground/40">/</span>
-              </>
-            )}
-            <span className="min-w-0 truncate text-foreground">{item.title}</span>
-          </div>
         </div>
-
-        {/* Navigation */}
-        {totalItems != null && totalItems > 0 && (
-          <div className="flex shrink-0 items-center gap-1.5">
-            <span className="text-xs tabular-nums text-muted-foreground">
-              {(currentIndex ?? 0) + 1} / {totalItems}
-            </span>
-            <button
-              type="button"
-              onClick={() => onNavigate?.("prev")}
-              disabled={currentIndex === 0}
-              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
-              title="Previous item"
-            >
-              <ChevronUp className="size-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigate?.("next")}
-              disabled={currentIndex === (totalItems ?? 0) - 1}
-              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
-              title="Next item"
-            >
-              <ChevronDown className="size-4" />
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Cards row */}
