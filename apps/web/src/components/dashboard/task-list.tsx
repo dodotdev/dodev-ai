@@ -4,7 +4,7 @@ import { CheckCircle2, Circle, Clock, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn, formatRelativeTime } from "@/lib/utils"
 
-interface TodoItem {
+interface TaskItem {
   _id: string
   title: string
   description?: string
@@ -45,17 +45,17 @@ const severityColors: Record<string, string> = {
   trivial: "bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300",
 }
 
-interface TodoListProps {
-  todos: TodoItem[]
-  onUpdate?: (id: string, data: Partial<TodoItem>) => void
+interface TaskListProps {
+  tasks: TaskItem[]
+  onUpdate?: (id: string, data: Partial<TaskItem>) => void
 }
 
-export function TodoList({ todos, onUpdate }: TodoListProps) {
-  if (todos.length === 0) {
+export function TaskList({ tasks, onUpdate }: TaskListProps) {
+  if (tasks.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <Circle className="mb-3 size-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">No todos yet</p>
+        <p className="text-sm text-muted-foreground">No tasks yet</p>
         <p className="mt-1 text-xs text-muted-foreground">
           Create one from the MCP server or the form above
         </p>
@@ -65,24 +65,24 @@ export function TodoList({ todos, onUpdate }: TodoListProps) {
 
   return (
     <div className="divide-y divide-border rounded-2xl border border-border bg-white dark:bg-card">
-      {todos.map((todo) => {
-        const StatusIcon = statusIcons[todo.status]
+      {tasks.map((task) => {
+        const StatusIcon = statusIcons[task.status]
         return (
           <div
-            key={todo._id}
+            key={task._id}
             className="flex items-start gap-3 p-4 transition-colors hover:bg-surface-hover"
           >
             <button
               type="button"
-              className={cn("mt-0.5 shrink-0", statusColors[todo.status])}
+              className={cn("mt-0.5 shrink-0", statusColors[task.status])}
               onClick={() => {
-                if (todo.status === "completed") {
-                  onUpdate?.(todo._id, { status: "pending" })
+                if (task.status === "completed") {
+                  onUpdate?.(task._id, { status: "pending" })
                 } else {
-                  onUpdate?.(todo._id, { status: "completed" })
+                  onUpdate?.(task._id, { status: "completed" })
                 }
               }}
-              aria-label={todo.status === "completed" ? "Mark as pending" : "Mark as complete"}
+              aria-label={task.status === "completed" ? "Mark as pending" : "Mark as complete"}
             >
               <StatusIcon className="size-5" />
             </button>
@@ -91,33 +91,33 @@ export function TodoList({ todos, onUpdate }: TodoListProps) {
               <p
                 className={cn(
                   "text-sm font-medium",
-                  todo.status === "completed" && "text-muted-foreground line-through"
+                  task.status === "completed" && "text-muted-foreground line-through"
                 )}
               >
-                {todo.title}
+                {task.title}
               </p>
-              {todo.description && (
+              {task.description && (
                 <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
-                  {todo.description}
+                  {task.description}
                 </p>
               )}
 
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <Badge
                   variant="secondary"
-                  className={cn("text-[10px]", priorityColors[todo.priority])}
+                  className={cn("text-[10px]", priorityColors[task.priority])}
                 >
-                  {todo.priority}
+                  {task.priority}
                 </Badge>
-                {todo.severity && (
+                {task.severity && (
                   <Badge
                     variant="secondary"
-                    className={cn("text-[10px]", severityColors[todo.severity])}
+                    className={cn("text-[10px]", severityColors[task.severity])}
                   >
-                    {todo.severity}
+                    {task.severity}
                   </Badge>
                 )}
-                {todo.tags.map((tag) => (
+                {task.tags.map((tag) => (
                   <Badge key={tag} variant="outline" className="text-[10px]">
                     {tag}
                   </Badge>
@@ -126,7 +126,7 @@ export function TodoList({ todos, onUpdate }: TodoListProps) {
             </div>
 
             <span className="shrink-0 text-xs text-muted-foreground">
-              {formatRelativeTime(todo.updatedAt)}
+              {formatRelativeTime(task.updatedAt)}
             </span>
           </div>
         )

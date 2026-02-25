@@ -72,6 +72,7 @@ export const createOrUpdateFromWorkOS = mutation({
     workosUserId: v.string(),
     email: v.string(),
     name: v.optional(v.string()),
+    avatarUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -83,6 +84,7 @@ export const createOrUpdateFromWorkOS = mutation({
       await ctx.db.patch(existing._id, {
         email: args.email,
         name: args.name,
+        ...(args.avatarUrl !== undefined ? { avatarUrl: args.avatarUrl } : {}),
         updatedAt: Date.now(),
       })
       return await ctx.db.get(existing._id)
@@ -110,6 +112,7 @@ export const createOrUpdateFromWorkOS = mutation({
       workosUserId: args.workosUserId,
       email: args.email,
       name: args.name,
+      avatarUrl: args.avatarUrl,
       apiKey,
       apiKeyHash,
       role: "waitlisted",

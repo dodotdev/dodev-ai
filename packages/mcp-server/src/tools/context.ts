@@ -8,7 +8,7 @@ export const contextTools: Tool[] = [
   {
     name: "get_context",
     description:
-      "CALL THIS FIRST at the start of every session. Returns everything you need to get oriented: active project (auto-detected from workspace if linked), pending todos, recent memories (project-scoped + global), project list, project config (workflow statuses, labels, members, estimate scale), AI persona instructions, active cycle, and memory settings. This is your primary way to load context from previous sessions — it includes the most relevant stored memories so you can pick up where you or another agent left off.",
+      "CALL THIS FIRST at the start of every session. Returns everything you need to get oriented: active project (auto-detected from workspace if linked), pending tasks, recent memories (project-scoped + global), project list, project config (workflow statuses, labels, members, estimate scale), AI persona instructions, active cycle, and memory settings. This is your primary way to load context from previous sessions — it includes the most relevant stored memories so you can pick up where you or another agent left off.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -17,9 +17,9 @@ export const contextTools: Tool[] = [
           description:
             "Get context for a specific project. If omitted, auto-detects from the current workspace (if linked) or falls back to the default project.",
         },
-        todoLimit: {
+        taskLimit: {
           type: "number",
-          description: "Max pending todos to return. Default: 10",
+          description: "Max pending tasks to return. Default: 10",
         },
         memoryLimit: {
           type: "number",
@@ -60,7 +60,7 @@ export async function handleContextTool(
       return await client.query(api.projects.getContext, {
         apiKeyHash,
         projectId: args.projectId as string | undefined,
-        todoLimit: args.todoLimit as number | undefined,
+        taskLimit: args.taskLimit as number | undefined,
         memoryLimit: args.memoryLimit as number | undefined,
         workspacePath: workspace?.workspacePath,
         repoUrl: workspace?.repoUrl,

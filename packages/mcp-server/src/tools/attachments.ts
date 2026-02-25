@@ -28,13 +28,13 @@ export const attachmentTools: Tool[] = [
   {
     name: "attach_file",
     description:
-      "Attach a file to a todo or issue. The file content must be base64-encoded. Supports images, PDFs, text files, and more. Either todoId or issueId must be provided.",
+      "Attach a file to a task or issue. The file content must be base64-encoded. Supports images, PDFs, text files, and more. Either taskId or issueId must be provided.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        todoId: {
+        taskId: {
           type: "string",
-          description: "Todo ID to attach the file to",
+          description: "Task ID to attach the file to",
         },
         issueId: {
           type: "string",
@@ -64,13 +64,13 @@ export const attachmentTools: Tool[] = [
   {
     name: "list_attachments",
     description:
-      "List all file attachments for a todo or issue. Either todoId or issueId must be provided.",
+      "List all file attachments for a task or issue. Either taskId or issueId must be provided.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        todoId: {
+        taskId: {
           type: "string",
-          description: "Todo ID to list attachments for",
+          description: "Task ID to list attachments for",
         },
         issueId: {
           type: "string",
@@ -115,7 +115,7 @@ export async function handleAttachmentTool(
 
       return await client.action(api.attachmentsInternal.uploadFromBase64, {
         apiKeyHash,
-        todoId: args.todoId as string | undefined,
+        taskId: args.taskId as string | undefined,
         issueId: args.issueId as string | undefined,
         filename,
         base64Content: content,
@@ -128,7 +128,7 @@ export async function handleAttachmentTool(
     case "list_attachments":
       return await client.query(api.attachments.list, {
         apiKeyHash,
-        todoId: args.todoId as string | undefined,
+        taskId: args.taskId as string | undefined,
         issueId: args.issueId as string | undefined,
       })
 

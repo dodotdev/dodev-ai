@@ -56,10 +56,10 @@ export default function ProjectsPage() {
         ? (
             t as {
               stats: {
-                totalTodos: number
-                pendingTodos: number
-                inProgressTodos: number
-                completedTodos: number
+                totalTasks: number
+                pendingTasks: number
+                inProgressTasks: number
+                completedTasks: number
                 memoryCount: number
               }
             }

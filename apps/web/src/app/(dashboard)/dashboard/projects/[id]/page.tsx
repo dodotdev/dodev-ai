@@ -9,30 +9,31 @@ import { ItemDetailView } from "@/components/dashboard/item-detail-view"
 import { LinearListView, type ListItem } from "@/components/dashboard/linear-list-view"
 import { ProjectHeader } from "@/components/dashboard/project-header"
 import { SlideView } from "@/components/dashboard/slide-view"
-import { TodoForm } from "@/components/dashboard/todo-form"
+import { TaskForm } from "@/components/dashboard/task-form"
 import { useAuth } from "@/components/providers/auth-provider"
 import { useUploadAttachments } from "@/hooks/use-upload-attachments"
 
-export default function ProjectTodosPage() {
+export default function ProjectTasksPage() {
   const { id } = useParams<{ id: string }>()
   const { apiKeyHash, isLoading: authLoading } = useAuth()
-  const [selectedItem, setSelectedItem] = useState<ListItem | null>(null)
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
 
   const project = useQuery(api.projects.get, apiKeyHash ? { apiKeyHash, id: id as never } : "skip")
 
-  const todos = useQuery(
-    api.todos.list,
+  const tasks = useQuery(
+    api.tasks.list,
     apiKeyHash ? { apiKeyHash, projectId: id as never, limit: 100 } : "skip"
   )
 
   // Comments query (only when item selected)
   const comments = useQuery(
     api.comments.list,
-    selectedItem && apiKeyHash ? { apiKeyHash, todoId: selectedItem._id as never } : "skip"
+    selectedItemId && apiKeyHash ? { apiKeyHash, taskId: selectedItemId as never } : "skip"
   )
 
-  const updateTodo = useMutation(api.todos.update)
-  const createTodo = useMutation(api.todos.create)
+  const updateTask = useMutation(api.tasks.update)
+  const createTask = useMutation(api.tasks.create)
+  const deleteTask = useMutation(api.tasks.remove)
   const createComment = useMutation(api.comments.create)
   const uploadAttachments = useUploadAttachments(apiKeyHash)
 
@@ -44,7 +45,7 @@ export default function ProjectTodosPage() {
     )
   }
 
-  if (project === undefined || todos === undefined) {
+  if (project === undefined || tasks === undefined) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
@@ -56,11 +57,11 @@ export default function ProjectTodosPage() {
   const projectLabels = project?.labels ?? []
   const projectMembers = project?.members ?? []
 
-  async function handleStatusChange(todoId: string, newStatus: string, statusId?: string) {
+  async function handleStatusChange(taskId: string, newStatus: string, statusId?: string) {
     if (!apiKeyHash) return
-    await updateTodo({
+    await updateTask({
       apiKeyHash,
-      id: todoId as never,
+      id: taskId as never,
       status: newStatus as "pending" | "in_progress" | "completed" | "cancelled",
       ...(statusId ? { statusId } : {}),
     })
@@ -78,7 +79,7 @@ export default function ProjectTodosPage() {
     attachments?: File[]
   }) {
     if (!apiKeyHash) return
-    const created = await createTodo({
+    const created = await createTask({
       apiKeyHash,
       title: data.title,
       description: data.description,
@@ -91,27 +92,33 @@ export default function ProjectTodosPage() {
       estimate: data.estimate,
     })
     if (data.attachments?.length && created?._id) {
-      await uploadAttachments(data.attachments, { todoId: created._id as string })
+      await uploadAttachments(data.attachments, { taskId: created._id as string })
     }
   }
 
   async function handleAddComment(body: string) {
-    if (!apiKeyHash || !selectedItem) return
+    if (!apiKeyHash || !selectedItemId) return
     await createComment({
       apiKeyHash,
-      todoId: selectedItem._id as never,
+      taskId: selectedItemId as never,
       body,
       authorType: "user" as const,
     })
   }
 
   async function handleUpdateItem(updates: Record<string, unknown>) {
-    if (!apiKeyHash || !selectedItem) return
-    await updateTodo({
+    if (!apiKeyHash || !selectedItemId) return
+    await updateTask({
       apiKeyHash,
-      id: selectedItem._id as never,
+      id: selectedItemId as never,
       ...updates,
     } as never)
+  }
+
+  async function handleDeleteItem() {
+    if (!apiKeyHash || !selectedItemId) return
+    await deleteTask({ apiKeyHash, id: selectedItemId as never })
+    setSelectedItemId(null)
   }
 
   // Resolve labels and assignees for display
@@ -119,9 +126,9 @@ export default function ProjectTodosPage() {
   const memberMap = new Map(projectMembers.map((m) => [m.id, m]))
   const projectSlug = project?.slug
 
-  const mapped: ListItem[] = (todos ?? []).map((t) => {
+  const mapped: ListItem[] = (tasks ?? []).map((t) => {
     const raw = t as Record<string, unknown>
-    const todoNumber = raw.number as number | undefined
+    const taskNumber = raw.number as number | undefined
     return {
       _id: t._id as string,
       title: t.title,
@@ -130,7 +137,7 @@ export default function ProjectTodosPage() {
       priority: t.priority,
       tags: t.tags,
       dueDate: t.dueDate,
-      number: todoNumber,
+      number: taskNumber,
       statusId: raw.statusId as string | undefined,
       labelIds: raw.labelIds as string[] | undefined,
       assigneeId: raw.assigneeId as string | undefined,
@@ -138,7 +145,7 @@ export default function ProjectTodosPage() {
       cycleId: raw.cycleId as string | undefined,
       createdAt: t.createdAt,
       updatedAt: t.updatedAt,
-      issueId: projectSlug && todoNumber ? `${projectSlug}-${todoNumber}` : undefined,
+      issueId: projectSlug && taskNumber ? `${projectSlug}-${taskNumber}` : undefined,
       resolvedLabels: (raw.labelIds as string[] | undefined)
         ?.map((lid) => labelMap.get(lid))
         .filter(Boolean) as Array<{ id: string; name: string; color: string }> | undefined,
@@ -146,22 +153,25 @@ export default function ProjectTodosPage() {
     }
   })
 
+  // Derive selected item from live query data
+  const selectedItem = selectedItemId ? mapped.find((i) => i._id === selectedItemId) ?? null : null
+
   // Navigation
   const currentIndex = selectedItem ? mapped.findIndex((i) => i._id === selectedItem._id) : -1
 
   function handleNavigate(direction: "prev" | "next") {
     const idx = direction === "prev" ? currentIndex - 1 : currentIndex + 1
     if (idx >= 0 && idx < mapped.length) {
-      setSelectedItem(mapped[idx])
+      setSelectedItemId(mapped[idx]._id)
     }
   }
 
   return (
     <div className="space-y-6">
       <ProjectHeader
-        title="Todos"
+        title="Tasks"
         actions={
-          <TodoForm
+          <TaskForm
             onSubmit={handleCreate}
             projectConfig={{
               statuses: projectStatuses,
@@ -173,7 +183,7 @@ export default function ProjectTodosPage() {
               <button
                 type="button"
                 className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                title="New todo"
+                title="New task"
               >
                 <Plus className="size-4" />
               </button>
@@ -189,8 +199,8 @@ export default function ProjectTodosPage() {
             items={mapped}
             statuses={projectStatuses}
             onStatusChange={handleStatusChange}
-            onItemClick={setSelectedItem}
-            emptyMessage="No todos yet. Create one from the MCP server or the form above."
+            onItemClick={(item) => setSelectedItemId(item._id)}
+            emptyMessage="No tasks yet. Create one from the MCP server or the form above."
           />
         }
         detailContent={
@@ -205,9 +215,10 @@ export default function ProjectTodosPage() {
                 estimateScale: project?.estimateScale,
               }}
               comments={comments ?? []}
-              onBack={() => setSelectedItem(null)}
+              onBack={() => setSelectedItemId(null)}
               onAddComment={handleAddComment}
               onUpdateItem={handleUpdateItem}
+              onDeleteItem={handleDeleteItem}
               currentIndex={currentIndex}
               totalItems={mapped.length}
               onNavigate={handleNavigate}

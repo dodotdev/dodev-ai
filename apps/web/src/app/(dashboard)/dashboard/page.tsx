@@ -5,7 +5,7 @@ import { useQuery } from "convex/react"
 import { ArrowRight, Loader2, Plus } from "lucide-react"
 import Link from "next/link"
 import { StatsCards } from "@/components/dashboard/stats-cards"
-import { TodoList } from "@/components/dashboard/todo-list"
+import { TaskList } from "@/components/dashboard/task-list"
 import { useAuth } from "@/components/providers/auth-provider"
 import { Button } from "@/components/ui/button"
 
@@ -14,7 +14,7 @@ export default function DashboardPage() {
 
   const context = useQuery(api.projects.getContext, apiKeyHash ? { apiKeyHash } : "skip")
   const usage = useQuery(api.usage.getCurrentUsage, apiKeyHash ? { apiKeyHash } : "skip")
-  const recentTodos = useQuery(api.todos.list, apiKeyHash ? { apiKeyHash, limit: 4 } : "skip")
+  const recentTasks = useQuery(api.tasks.list, apiKeyHash ? { apiKeyHash, limit: 4 } : "skip")
 
   if (authLoading || !apiKeyHash) {
     return (
@@ -25,20 +25,20 @@ export default function DashboardPage() {
   }
 
   const stats = {
-    totalTodos: usage?.todoCount ?? 0,
-    pendingTodos: context?.todoSummary?.pending ?? 0,
-    inProgressTodos: context?.todoSummary?.inProgress ?? 0,
-    completedTodos: Math.max(
+    totalTasks: usage?.taskCount ?? 0,
+    pendingTasks: context?.taskSummary?.pending ?? 0,
+    inProgressTasks: context?.taskSummary?.inProgress ?? 0,
+    completedTasks: Math.max(
       0,
-      (usage?.todoCount ?? 0) -
-        (context?.todoSummary?.pending ?? 0) -
-        (context?.todoSummary?.inProgress ?? 0)
+      (usage?.taskCount ?? 0) -
+        (context?.taskSummary?.pending ?? 0) -
+        (context?.taskSummary?.inProgress ?? 0)
     ),
     totalMemories: usage?.memoryCount ?? 0,
     totalProjects: usage?.projectCount ?? 0,
   }
 
-  const todos = (recentTodos ?? []).map((t) => ({
+  const tasks = (recentTasks ?? []).map((t) => ({
     _id: t._id as string,
     title: t.title,
     description: t.description,
@@ -62,18 +62,18 @@ export default function DashboardPage() {
       <StatsCards stats={stats} />
 
       <div className="grid gap-8 lg:grid-cols-3">
-        {/* Recent todos */}
+        {/* Recent tasks */}
         <div className="lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Recent Todos</h2>
+            <h2 className="text-lg font-semibold">Recent Tasks</h2>
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/dashboard/todos">
+              <Link href="/dashboard/tasks">
                 View All
                 <ArrowRight className="ml-1 size-3" />
               </Link>
             </Button>
           </div>
-          <TodoList todos={todos} />
+          <TaskList tasks={tasks} />
         </div>
 
         {/* Quick actions */}
@@ -87,9 +87,9 @@ export default function DashboardPage() {
               </Link>
             </Button>
             <Button variant="outline" className="w-full justify-start" asChild>
-              <Link href="/dashboard/todos">
+              <Link href="/dashboard/tasks">
                 <Plus className="mr-2 size-4" />
-                New Todo
+                New Task
               </Link>
             </Button>
             <Button variant="outline" className="w-full justify-start" asChild>
@@ -109,7 +109,7 @@ export default function DashboardPage() {
           <div className="mt-6 rounded-2xl border border-border bg-white p-4 dark:bg-card">
             <h3 className="text-sm font-medium">Connect Your AI Agent</h3>
             <p className="mt-2 text-xs text-muted-foreground">
-              Add dodev.ai to your Claude Code config to start syncing todos and memories.
+              Add dodev.ai to your Claude Code config to start syncing tasks and memories.
             </p>
             <Button variant="ghost" size="sm" className="mt-3 text-xs" asChild>
               <Link href="/dashboard/settings">

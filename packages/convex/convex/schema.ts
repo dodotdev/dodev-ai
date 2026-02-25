@@ -7,6 +7,7 @@ export default defineSchema({
     workosUserId: v.string(),
     email: v.string(),
     name: v.optional(v.string()),
+    avatarUrl: v.optional(v.string()),
 
     // API access
     apiKey: v.string(),
@@ -38,7 +39,7 @@ export default defineSchema({
       })
     ),
 
-    // Global item counter (shared across all todos, issues, projects)
+    // Global item counter (shared across all tasks, issues, projects)
     itemCounter: v.optional(v.number()),
 
     createdAt: v.number(),
@@ -53,8 +54,6 @@ export default defineSchema({
     userId: v.id("users"),
     name: v.string(),
     slug: v.optional(v.string()),
-    /** @deprecated Use slug instead — kept for migration compatibility */
-    stub: v.optional(v.string()),
     description: v.optional(v.string()),
     status: v.union(
       v.literal("active"),
@@ -62,7 +61,7 @@ export default defineSchema({
       v.literal("completed"),
       v.literal("archived")
     ),
-    todoCounter: v.number(),
+    taskCounter: v.optional(v.number()),
     issueCounter: v.number(),
     metadata: v.optional(v.any()),
 
@@ -124,10 +123,9 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_status", ["userId", "status"])
-    .index("by_user_slug", ["userId", "slug"])
-    .index("by_user_stub", ["userId", "stub"]),
+    .index("by_user_slug", ["userId", "slug"]),
 
-  todos: defineTable({
+  tasks: defineTable({
     userId: v.id("users"),
     projectId: v.optional(v.id("projects")),
     number: v.optional(v.number()),
@@ -295,7 +293,7 @@ export default defineSchema({
 
   attachments: defineTable({
     userId: v.id("users"),
-    todoId: v.optional(v.id("todos")),
+    taskId: v.optional(v.id("tasks")),
     issueId: v.optional(v.id("issues")),
     projectId: v.optional(v.id("projects")),
     storageId: v.id("_storage"),
@@ -307,14 +305,14 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_todo", ["todoId"])
+    .index("by_task", ["taskId"])
     .index("by_issue", ["issueId"])
     .index("by_user_project", ["userId", "projectId"])
     .index("by_storage_id", ["storageId"]),
 
   comments: defineTable({
     userId: v.id("users"),
-    todoId: v.optional(v.id("todos")),
+    taskId: v.optional(v.id("tasks")),
     issueId: v.optional(v.id("issues")),
     projectId: v.optional(v.id("projects")),
     parentId: v.optional(v.id("comments")),
@@ -324,7 +322,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("by_todo", ["todoId"])
+    .index("by_task", ["taskId"])
     .index("by_issue", ["issueId"])
     .index("by_user", ["userId"])
     .index("by_parent", ["parentId"]),
@@ -332,7 +330,7 @@ export default defineSchema({
   usage: defineTable({
     userId: v.id("users"),
     period: v.string(),
-    todoCount: v.number(),
+    taskCount: v.optional(v.number()),
     memoryCount: v.number(),
     projectCount: v.number(),
     issueCount: v.number(),

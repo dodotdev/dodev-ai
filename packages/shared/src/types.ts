@@ -1,13 +1,13 @@
-/** Status of a todo item (base category — always derived from workflow status) */
-export type TodoStatus = "pending" | "in_progress" | "completed" | "cancelled"
+/** Status of a task item (base category — always derived from workflow status) */
+export type TaskStatus = "pending" | "in_progress" | "completed" | "cancelled"
 
-/** Alias for TodoStatus, used in workflow status definitions */
-export type StatusCategory = TodoStatus
+/** Alias for TaskStatus, used in workflow status definitions */
+export type StatusCategory = TaskStatus
 
-/** Priority levels for todos */
-export type TodoPriority = "low" | "medium" | "high" | "urgent"
+/** Priority levels for tasks */
+export type TaskPriority = "low" | "medium" | "high" | "urgent"
 
-/** Severity levels (shared by todos and issues) */
+/** Severity levels (shared by tasks and issues) */
 export type Severity = "critical" | "major" | "minor" | "trivial"
 
 /** Issue type categories */
@@ -16,8 +16,6 @@ export type IssueType = "bug" | "feature" | "improvement" | "task"
 /** Lifecycle status of a project */
 export type ProjectLifecycle = "active" | "paused" | "completed" | "archived"
 
-/** @deprecated Use ProjectLifecycle instead */
-export type ProjectStatus = ProjectLifecycle
 
 /** Subscription plan tiers */
 export type PlanTier = "free" | "pro" | "team"
@@ -47,8 +45,6 @@ export interface ProjectMemorySettings {
   memoryInstructions?: string
 }
 
-/** API key prefix */
-export const API_KEY_PREFIX = "dodev_sk_"
 
 /** A custom workflow status within a project */
 export interface WorkflowStatus {
@@ -59,7 +55,7 @@ export interface WorkflowStatus {
   position: number
 }
 
-/** A colored label for categorizing todos */
+/** A colored label for categorizing tasks */
 export interface ProjectLabel {
   id: string
   name: string
@@ -114,16 +110,16 @@ export interface Cycle {
   updatedAt: number
 }
 
-/** Todo as returned from Convex */
-export interface Todo {
+/** Task as returned from Convex */
+export interface Task {
   _id: string
   userId: string
   projectId?: string
   number?: number
   title: string
   description?: string
-  status: TodoStatus
-  priority: TodoPriority
+  status: TaskStatus
+  priority: TaskPriority
   severity?: Severity
   dueDate?: number
   tags: string[]
@@ -145,8 +141,8 @@ export interface Issue {
   number?: number
   title: string
   description?: string
-  status: TodoStatus
-  priority: TodoPriority
+  status: TaskStatus
+  priority: TaskPriority
   type: IssueType
   severity: Severity
   dueDate?: number
@@ -177,11 +173,11 @@ export interface Memory {
   updatedAt: number
 }
 
-/** File attachment linked to a todo or issue */
+/** File attachment linked to a task or issue */
 export interface Attachment {
   _id: string
   userId: string
-  todoId?: string
+  taskId?: string
   issueId?: string
   projectId?: string
   storageId: string
@@ -194,11 +190,11 @@ export interface Attachment {
   createdAt: number
 }
 
-/** Comment on a todo or issue */
+/** Comment on a task or issue */
 export interface Comment {
   _id: string
   userId: string
-  todoId?: string
+  taskId?: string
   issueId?: string
   projectId?: string
   parentId?: string
@@ -217,7 +213,7 @@ export interface Project {
   slug: string
   description?: string
   status: ProjectLifecycle
-  todoCounter: number
+  taskCounter: number
   issueCounter: number
   metadata?: Record<string, unknown>
   statuses: WorkflowStatus[]
@@ -270,7 +266,7 @@ export interface Usage {
   _id: string
   userId: string
   period: string
-  todoCount: number
+  taskCount: number
   memoryCount: number
   projectCount: number
   issueCount: number
@@ -280,10 +276,10 @@ export interface Usage {
 /** Project with stats (from list_projects with includeStats) */
 export interface ProjectWithStats extends Project {
   stats: {
-    totalTodos: number
-    pendingTodos: number
-    inProgressTodos: number
-    completedTodos: number
+    totalTasks: number
+    pendingTasks: number
+    inProgressTasks: number
+    completedTasks: number
     memoryCount: number
   }
 }
@@ -291,10 +287,10 @@ export interface ProjectWithStats extends Project {
 /** Context response from get_context */
 export interface ContextResponse {
   activeProject: Project | null
-  todoSummary: {
+  taskSummary: {
     pending: number
     inProgress: number
-    topPending: Todo[]
+    topPending: Task[]
   }
   recentMemories: Memory[]
   memories?: {

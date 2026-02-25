@@ -10,6 +10,7 @@ interface AuthContextValue {
     workosUserId: string
     email: string
     name?: string
+    avatarUrl?: string
     apiKey: string
     apiKeyHash: string
     plan: string
@@ -32,10 +33,11 @@ interface AuthProviderProps {
   workosUserId: string
   email: string
   name?: string
+  avatarUrl?: string
   children: React.ReactNode
 }
 
-export function AuthProvider({ workosUserId, email, name, children }: AuthProviderProps) {
+export function AuthProvider({ workosUserId, email, name, avatarUrl, children }: AuthProviderProps) {
   const ensureUser = useMutation(api.users.createOrUpdateFromWorkOS)
   const user = useQuery(api.users.getByWorkosId, { workosUserId })
   const ensuredRef = useRef(false)
@@ -43,9 +45,9 @@ export function AuthProvider({ workosUserId, email, name, children }: AuthProvid
   useEffect(() => {
     if (!ensuredRef.current) {
       ensuredRef.current = true
-      ensureUser({ workosUserId, email, name }).catch(console.error)
+      ensureUser({ workosUserId, email, name, avatarUrl }).catch(console.error)
     }
-  }, [ensureUser, workosUserId, email, name])
+  }, [ensureUser, workosUserId, email, name, avatarUrl])
 
   const isLoading = user === undefined
   const apiKeyHash = user?.apiKeyHash ?? null
@@ -59,6 +61,7 @@ export function AuthProvider({ workosUserId, email, name, children }: AuthProvid
               workosUserId: user.workosUserId,
               email: user.email,
               name: user.name,
+              avatarUrl: user.avatarUrl,
               apiKey: user.apiKey,
               apiKeyHash: user.apiKeyHash,
               plan: user.plan,

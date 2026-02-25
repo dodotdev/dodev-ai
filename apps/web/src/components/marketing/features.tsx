@@ -5,7 +5,7 @@ import { Brain, CheckSquare, Code2, FolderOpen, RefreshCw, Server } from "lucide
 
 const features = [
   {
-    title: "Todos & Issues",
+    title: "Tasks & Issues",
     description:
       "Create, update, and track tasks and issues with priorities, severity, due dates, labels, and sprint cycles — just like Linear.",
     icon: CheckSquare,
@@ -23,7 +23,7 @@ const features = [
   {
     title: "Project Context",
     description:
-      "Every session starts with full context — active todos, recent memories, project config, and active cycle loaded automatically.",
+      "Every session starts with full context — active tasks, recent memories, project config, and active cycle loaded automatically.",
     icon: FolderOpen,
     borderColor: "border-l-blue-500",
     iconColor: "text-blue-500",
@@ -31,7 +31,7 @@ const features = [
   {
     title: "Sprint Cycles",
     description:
-      "Plan and track work in time-boxed cycles. Assign todos to sprints and monitor progress across sessions.",
+      "Plan and track work in time-boxed cycles. Assign tasks to sprints and monitor progress across sessions.",
     icon: RefreshCw,
     borderColor: "border-l-amber-500",
     iconColor: "text-amber-500",
@@ -72,7 +72,7 @@ export function Features() {
             </span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-zinc-400">
-            Todos, issues, memories, projects, cycles, and config — all through the Model Context
+            Tasks, issues, memories, projects, cycles, and config — all through the Model Context
             Protocol.
           </p>
         </motion.div>

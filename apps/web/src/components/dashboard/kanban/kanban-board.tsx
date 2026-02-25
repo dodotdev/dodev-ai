@@ -14,15 +14,15 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable"
 import { CheckCircle2, Circle, Clock, X } from "lucide-react"
 import { useMemo, useState } from "react"
-import { KanbanCard, type KanbanTodo } from "./kanban-card"
+import { KanbanCard, type KanbanTask } from "./kanban-card"
 import { KanbanColumn } from "./kanban-column"
 
-type TodoStatus = "pending" | "in_progress" | "completed" | "cancelled"
+type TaskStatus = "pending" | "in_progress" | "completed" | "cancelled"
 
 interface WorkflowStatus {
   id: string
   name: string
-  category: TodoStatus
+  category: TaskStatus
   color: string
   position: number
 }
@@ -32,7 +32,7 @@ const fallbackColumns: {
   title: string
   icon: typeof Circle
   color: string
-  category: TodoStatus
+  category: TaskStatus
 }[] = [
   {
     id: "pending",
@@ -64,7 +64,7 @@ const fallbackColumns: {
   },
 ]
 
-const categoryIcons: Record<TodoStatus, typeof Circle> = {
+const categoryIcons: Record<TaskStatus, typeof Circle> = {
   pending: Circle,
   in_progress: Clock,
   completed: CheckCircle2,
@@ -72,13 +72,13 @@ const categoryIcons: Record<TodoStatus, typeof Circle> = {
 }
 
 interface KanbanBoardProps {
-  todos: KanbanTodo[]
+  tasks: KanbanTask[]
   statuses?: WorkflowStatus[]
-  onStatusChange: (todoId: string, newStatus: TodoStatus, statusId?: string) => void
-  onQuickAdd?: (title: string, status: TodoStatus, statusId?: string) => void
+  onStatusChange: (taskId: string, newStatus: TaskStatus, statusId?: string) => void
+  onQuickAdd?: (title: string, status: TaskStatus, statusId?: string) => void
 }
 
-export function KanbanBoard({ todos, statuses, onStatusChange, onQuickAdd }: KanbanBoardProps) {
+export function KanbanBoard({ tasks, statuses, onStatusChange, onQuickAdd }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null)
 
   const sensors = useSensors(
@@ -108,38 +108,38 @@ export function KanbanBoard({ todos, statuses, onStatusChange, onQuickAdd }: Kan
     }))
   }, [statuses])
 
-  // Group todos by statusId (when using custom statuses) or by base status
+  // Group tasks by statusId (when using custom statuses) or by base status
   const grouped = useMemo(() => {
-    const groups: Record<string, KanbanTodo[]> = {}
+    const groups: Record<string, KanbanTask[]> = {}
     for (const col of columns) {
       groups[col.id] = []
     }
 
-    for (const todo of todos) {
+    for (const task of tasks) {
       if (statuses && statuses.length > 0) {
         // Match by statusId first, then fallback to category match
-        if (todo.statusId && groups[todo.statusId]) {
-          groups[todo.statusId].push(todo)
+        if (task.statusId && groups[task.statusId]) {
+          groups[task.statusId].push(task)
         } else {
           // Find first column matching this category
-          const col = columns.find((c) => c.category === todo.status)
-          if (col) groups[col.id].push(todo)
+          const col = columns.find((c) => c.category === task.status)
+          if (col) groups[col.id].push(task)
         }
       } else {
-        if (groups[todo.status]) {
-          groups[todo.status].push(todo)
+        if (groups[task.status]) {
+          groups[task.status].push(task)
         }
       }
     }
     return groups
-  }, [todos, columns, statuses])
+  }, [tasks, columns, statuses])
 
   // Hide cancelled-category columns if empty
   const visibleColumns = columns.filter(
     (col) => col.category !== "cancelled" || (grouped[col.id]?.length ?? 0) > 0
   )
 
-  const activeTodo = activeId ? todos.find((t) => t._id === activeId) : null
+  const activeTask = activeId ? tasks.find((t) => t._id === activeId) : null
 
   function handleDragStart(event: DragStartEvent) {
     setActiveId(event.active.id as string)
@@ -150,21 +150,21 @@ export function KanbanBoard({ todos, statuses, onStatusChange, onQuickAdd }: Kan
     const { active, over } = event
     if (!over) return
 
-    const todoId = active.id as string
-    const todo = todos.find((t) => t._id === todoId)
-    if (!todo) return
+    const taskId = active.id as string
+    const task = tasks.find((t) => t._id === taskId)
+    if (!task) return
 
     // Determine target column
     let targetCol = columns.find((col) => col.id === over.id)
     if (!targetCol) {
-      const overTodo = todos.find((t) => t._id === over.id)
-      if (overTodo) {
+      const overTask = tasks.find((t) => t._id === over.id)
+      if (overTask) {
         // Find which column this card belongs to
-        if (statuses && statuses.length > 0 && overTodo.statusId) {
-          targetCol = columns.find((c) => c.id === overTodo.statusId)
+        if (statuses && statuses.length > 0 && overTask.statusId) {
+          targetCol = columns.find((c) => c.id === overTask.statusId)
         }
         if (!targetCol) {
-          targetCol = columns.find((c) => c.category === overTodo.status)
+          targetCol = columns.find((c) => c.category === overTask.status)
         }
       }
     }
@@ -172,11 +172,11 @@ export function KanbanBoard({ todos, statuses, onStatusChange, onQuickAdd }: Kan
     if (!targetCol) return
 
     // Check if actually changed
-    const currentColId = todo.statusId || todo.status
+    const currentColId = task.statusId || task.status
     if (targetCol.id === currentColId) return
 
     const isCustom = statuses && statuses.length > 0
-    onStatusChange(todoId, targetCol.category, isCustom ? targetCol.id : undefined)
+    onStatusChange(taskId, targetCol.category, isCustom ? targetCol.id : undefined)
   }
 
   return (
@@ -198,7 +198,7 @@ export function KanbanBoard({ todos, statuses, onStatusChange, onQuickAdd }: Kan
             icon={col.icon}
             color={col.hexColor ? undefined : undefined}
             hexColor={col.hexColor}
-            todos={grouped[col.id] ?? []}
+            tasks={grouped[col.id] ?? []}
             onQuickAdd={
               onQuickAdd
                 ? (title) => {
@@ -212,7 +212,7 @@ export function KanbanBoard({ todos, statuses, onStatusChange, onQuickAdd }: Kan
       </div>
 
       <DragOverlay>
-        {activeTodo ? <KanbanCard todo={activeTodo} isDragOverlay /> : null}
+        {activeTask ? <KanbanCard task={activeTask} isDragOverlay /> : null}
       </DragOverlay>
     </DndContext>
   )

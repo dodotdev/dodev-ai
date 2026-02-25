@@ -19,12 +19,12 @@ export const metadata: Metadata = {
     template: "%s | dodev.ai",
   },
   description:
-    "Open-source todo and memory management for AI agents. Give Claude, Cursor, and any MCP client persistent cross-session awareness.",
+    "Open-source task and memory management for AI agents. Give Claude, Cursor, and any MCP client persistent cross-session awareness.",
   metadataBase: new URL("https://dodev.ai"),
   openGraph: {
     title: "dodev.ai - AI-Native Task & Memory Management",
     description:
-      "Open-source todo and memory management for AI agents. Give Claude, Cursor, and any MCP client persistent cross-session awareness.",
+      "Open-source task and memory management for AI agents. Give Claude, Cursor, and any MCP client persistent cross-session awareness.",
     url: "https://dodev.ai",
     siteName: "dodev.ai",
     type: "website",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "dodev.ai - AI-Native Task & Memory Management",
     description:
-      "Open-source todo and memory management for AI agents. Give Claude, Cursor, and any MCP client persistent cross-session awareness.",
+      "Open-source task and memory management for AI agents. Give Claude, Cursor, and any MCP client persistent cross-session awareness.",
   },
 }
 

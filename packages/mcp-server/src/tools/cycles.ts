@@ -82,7 +82,7 @@ export const cycleTools: Tool[] = [
   },
   {
     name: "delete_cycle",
-    description: "Delete a cycle. Removes the cycle association from all todos assigned to it.",
+    description: "Delete a cycle. Removes the cycle association from all tasks assigned to it.",
     inputSchema: {
       type: "object" as const,
       properties: {

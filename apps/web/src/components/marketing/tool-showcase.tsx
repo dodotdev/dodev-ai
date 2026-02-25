@@ -6,12 +6,12 @@ import { cn } from "@/lib/utils"
 
 const categories = [
   {
-    id: "todos",
-    label: "Todos",
-    tools: ["create_todo", "update_todo", "complete_todo", "list_todos", "get_todo", "delete_todo"],
+    id: "tasks",
+    label: "Tasks",
+    tools: ["create_task", "update_task", "complete_task", "list_tasks", "get_task", "delete_task"],
     example: {
       request: `{
-  "tool": "create_todo",
+  "tool": "create_task",
   "arguments": {
     "title": "Implement OAuth flow",
     "priority": "high",
@@ -95,7 +95,7 @@ const categories = [
   "activeProject": {
     "name": "backend-api"
   },
-  "todoSummary": {
+  "taskSummary": {
     "pending": 5,
     "inProgress": 2,
     "topPending": [...]
@@ -111,7 +111,7 @@ const categories = [
 ]
 
 export function ToolShowcase() {
-  const [activeTab, setActiveTab] = useState("todos")
+  const [activeTab, setActiveTab] = useState("tasks")
   const active = categories.find((c) => c.id === activeTab)!
 
   return (

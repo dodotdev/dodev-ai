@@ -35,7 +35,7 @@ interface ProjectConfig {
   estimateScale?: { type: string; values: string[] }
 }
 
-interface TodoFormData {
+interface TaskFormData {
   title: string
   description?: string
   priority: string
@@ -48,8 +48,8 @@ interface TodoFormData {
   attachments?: File[]
 }
 
-interface TodoFormProps {
-  onSubmit: (data: TodoFormData) => void | Promise<void>
+interface TaskFormProps {
+  onSubmit: (data: TaskFormData) => void | Promise<void>
   projectConfig?: ProjectConfig
   trigger?: React.ReactNode
 }
@@ -72,7 +72,7 @@ function PriorityIcon({ className }: { className?: string }) {
   return <Signal className={cn("size-3.5", className)} />
 }
 
-export function TodoForm({ onSubmit, projectConfig, trigger }: TodoFormProps) {
+export function TaskForm({ onSubmit, projectConfig, trigger }: TaskFormProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -162,7 +162,7 @@ export function TodoForm({ onSubmit, projectConfig, trigger }: TodoFormProps) {
             className="bg-gradient-to-r from-emerald-400 to-emerald-600 text-white hover:from-emerald-500 hover:to-emerald-700"
           >
             <Plus className="mr-1 size-4" />
-            New Todo
+            New Task
           </Button>
         )}
       </DialogTrigger>
@@ -170,7 +170,7 @@ export function TodoForm({ onSubmit, projectConfig, trigger }: TodoFormProps) {
         showCloseButton={false}
         className="flex max-w-3xl flex-col gap-0 overflow-hidden p-0"
       >
-        <DialogTitle className="sr-only">Create Todo</DialogTitle>
+        <DialogTitle className="sr-only">Create Task</DialogTitle>
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -178,7 +178,7 @@ export function TodoForm({ onSubmit, projectConfig, trigger }: TodoFormProps) {
               DO
             </span>
             <ChevronRight className="size-3.5" />
-            <span className="font-medium text-foreground">New todo</span>
+            <span className="font-medium text-foreground">New task</span>
           </div>
           <div className="flex items-center gap-1">
             <button
@@ -216,7 +216,7 @@ export function TodoForm({ onSubmit, projectConfig, trigger }: TodoFormProps) {
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Todo title"
+              placeholder="Task title"
               className="w-full bg-transparent text-lg font-medium placeholder:text-muted-foreground/60 focus:outline-none"
               autoFocus
             />
@@ -494,7 +494,7 @@ export function TodoForm({ onSubmit, projectConfig, trigger }: TodoFormProps) {
               disabled={!title.trim() || isSubmitting}
               className="shrink-0 bg-primary px-4 text-primary-foreground hover:bg-primary/90"
             >
-              {isSubmitting ? "Creating..." : "Create todo"}
+              {isSubmitting ? "Creating..." : "Create task"}
             </Button>
           </div>
         </form>

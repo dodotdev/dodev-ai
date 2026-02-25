@@ -20,7 +20,7 @@ export async function incrementUsage(
   ctx: MutationCtx,
   userId: Id<"users">,
   field:
-    | "todoCount"
+    | "taskCount"
     | "memoryCount"
     | "projectCount"
     | "issueCount"
@@ -42,7 +42,7 @@ export async function incrementUsage(
     await ctx.db.insert("usage", {
       userId,
       period,
-      todoCount: field === "todoCount" ? 1 : 0,
+      taskCount: field === "taskCount" ? 1 : 0,
       memoryCount: field === "memoryCount" ? 1 : 0,
       projectCount: field === "projectCount" ? 1 : 0,
       issueCount: field === "issueCount" ? 1 : 0,

@@ -26,14 +26,14 @@ function timeAgo(ts: number): string {
 
 function toolCategory(tool: string): string {
   if (
-    tool.startsWith("create_todo") ||
-    tool.startsWith("update_todo") ||
-    tool.startsWith("complete_todo") ||
-    tool.startsWith("list_todo") ||
-    tool.startsWith("get_todo") ||
-    tool.startsWith("delete_todo")
+    tool.startsWith("create_task") ||
+    tool.startsWith("update_task") ||
+    tool.startsWith("complete_task") ||
+    tool.startsWith("list_task") ||
+    tool.startsWith("get_task") ||
+    tool.startsWith("delete_task")
   )
-    return "todo"
+    return "task"
   if (tool.includes("issue")) return "issue"
   if (tool.includes("memory") || tool === "add_memory" || tool === "search_memories")
     return "memory"
@@ -46,7 +46,7 @@ function toolCategory(tool: string): string {
 }
 
 const categoryColors: Record<string, string> = {
-  todo: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+  task: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
   issue: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
   memory: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
   project: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",

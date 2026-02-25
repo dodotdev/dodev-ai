@@ -55,15 +55,15 @@ export const updateStatuses = mutation({
 
     const validIds = new Set(statuses.map((s) => s.id))
 
-    // Clear orphaned statusId refs on todos
-    const todos = await ctx.db
-      .query("todos")
+    // Clear orphaned statusId refs on tasks
+    const tasks = await ctx.db
+      .query("tasks")
       .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.projectId))
       .collect()
 
-    for (const todo of todos) {
-      if (todo.statusId && !validIds.has(todo.statusId)) {
-        await ctx.db.patch(todo._id, { statusId: undefined, updatedAt: Date.now() })
+    for (const task of tasks) {
+      if (task.statusId && !validIds.has(task.statusId)) {
+        await ctx.db.patch(task._id, { statusId: undefined, updatedAt: Date.now() })
       }
     }
 
@@ -117,16 +117,16 @@ export const removeLabel = mutation({
     const labels = project.labels.filter((l) => l.id !== args.labelId)
     await ctx.db.patch(args.projectId, { labels, updatedAt: Date.now() })
 
-    // Clear labelIds refs from todos
-    const todos = await ctx.db
-      .query("todos")
+    // Clear labelIds refs from tasks
+    const tasks = await ctx.db
+      .query("tasks")
       .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.projectId))
       .collect()
 
-    for (const todo of todos) {
-      if (todo.labelIds?.includes(args.labelId)) {
-        const newLabelIds = todo.labelIds.filter((id) => id !== args.labelId)
-        await ctx.db.patch(todo._id, {
+    for (const task of tasks) {
+      if (task.labelIds?.includes(args.labelId)) {
+        const newLabelIds = task.labelIds.filter((id) => id !== args.labelId)
+        await ctx.db.patch(task._id, {
           labelIds: newLabelIds.length > 0 ? newLabelIds : undefined,
           updatedAt: Date.now(),
         })
@@ -218,15 +218,15 @@ export const removeMember = mutation({
     const members = project.members.filter((m) => m.id !== args.memberId)
     await ctx.db.patch(args.projectId, { members, updatedAt: Date.now() })
 
-    // Clear assigneeId refs from todos
-    const todos = await ctx.db
-      .query("todos")
+    // Clear assigneeId refs from tasks
+    const tasks = await ctx.db
+      .query("tasks")
       .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.projectId))
       .collect()
 
-    for (const todo of todos) {
-      if (todo.assigneeId === args.memberId) {
-        await ctx.db.patch(todo._id, { assigneeId: undefined, updatedAt: Date.now() })
+    for (const task of tasks) {
+      if (task.assigneeId === args.memberId) {
+        await ctx.db.patch(task._id, { assigneeId: undefined, updatedAt: Date.now() })
       }
     }
 
@@ -283,18 +283,18 @@ export const updateEstimateScale = mutation({
 
     const estimateScale = { type: args.type, values: args.values }
 
-    // If scale type changed, clear estimates from todos
+    // If scale type changed, clear estimates from tasks
     if (project.estimateScale.type !== args.type) {
-      const todos = await ctx.db
-        .query("todos")
+      const tasks = await ctx.db
+        .query("tasks")
         .withIndex("by_user_project", (q) =>
           q.eq("userId", user._id).eq("projectId", args.projectId)
         )
         .collect()
 
-      for (const todo of todos) {
-        if (todo.estimate) {
-          await ctx.db.patch(todo._id, { estimate: undefined, updatedAt: Date.now() })
+      for (const task of tasks) {
+        if (task.estimate) {
+          await ctx.db.patch(task._id, { estimate: undefined, updatedAt: Date.now() })
         }
       }
     }

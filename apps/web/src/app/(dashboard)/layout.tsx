@@ -45,6 +45,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       workosUserId: user.id,
       email: user.email,
       name: user.name,
+      avatarUrl: user.avatarUrl,
     })
   }
 
@@ -53,7 +54,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <DashboardProviders workosUserId={user.id} email={user.email} name={user.name}>
+    <DashboardProviders workosUserId={user.id} email={user.email} name={user.name} avatarUrl={user.avatarUrl}>
       {children}
     </DashboardProviders>
   )

@@ -4,6 +4,7 @@ export interface AuthUser {
   id: string
   email: string
   name?: string
+  avatarUrl?: string
 }
 
 /**
@@ -29,6 +30,7 @@ export async function getUser(): Promise<AuthUser | null> {
       id: user.id,
       email: user.email,
       name: [user.firstName, user.lastName].filter(Boolean).join(" ") || undefined,
+      avatarUrl: user.profilePictureUrl ?? undefined,
     }
   } catch {
     return null

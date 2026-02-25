@@ -20,10 +20,10 @@ interface ProjectItem {
   createdAt: number
   updatedAt: number
   stats?: {
-    totalTodos: number
-    pendingTodos: number
-    inProgressTodos: number
-    completedTodos: number
+    totalTasks: number
+    pendingTasks: number
+    inProgressTasks: number
+    completedTasks: number
     memoryCount: number
   }
 }
@@ -103,7 +103,7 @@ export function ProjectCards({ projects, onArchive }: ProjectCardsProps) {
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <CheckSquare className="size-3" />
                 <span>
-                  {project.stats.completedTodos}/{project.stats.totalTodos} todos
+                  {project.stats.completedTasks}/{project.stats.totalTasks} tasks
                 </span>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">

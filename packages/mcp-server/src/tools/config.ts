@@ -53,7 +53,7 @@ export const configTools: Tool[] = [
   {
     name: "remove_project_label",
     description:
-      "Remove a label from a project. Clears the label from all todos that reference it.",
+      "Remove a label from a project. Clears the label from all tasks that reference it.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -80,7 +80,7 @@ export const configTools: Tool[] = [
   {
     name: "remove_project_member",
     description:
-      "Remove a member from a project. Unassigns them from all todos they are assigned to.",
+      "Remove a member from a project. Unassigns them from all tasks they are assigned to.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -93,7 +93,7 @@ export const configTools: Tool[] = [
   {
     name: "update_estimate_scale",
     description:
-      "Update the effort estimation scale for a project. If the scale type changes, clears existing estimates from todos.",
+      "Update the effort estimation scale for a project. If the scale type changes, clears existing estimates from tasks.",
     inputSchema: {
       type: "object" as const,
       properties: {

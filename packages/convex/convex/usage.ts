@@ -20,7 +20,7 @@ export const getCurrentUsage = query({
       return {
         userId: user._id,
         period,
-        todoCount: 0,
+        taskCount: 0,
         memoryCount: 0,
         projectCount: 0,
         issueCount: 0,

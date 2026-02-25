@@ -4,10 +4,10 @@ import { Brain, CheckSquare, Clock, FolderOpen, Loader2 } from "lucide-react"
 
 interface StatsCardsProps {
   stats: {
-    totalTodos: number
-    pendingTodos: number
-    inProgressTodos: number
-    completedTodos: number
+    totalTasks: number
+    pendingTasks: number
+    inProgressTasks: number
+    completedTasks: number
     totalMemories: number
     totalProjects: number
   }
@@ -15,28 +15,28 @@ interface StatsCardsProps {
 
 const cards = [
   {
-    key: "totalTodos",
-    label: "Total Todos",
+    key: "totalTasks",
+    label: "Total Tasks",
     icon: CheckSquare,
     bg: "bg-emerald-50 dark:bg-emerald-500/10",
     color: "text-emerald-600",
   },
   {
-    key: "pendingTodos",
+    key: "pendingTasks",
     label: "Pending",
     icon: Clock,
     bg: "bg-amber-50 dark:bg-amber-500/10",
     color: "text-amber-600",
   },
   {
-    key: "inProgressTodos",
+    key: "inProgressTasks",
     label: "In Progress",
     icon: Loader2,
     bg: "bg-blue-50 dark:bg-blue-500/10",
     color: "text-blue-600",
   },
   {
-    key: "completedTodos",
+    key: "completedTasks",
     label: "Completed",
     icon: CheckSquare,
     bg: "bg-emerald-50 dark:bg-emerald-500/10",

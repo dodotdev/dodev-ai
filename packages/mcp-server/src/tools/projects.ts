@@ -6,7 +6,7 @@ export const projectTools: Tool[] = [
   {
     name: "create_project",
     description:
-      "Create a new project to organize todos, issues, and memories for a codebase or initiative. After creating, call link_project to associate the current workspace so the project is auto-detected in future sessions.",
+      "Create a new project to organize tasks, issues, and memories for a codebase or initiative. After creating, call link_project to associate the current workspace so the project is auto-detected in future sessions.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -28,7 +28,7 @@ export const projectTools: Tool[] = [
   {
     name: "list_projects",
     description:
-      "List all projects. By default excludes archived projects. Optionally include todo/memory counts.",
+      "List all projects. By default excludes archived projects. Optionally include task/memory counts.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -39,7 +39,7 @@ export const projectTools: Tool[] = [
         },
         includeStats: {
           type: "boolean",
-          description: "Include todo/memory counts. Default: false",
+          description: "Include task/memory counts. Default: false",
         },
       },
     },

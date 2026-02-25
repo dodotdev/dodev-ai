@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**dodev.ai** is an open-source, AI-native task and memory management system built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). It gives AI agents (Claude Code, Cursor, Windsurf, etc.) persistent, cross-session awareness of todos, issues, memories, and project context — with Linear-like project management features.
+**dodev.ai** is an open-source, AI-native task and memory management system built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). It gives AI agents (Claude Code, Cursor, Windsurf, etc.) persistent, cross-session awareness of tasks, issues, memories, and project context — with Linear-like project management features.
 
 - **Website**: dodev.ai
 - **npm package**: `@dodev/mcp-server`
@@ -19,14 +19,14 @@ Shared do.dev conventions are loaded via `.claude/CLAUDE.md` (symlinked to `do-c
 This project has a connected dodev.ai MCP server. You MUST use it proactively:
 
 ### Session Start
-- **Always** call `get_context` at the beginning of every session to load the active project, pending todos, recent memories, and project config.
+- **Always** call `get_context` at the beginning of every session to load the active project, pending tasks, recent memories, and project config.
 - **Always** call `search_memories` before starting any non-trivial task to check for relevant past decisions, gotchas, and preferences.
 
 ### During Work
 - **Store memories** proactively via `add_memory` whenever you discover facts about the codebase, make architectural decisions, learn user preferences, encounter non-obvious behavior, or resolve tricky bugs. Write each memory so a future agent with no context can understand it.
-- **Create todos** via `create_todo` for follow-up work, known issues, or tasks you can't complete right now.
+- **Create tasks** via `create_task` for follow-up work, known issues, or tasks you can't complete right now.
 - **Create issues** via `create_issue` for bugs found during development.
-- **Update todos/issues** as you work — mark them `in_progress` when starting, `completed` when done.
+- **Update tasks/issues** as you work — mark them `in_progress` when starting, `completed` when done.
 
 ### Memory Best Practices
 - Use type: `"fact"` for codebase/infrastructure facts, `"decision"` for architectural choices, `"preference"` for user conventions, `"learning"` for gotchas and lessons learned.
@@ -35,8 +35,8 @@ This project has a connected dodev.ai MCP server. You MUST use it proactively:
 - Update existing memories rather than creating duplicates.
 
 ### Project Context
-- The active dodev.ai project is **"dodev"** (slug: DODEV, ID: `jd7c2ehq03hap29srh1sv895xx81va1e`).
-- Always scope todos, issues, and memories to this project using the `projectId` parameter.
+- The active dodev.ai project is **"dodev"** (slug: DODEV, ID: `jd71k24g625k3dqk4xq71szmqd81qbdv`).
+- Always scope tasks, issues, and memories to this project using the `projectId` parameter.
 
 ## Architecture
 
@@ -61,7 +61,7 @@ domcp-ai/
 ├── packages/
 │   ├── mcp-server/          # MCP server (npm-publishable)
 │   │   └── src/
-│   │       ├── tools/       # Tool implementations (7 files: todos, issues, memories, projects, context, config, cycles)
+│   │       ├── tools/       # Tool implementations (7 files: tasks, issues, memories, projects, context, config, cycles)
 │   │       ├── auth/        # API key hashing (SHA-256)
 │   │       ├── server.ts    # MCP server setup and request handlers
 │   │       ├── index.ts     # Entry point (stdio transport)
@@ -70,7 +70,7 @@ domcp-ai/
 │   ├── convex/              # Convex schema + functions
 │   │   └── convex/
 │   │       ├── schema.ts    # Database schema (8 tables, 27+ indexes)
-│   │       ├── todos.ts     # Todo CRUD (5 functions)
+│   │       ├── tasks.ts     # Task CRUD (5 functions)
 │   │       ├── issues.ts    # Issue CRUD (5 functions)
 │   │       ├── memories.ts  # Memory CRUD + search (5 functions)
 │   │       ├── projects.ts  # Project CRUD + getContext (6 functions)
@@ -86,7 +86,7 @@ domcp-ai/
 │   │           └── utils.ts # Usage increment, period helpers
 │   └── shared/              # Shared types and validators
 │       └── src/
-│           ├── types.ts     # 15 interfaces: Todo, Issue, Memory, Project, Cycle, User, etc.
+│           ├── types.ts     # 15 interfaces: Task, Issue, Memory, Project, Cycle, User, etc.
 │           ├── constants.ts # Plan limits, rate limits, validation limits, default statuses/estimates
 │           └── validators.ts # Input validation helpers
 ├── docker/                  # Docker Compose for self-hosting
@@ -138,17 +138,17 @@ All Convex functions authenticate via `authenticateApiKey()` in `packages/convex
 
 ## Data Model (Convex)
 
-Eight tables: `users`, `projects`, `todos`, `issues`, `memories`, `cycles`, `sessions`, `usage`.
+Eight tables: `users`, `projects`, `tasks`, `issues`, `memories`, `cycles`, `sessions`, `usage`.
 
 Key patterns:
 - `userId` on every row — all queries are user-scoped
-- Indexes follow query patterns: `by_user_project_status` for "pending todos in project X"
-- Full-text search indexes on `todos.title`, `issues.title`, and `memories.content`
+- Indexes follow query patterns: `by_user_project_status` for "pending tasks in project X"
+- Full-text search indexes on `tasks.title`, `issues.title`, and `memories.content`
 - Vector index on `memories.embedding` (1536 dimensions, schema defined but not yet used)
-- `usage` table tracks monthly quotas per user (free plan: 1 project, 100 todos, 200 issues, 50 memories)
+- `usage` table tracks monthly quotas per user (free plan: 1 project, 100 tasks, 200 issues, 50 memories)
 - Projects embed their config: custom workflow statuses, labels, members, estimate scale, AI persona
-- Todos and issues have Linear-like fields: `statusId`, `labelIds`, `assigneeId`, `estimate`, `cycleId`
-- Projects have auto-incrementing `todoCounter` and `issueCounter` for human-readable numbering
+- Tasks and issues have Linear-like fields: `statusId`, `labelIds`, `assigneeId`, `estimate`, `cycleId`
+- Projects have auto-incrementing `taskCounter` and `issueCounter` for human-readable numbering
 
 See `docs/CONVEX_SCHEMA.md` for complete schema and function signatures. See `docs/MEMORY.md` for the memory architecture design (semantic search, hybrid search, embedding generation, consolidation, and phased implementation plan).
 
@@ -156,13 +156,13 @@ See `docs/CONVEX_SCHEMA.md` for complete schema and function signatures. See `do
 
 31 tools across 7 categories (34 planned after Phase 1) — see `docs/MCP_TOOLS.md` for full spec:
 
-- **Todos** (6): `create_todo`, `update_todo`, `complete_todo`, `list_todos`, `get_todo`, `delete_todo`
+- **Tasks** (6): `create_task`, `update_task`, `complete_task`, `list_tasks`, `get_task`, `delete_task`
 - **Issues** (6): `create_issue`, `update_issue`, `close_issue`, `list_issues`, `get_issue`, `delete_issue`
 - **Memories** (5): `add_memory`, `search_memories`, `list_memories`, `update_memory`, `delete_memory`
 - **Projects** (6 → 9 after Phase 1): `create_project`, `list_projects`, `get_project`, `update_project`, `archive_project`, `set_active_project`. Planned: `link_project`, `unlink_project`, `update_memory_settings`
 - **Config** (7): `update_project_statuses`, `add_project_label`, `remove_project_label`, `add_project_member`, `remove_project_member`, `update_estimate_scale`, `update_project_persona`
 - **Cycles** (5): `create_cycle`, `list_cycles`, `get_cycle`, `update_cycle`, `delete_cycle`
-- **Context** (1): `get_context` — session bootstrapper returning active project, pending todos, recent memories, project config, and active cycle. Phase 1 will add workspace auto-detection (resolve project from git remote or workspace path), type-prioritized memory loading, and memory settings in the response.
+- **Context** (1): `get_context` — session bootstrapper returning active project, pending tasks, recent memories, project config, and active cycle. Phase 1 will add workspace auto-detection (resolve project from git remote or workspace path), type-prioritized memory loading, and memory settings in the response.
 
 Conventions: All tools return JSON. Timestamps are Unix ms. IDs are opaque Convex document IDs.
 

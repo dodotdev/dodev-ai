@@ -25,7 +25,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    await checkQuota(ctx, user, "todos")
+    await checkQuota(ctx, user, "tasks")
 
     // Derive base status category from statusId if provided
     let status: "pending" | "in_progress" | "completed" | "cancelled" = "pending"
@@ -43,7 +43,7 @@ export const create = mutation({
     await ctx.db.patch(user._id, { itemCounter: nextNumber })
 
     const now = Date.now()
-    const id = await ctx.db.insert("todos", {
+    const id = await ctx.db.insert("tasks", {
       userId: user._id,
       projectId: args.projectId,
       number: nextNumber,
@@ -63,7 +63,7 @@ export const create = mutation({
       updatedAt: now,
     })
 
-    await incrementUsage(ctx, user._id, "todoCount")
+    await incrementUsage(ctx, user._id, "taskCount")
     return await ctx.db.get(id)
   },
 })
@@ -71,7 +71,7 @@ export const create = mutation({
 export const update = mutation({
   args: {
     apiKeyHash: v.string(),
-    id: v.id("todos"),
+    id: v.id("tasks"),
     title: v.optional(v.string()),
     description: v.optional(v.string()),
     status: v.optional(
@@ -105,8 +105,8 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const todo = await ctx.db.get(args.id)
-    if (!todo || todo.userId !== user._id) {
+    const task = await ctx.db.get(args.id)
+    if (!task || task.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
 
@@ -122,7 +122,7 @@ export const update = mutation({
         updates.statusId = args.statusId
         // Look up project to derive category
         const projectId =
-          args.projectId !== undefined ? (args.projectId ?? undefined) : todo.projectId
+          args.projectId !== undefined ? (args.projectId ?? undefined) : task.projectId
         if (projectId) {
           const project = await ctx.db.get(projectId)
           if (project) {
@@ -160,19 +160,19 @@ export const update = mutation({
 export const remove = mutation({
   args: {
     apiKeyHash: v.string(),
-    id: v.id("todos"),
+    id: v.id("tasks"),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const todo = await ctx.db.get(args.id)
-    if (!todo || todo.userId !== user._id) {
+    const task = await ctx.db.get(args.id)
+    if (!task || task.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
 
     // Cascade delete associated attachments
     const attachments = await ctx.db
       .query("attachments")
-      .withIndex("by_todo", (q) => q.eq("todoId", args.id))
+      .withIndex("by_task", (q) => q.eq("taskId", args.id))
       .collect()
     for (const att of attachments) {
       await ctx.storage.delete(att.storageId)
@@ -182,7 +182,7 @@ export const remove = mutation({
     // Cascade delete associated comments
     const comments = await ctx.db
       .query("comments")
-      .withIndex("by_todo", (q) => q.eq("todoId", args.id))
+      .withIndex("by_task", (q) => q.eq("taskId", args.id))
       .collect()
     for (const comment of comments) {
       await ctx.db.delete(comment._id)
@@ -209,7 +209,7 @@ export const list = query({
 
     if (args.search) {
       return await ctx.db
-        .query("todos")
+        .query("tasks")
         .withSearchIndex("search_title_description", (q) => {
           let search = q.search("title", args.search!)
           search = search.eq("userId", user._id)
@@ -220,42 +220,42 @@ export const list = query({
     }
 
     // Index-based query
-    let todoQuery
+    let taskQuery
     if (args.projectId && args.status) {
-      todoQuery = ctx.db.query("todos").withIndex("by_user_project_status", (q) =>
+      taskQuery = ctx.db.query("tasks").withIndex("by_user_project_status", (q) =>
         q
           .eq("userId", user._id)
           .eq("projectId", args.projectId!)
           .eq("status", args.status as "pending" | "in_progress" | "completed" | "cancelled")
       )
     } else if (args.projectId) {
-      todoQuery = ctx.db
-        .query("todos")
+      taskQuery = ctx.db
+        .query("tasks")
         .withIndex("by_user_project", (q) =>
           q.eq("userId", user._id).eq("projectId", args.projectId!)
         )
     } else if (args.globalOnly && args.status) {
       // Global-only with status: fetch unscoped, then filter
-      todoQuery = ctx.db
-        .query("todos")
+      taskQuery = ctx.db
+        .query("tasks")
         .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", undefined))
     } else if (args.globalOnly) {
-      todoQuery = ctx.db
-        .query("todos")
+      taskQuery = ctx.db
+        .query("tasks")
         .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", undefined))
     } else if (args.status) {
-      todoQuery = ctx.db
-        .query("todos")
+      taskQuery = ctx.db
+        .query("tasks")
         .withIndex("by_user_status", (q) =>
           q
             .eq("userId", user._id)
             .eq("status", args.status as "pending" | "in_progress" | "completed" | "cancelled")
         )
     } else {
-      todoQuery = ctx.db.query("todos").withIndex("by_user", (q) => q.eq("userId", user._id))
+      taskQuery = ctx.db.query("tasks").withIndex("by_user", (q) => q.eq("userId", user._id))
     }
 
-    let results = await todoQuery.order("desc").take(limit)
+    let results = await taskQuery.order("desc").take(limit)
 
     // Post-filter status for globalOnly + status combo (no compound index)
     if (args.globalOnly && args.status) {
@@ -269,14 +269,14 @@ export const list = query({
 export const get = query({
   args: {
     apiKeyHash: v.string(),
-    id: v.id("todos"),
+    id: v.id("tasks"),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const todo = await ctx.db.get(args.id)
-    if (!todo || todo.userId !== user._id) {
+    const task = await ctx.db.get(args.id)
+    if (!task || task.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
-    return todo
+    return task
   },
 })

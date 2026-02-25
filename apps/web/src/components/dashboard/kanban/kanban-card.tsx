@@ -17,7 +17,7 @@ interface ResolvedAssignee {
   avatarUrl?: string
 }
 
-export interface KanbanTodo {
+export interface KanbanTask {
   _id: string
   title: string
   description?: string
@@ -63,13 +63,13 @@ const severityColors: Record<string, string> = {
 }
 
 interface KanbanCardProps {
-  todo: KanbanTodo
+  task: KanbanTask
   isDragOverlay?: boolean
 }
 
-export function KanbanCard({ todo, isDragOverlay }: KanbanCardProps) {
+export function KanbanCard({ task, isDragOverlay }: KanbanCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: todo._id,
+    id: task._id,
   })
 
   const style = {
@@ -77,7 +77,7 @@ export function KanbanCard({ todo, isDragOverlay }: KanbanCardProps) {
     transition,
   }
 
-  const initials = todo.resolvedAssignee?.name
+  const initials = task.resolvedAssignee?.name
     ?.split(" ")
     .map((w) => w[0])
     .join("")
@@ -96,24 +96,24 @@ export function KanbanCard({ todo, isDragOverlay }: KanbanCardProps) {
         isDragOverlay && "shadow-xl scale-105 rotate-2"
       )}
     >
-      {todo.issueId && (
+      {task.issueId && (
         <p className="mb-1 font-mono text-[10px] font-medium text-muted-foreground">
-          {todo.issueId}
+          {task.issueId}
         </p>
       )}
       <div className="flex items-start justify-between gap-2">
         <p
           className={cn(
             "text-sm font-medium leading-snug flex-1",
-            todo.status === "completed" && "text-muted-foreground line-through"
+            task.status === "completed" && "text-muted-foreground line-through"
           )}
         >
-          {todo.title}
+          {task.title}
         </p>
-        {todo.resolvedAssignee && (
+        {task.resolvedAssignee && (
           <div
             className="flex size-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-[10px] font-semibold text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"
-            title={todo.resolvedAssignee.name}
+            title={task.resolvedAssignee.name}
           >
             {initials}
           </div>
@@ -123,36 +123,36 @@ export function KanbanCard({ todo, isDragOverlay }: KanbanCardProps) {
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         <Badge
           variant="secondary"
-          className={cn("text-[10px] px-1.5 py-0", priorityColors[todo.priority])}
+          className={cn("text-[10px] px-1.5 py-0", priorityColors[task.priority])}
         >
-          {todo.priority}
+          {task.priority}
         </Badge>
 
-        {todo.type && (
+        {task.type && (
           <Badge
             variant="secondary"
-            className={cn("text-[10px] px-1.5 py-0", typeColors[todo.type])}
+            className={cn("text-[10px] px-1.5 py-0", typeColors[task.type])}
           >
-            {todo.type}
+            {task.type}
           </Badge>
         )}
 
-        {todo.severity && (
+        {task.severity && (
           <Badge
             variant="secondary"
-            className={cn("text-[10px] px-1.5 py-0", severityColors[todo.severity])}
+            className={cn("text-[10px] px-1.5 py-0", severityColors[task.severity])}
           >
-            {todo.severity}
+            {task.severity}
           </Badge>
         )}
 
-        {todo.estimate && (
+        {task.estimate && (
           <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-mono">
-            {todo.estimate}
+            {task.estimate}
           </Badge>
         )}
 
-        {todo.resolvedLabels?.map((label) => (
+        {task.resolvedLabels?.map((label) => (
           <Badge key={label.id} variant="outline" className="text-[10px] px-1.5 py-0 gap-1">
             <span
               className="inline-block size-2 rounded-full"
@@ -162,14 +162,14 @@ export function KanbanCard({ todo, isDragOverlay }: KanbanCardProps) {
           </Badge>
         ))}
 
-        {todo.tags.map((tag) => (
+        {task.tags.map((tag) => (
           <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0">
             {tag}
           </Badge>
         ))}
       </div>
 
-      <p className="mt-2 text-[10px] text-muted-foreground">{formatRelativeTime(todo.updatedAt)}</p>
+      <p className="mt-2 text-[10px] text-muted-foreground">{formatRelativeTime(task.updatedAt)}</p>
     </div>
   )
 }

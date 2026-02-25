@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
-import { KanbanCard, type KanbanTodo } from "./kanban-card"
+import { KanbanCard, type KanbanTask } from "./kanban-card"
 
 interface KanbanColumnProps {
   id: string
@@ -17,7 +17,7 @@ interface KanbanColumnProps {
   icon: LucideIcon
   color?: string
   hexColor?: string
-  todos: KanbanTodo[]
+  tasks: KanbanTask[]
   onQuickAdd?: (title: string) => void
 }
 
@@ -27,7 +27,7 @@ export function KanbanColumn({
   icon: Icon,
   color,
   hexColor,
-  todos,
+  tasks,
   onQuickAdd,
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id })
@@ -53,16 +53,16 @@ export function KanbanColumn({
         <Icon className={cn("size-4", color)} style={hexColor ? { color: hexColor } : undefined} />
         <span className="text-sm font-semibold">{title}</span>
         <Badge variant="secondary" className="ml-auto text-[10px]">
-          {todos.length}
+          {tasks.length}
         </Badge>
       </div>
 
       {/* Card list */}
       <ScrollArea className="flex-1">
         <div ref={setNodeRef} className="min-h-[120px] space-y-2 p-2">
-          <SortableContext items={todos.map((t) => t._id)} strategy={verticalListSortingStrategy}>
-            {todos.map((todo) => (
-              <KanbanCard key={todo._id} todo={todo} />
+          <SortableContext items={tasks.map((t) => t._id)} strategy={verticalListSortingStrategy}>
+            {tasks.map((task) => (
+              <KanbanCard key={task._id} task={task} />
             ))}
           </SortableContext>
         </div>
@@ -76,7 +76,7 @@ export function KanbanColumn({
             <Input
               value={quickAddValue}
               onChange={(e) => setQuickAddValue(e.target.value)}
-              placeholder="Add a todo..."
+              placeholder="Add a task..."
               className="h-7 border-0 bg-transparent px-0 text-xs shadow-none focus-visible:ring-0"
             />
           </div>

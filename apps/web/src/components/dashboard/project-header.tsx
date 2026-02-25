@@ -278,7 +278,7 @@ function ProjectSettingsModal({
                       <p className="text-sm text-muted-foreground">
                         Permanently delete{" "}
                         <span className="font-medium text-foreground">{project.name}</span> and all
-                        its todos, issues, and memories? This cannot be undone.
+                        its tasks, issues, and memories? This cannot be undone.
                       </p>
                       <div className="flex gap-2">
                         <Button

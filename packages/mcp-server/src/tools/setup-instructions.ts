@@ -12,7 +12,7 @@ export function generateSetupInstructions(project?: ProjectInfo): string {
   const projectSection = project
     ? `### Project Context
 - The active dodev.ai project is **"${project.projectName}"** (slug: ${project.projectSlug}, ID: \`${project.projectId}\`).
-- Always scope todos, issues, and memories to this project using the \`projectId\` parameter.`
+- Always scope tasks, issues, and memories to this project using the \`projectId\` parameter.`
     : `### Project Context
 - No project is linked to this workspace yet. Create one with \`create_project\` and link it with \`link_project\`.`
 
@@ -21,14 +21,14 @@ export function generateSetupInstructions(project?: ProjectInfo): string {
 This project has a connected dodev.ai MCP server. You MUST use it proactively:
 
 ### Session Start
-- **Always** call \`get_context\` at the beginning of every session to load the active project, pending todos, recent memories, and project config.
+- **Always** call \`get_context\` at the beginning of every session to load the active project, pending tasks, recent memories, and project config.
 - **Always** call \`search_memories\` before starting any non-trivial task to check for relevant past decisions, gotchas, and preferences.
 
 ### During Work
 - **Store memories** proactively via \`add_memory\` whenever you discover facts about the codebase, make architectural decisions, learn user preferences, encounter non-obvious behavior, or resolve tricky bugs. Write each memory so a future agent with no context can understand it.
-- **Create todos** via \`create_todo\` for follow-up work, known issues, or tasks you can't complete right now.
+- **Create tasks** via \`create_task\` for follow-up work, known issues, or tasks you can't complete right now.
 - **Create issues** via \`create_issue\` for bugs found during development.
-- **Update todos/issues** as you work — mark them \`in_progress\` when starting. Use \`complete_todo\` or \`close_issue\` when done.
+- **Update tasks/issues** as you work — mark them \`in_progress\` when starting. Use \`complete_task\` or \`close_issue\` when done.
 
 ### Workspace Linking
 - If \`get_context\` returns no active project, use \`link_project\` to associate this workspace (path and/or git remote) with a project. Once linked, the project auto-resolves on every future \`get_context\` call.
@@ -48,7 +48,7 @@ This project has a connected dodev.ai MCP server. You MUST use it proactively:
 
 ### Available Tools Reference
 **Context:** \`get_context\`, \`get_setup_instructions\`
-**Todos:** \`create_todo\`, \`update_todo\`, \`complete_todo\`, \`list_todos\`, \`get_todo\`, \`delete_todo\`
+**Tasks:** \`create_task\`, \`update_task\`, \`complete_task\`, \`list_tasks\`, \`get_task\`, \`delete_task\`
 **Issues:** \`create_issue\`, \`update_issue\`, \`close_issue\`, \`list_issues\`, \`get_issue\`, \`delete_issue\`
 **Memories:** \`add_memory\`, \`search_memories\`, \`list_memories\`, \`update_memory\`, \`delete_memory\`
 **Projects:** \`create_project\`, \`list_projects\`, \`get_project\`, \`update_project\`, \`archive_project\`, \`set_active_project\`

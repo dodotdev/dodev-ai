@@ -24,17 +24,17 @@ export async function authenticateApiKey(
 
 /**
  * Checks plan quotas before creating resources.
- * Free plan: 1 project, 100 todos, 50 memories.
+ * Free plan: 1 project, 100 tasks, 50 memories.
  * Paid plans: unlimited.
  */
 export async function checkQuota(
   ctx: QueryCtx | MutationCtx,
   user: Doc<"users">,
-  resource: "todos" | "memories" | "projects" | "issues" | "attachments"
+  resource: "tasks" | "memories" | "projects" | "issues" | "attachments"
 ): Promise<void> {
   if (user.plan !== "free") return
 
-  const limits = { todos: 100, memories: 50, projects: 1, issues: 200, attachments: 50 }
+  const limits = { tasks: 100, memories: 50, projects: 1, issues: 200, attachments: 50 }
   const period = getCurrentPeriod()
 
   const usage = await ctx.db
@@ -43,7 +43,7 @@ export async function checkQuota(
     .unique()
 
   const countField = `${resource}Count` as
-    | "todoCount"
+    | "taskCount"
     | "memoryCount"
     | "projectCount"
     | "issueCount"

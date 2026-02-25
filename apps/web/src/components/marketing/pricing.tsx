@@ -14,7 +14,7 @@ const plans = [
     description: "Self-hosted. Your infrastructure, your data.",
     features: [
       "1 project",
-      "100 todos & 200 issues",
+      "100 tasks & 200 issues",
       "50 memories",
       "31 MCP tools",
       "Docker & npx install",
@@ -31,7 +31,7 @@ const plans = [
     description: "Cloud hosted. Unlimited everything.",
     features: [
       "Unlimited projects",
-      "Unlimited todos & issues",
+      "Unlimited tasks & issues",
       "Unlimited memories",
       "Vector search (semantic)",
       "Cloud hosted MCP server",

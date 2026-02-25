@@ -2,15 +2,15 @@ import type { Tool } from "@modelcontextprotocol/sdk/types.js"
 import { getApiKeyHash } from "../auth/api-key.js"
 import { api, getConvexClient } from "../convex-client.js"
 
-export const todoTools: Tool[] = [
+export const taskTools: Tool[] = [
   {
-    name: "create_todo",
+    name: "create_task",
     description:
-      "Create a new todo item. Returns the created todo with its ID, status, and timestamps.",
+      "Create a new task. Returns the created task with its ID, status, and timestamps.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        title: { type: "string", description: "Short title for the todo (max 200 chars)" },
+        title: { type: "string", description: "Short title for the task (max 200 chars)" },
         description: { type: "string", description: "Longer description or details" },
         priority: {
           type: "string",
@@ -20,7 +20,7 @@ export const todoTools: Tool[] = [
         severity: {
           type: "string",
           enum: ["critical", "major", "minor", "trivial"],
-          description: "Severity level (optional for todos)",
+          description: "Severity level (optional for tasks)",
         },
         projectId: { type: "string", description: "Associate with a specific project" },
         dueDate: {
@@ -44,7 +44,7 @@ export const todoTools: Tool[] = [
         },
         assigneeId: {
           type: "string",
-          description: "Member ID from the project config to assign this todo to",
+          description: "Member ID from the project config to assign this task to",
         },
         estimate: {
           type: "string",
@@ -52,19 +52,19 @@ export const todoTools: Tool[] = [
         },
         cycleId: {
           type: "string",
-          description: "Cycle ID to associate this todo with a sprint/iteration",
+          description: "Cycle ID to associate this task with a sprint/iteration",
         },
       },
       required: ["title"],
     },
   },
   {
-    name: "update_todo",
-    description: "Update one or more fields on an existing todo.",
+    name: "update_task",
+    description: "Update one or more fields on an existing task.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        id: { type: "string", description: "The todo ID" },
+        id: { type: "string", description: "The task ID" },
         title: { type: "string", description: "New title" },
         description: { type: "string", description: "New description" },
         status: {
@@ -122,20 +122,20 @@ export const todoTools: Tool[] = [
     },
   },
   {
-    name: "complete_todo",
-    description: 'Mark a todo as completed. Shorthand for update_todo with status: "completed".',
+    name: "complete_task",
+    description: 'Mark a task as completed. Shorthand for update_task with status: "completed".',
     inputSchema: {
       type: "object" as const,
       properties: {
-        id: { type: "string", description: "The todo ID" },
+        id: { type: "string", description: "The task ID" },
       },
       required: ["id"],
     },
   },
   {
-    name: "list_todos",
+    name: "list_tasks",
     description:
-      "List todos with optional filters. Returns todos sorted by creation date (newest first).",
+      "List tasks with optional filters. Returns tasks sorted by creation date (newest first).",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -167,30 +167,30 @@ export const todoTools: Tool[] = [
     },
   },
   {
-    name: "get_todo",
-    description: "Get a single todo by ID.",
+    name: "get_task",
+    description: "Get a single task by ID.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        id: { type: "string", description: "The todo ID" },
+        id: { type: "string", description: "The task ID" },
       },
       required: ["id"],
     },
   },
   {
-    name: "delete_todo",
-    description: "Permanently delete a todo.",
+    name: "delete_task",
+    description: "Permanently delete a task.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        id: { type: "string", description: "The todo ID" },
+        id: { type: "string", description: "The task ID" },
       },
       required: ["id"],
     },
   },
 ]
 
-export async function handleTodoTool(
+export async function handleTaskTool(
   name: string,
   args: Record<string, unknown>
 ): Promise<unknown> {
@@ -198,8 +198,8 @@ export async function handleTodoTool(
   const apiKeyHash = getApiKeyHash()
 
   switch (name) {
-    case "create_todo":
-      return await client.mutation(api.todos.create, {
+    case "create_task":
+      return await client.mutation(api.tasks.create, {
         apiKeyHash,
         title: args.title as string,
         description: args.description as string | undefined,
@@ -215,8 +215,8 @@ export async function handleTodoTool(
         cycleId: args.cycleId as string | undefined,
       })
 
-    case "update_todo":
-      return await client.mutation(api.todos.update, {
+    case "update_task":
+      return await client.mutation(api.tasks.update, {
         apiKeyHash,
         id: args.id as string,
         title: args.title as string | undefined,
@@ -234,15 +234,15 @@ export async function handleTodoTool(
         cycleId: args.cycleId as string | null | undefined,
       })
 
-    case "complete_todo":
-      return await client.mutation(api.todos.update, {
+    case "complete_task":
+      return await client.mutation(api.tasks.update, {
         apiKeyHash,
         id: args.id as string,
         status: "completed",
       })
 
-    case "list_todos":
-      return await client.query(api.todos.list, {
+    case "list_tasks":
+      return await client.query(api.tasks.list, {
         apiKeyHash,
         projectId: args.projectId as string | undefined,
         status: args.status as string | undefined,
@@ -251,19 +251,19 @@ export async function handleTodoTool(
         limit: args.limit as number | undefined,
       })
 
-    case "get_todo":
-      return await client.query(api.todos.get, {
+    case "get_task":
+      return await client.query(api.tasks.get, {
         apiKeyHash,
         id: args.id as string,
       })
 
-    case "delete_todo":
-      return await client.mutation(api.todos.remove, {
+    case "delete_task":
+      return await client.mutation(api.tasks.remove, {
         apiKeyHash,
         id: args.id as string,
       })
 
     default:
-      throw new Error(`Unknown todo tool: ${name}`)
+      throw new Error(`Unknown task tool: ${name}`)
   }
 }

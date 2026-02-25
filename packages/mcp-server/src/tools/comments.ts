@@ -6,13 +6,13 @@ export const commentTools: Tool[] = [
   {
     name: "create_comment",
     description:
-      "Add a comment to a todo or issue. Use this to log work progress, decisions, or notes. Supports threading via parentId.",
+      "Add a comment to a task or issue. Use this to log work progress, decisions, or notes. Supports threading via parentId.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        todoId: {
+        taskId: {
           type: "string",
-          description: "Todo ID to comment on",
+          description: "Task ID to comment on",
         },
         issueId: {
           type: "string",
@@ -21,7 +21,7 @@ export const commentTools: Tool[] = [
         parentId: {
           type: "string",
           description:
-            "Parent comment ID for threaded replies (inherits todoId/issueId from parent)",
+            "Parent comment ID for threaded replies (inherits taskId/issueId from parent)",
         },
         body: {
           type: "string",
@@ -43,13 +43,13 @@ export const commentTools: Tool[] = [
   {
     name: "list_comments",
     description:
-      "List all comments on a todo or issue, sorted chronologically. Exactly one of todoId or issueId is required.",
+      "List all comments on a task or issue, sorted chronologically. Exactly one of taskId or issueId is required.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        todoId: {
+        taskId: {
           type: "string",
-          description: "Todo ID to list comments for",
+          description: "Task ID to list comments for",
         },
         issueId: {
           type: "string",
@@ -82,7 +82,7 @@ export async function handleCommentTool(
     case "create_comment":
       return await client.mutation(api.comments.create, {
         apiKeyHash,
-        todoId: args.todoId as string | undefined,
+        taskId: args.taskId as string | undefined,
         issueId: args.issueId as string | undefined,
         parentId: args.parentId as string | undefined,
         body: args.body as string,
@@ -93,7 +93,7 @@ export async function handleCommentTool(
     case "list_comments":
       return await client.query(api.comments.list, {
         apiKeyHash,
-        todoId: args.todoId as string | undefined,
+        taskId: args.taskId as string | undefined,
         issueId: args.issueId as string | undefined,
       } as never)
 

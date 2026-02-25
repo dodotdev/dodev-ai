@@ -309,7 +309,7 @@ export default function SignInPage() {
             {[
               {
                 icon: CheckSquare,
-                title: "Todos that persist",
+                title: "Tasks that persist",
                 desc: "Tasks survive sessions, restarts, and context windows.",
               },
               {

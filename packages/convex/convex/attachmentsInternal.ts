@@ -27,7 +27,7 @@ export const internalSave = internalMutation({
   args: {
     userId: v.id("users"),
     storageId: v.id("_storage"),
-    todoId: v.optional(v.id("todos")),
+    taskId: v.optional(v.id("tasks")),
     issueId: v.optional(v.id("issues")),
     projectId: v.optional(v.id("projects")),
     filename: v.string(),
@@ -39,7 +39,7 @@ export const internalSave = internalMutation({
     const now = Date.now()
     const id = await ctx.db.insert("attachments", {
       userId: args.userId,
-      todoId: args.todoId,
+      taskId: args.taskId,
       issueId: args.issueId,
       projectId: args.projectId,
       storageId: args.storageId,
@@ -66,16 +66,16 @@ export const internalGetUrl = internalQuery({
   },
 })
 
-/** Internal: validate parent todo exists and belongs to user */
-export const internalGetTodoParent = internalQuery({
+/** Internal: validate parent task exists and belongs to user */
+export const internalGetTaskParent = internalQuery({
   args: {
-    id: v.id("todos"),
+    id: v.id("tasks"),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const todo = await ctx.db.get(args.id)
-    if (!todo || todo.userId !== args.userId) return null
-    return { projectId: todo.projectId as string | undefined }
+    const task = await ctx.db.get(args.id)
+    if (!task || task.userId !== args.userId) return null
+    return { projectId: task.projectId as string | undefined }
   },
 })
 
@@ -103,7 +103,7 @@ export const internalGetIssueParent = internalQuery({
 export const uploadFromBase64 = action({
   args: {
     apiKeyHash: v.string(),
-    todoId: v.optional(v.string()),
+    taskId: v.optional(v.string()),
     issueId: v.optional(v.string()),
     filename: v.string(),
     base64Content: v.string(),
@@ -119,22 +119,22 @@ export const uploadFromBase64 = action({
     if (!user) throw new ConvexError("UNAUTHORIZED")
 
     // 2. Validate exactly one parent is provided
-    if (!args.todoId && !args.issueId) {
-      throw new ConvexError("VALIDATION_ERROR: either todoId or issueId is required")
+    if (!args.taskId && !args.issueId) {
+      throw new ConvexError("VALIDATION_ERROR: either taskId or issueId is required")
     }
-    if (args.todoId && args.issueId) {
-      throw new ConvexError("VALIDATION_ERROR: provide only one of todoId or issueId, not both")
+    if (args.taskId && args.issueId) {
+      throw new ConvexError("VALIDATION_ERROR: provide only one of taskId or issueId, not both")
     }
 
     // 3. Validate parent exists and get projectId
     let projectId: string | undefined
-    if (args.todoId) {
-      const todo = (await ctx.runQuery(internal.attachmentsInternal.internalGetTodoParent, {
-        id: args.todoId as any,
+    if (args.taskId) {
+      const task = (await ctx.runQuery(internal.attachmentsInternal.internalGetTaskParent, {
+        id: args.taskId as any,
         userId: user._id,
       })) as { projectId: string | undefined } | null
-      if (!todo) throw new ConvexError("NOT_FOUND")
-      projectId = todo.projectId
+      if (!task) throw new ConvexError("NOT_FOUND")
+      projectId = task.projectId
     } else if (args.issueId) {
       const issue = (await ctx.runQuery(internal.attachmentsInternal.internalGetIssueParent, {
         id: args.issueId as any,
@@ -174,7 +174,7 @@ export const uploadFromBase64 = action({
     const result = (await ctx.runMutation(internal.attachmentsInternal.internalSave, {
       userId: user._id,
       storageId: storageId as any,
-      todoId: args.todoId as any,
+      taskId: args.taskId as any,
       issueId: args.issueId as any,
       projectId: projectId as any,
       filename: args.filename,

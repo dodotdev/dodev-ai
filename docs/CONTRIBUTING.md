@@ -60,7 +60,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
 feat: add vector search for memories
-fix: handle missing project in list_todos
+fix: handle missing project in list_tasks
 docs: update self-hosting guide for ARM
 refactor: extract auth middleware
 ```

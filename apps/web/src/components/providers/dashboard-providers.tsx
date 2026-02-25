@@ -9,6 +9,7 @@ interface DashboardProvidersProps {
   workosUserId: string
   email: string
   name?: string
+  avatarUrl?: string
   children: React.ReactNode
 }
 
@@ -16,11 +17,12 @@ export function DashboardProviders({
   workosUserId,
   email,
   name,
+  avatarUrl,
   children,
 }: DashboardProvidersProps) {
   return (
     <ConvexProvider>
-      <AuthProvider workosUserId={workosUserId} email={email} name={name}>
+      <AuthProvider workosUserId={workosUserId} email={email} name={name} avatarUrl={avatarUrl}>
         <div className="relative flex min-h-svh w-full bg-surface dark:bg-background">
           <DashboardHeader />
 

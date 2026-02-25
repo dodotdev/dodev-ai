@@ -4,20 +4,20 @@ import { api } from "@dodev/convex/api"
 import { useMutation, useQuery } from "convex/react"
 import { Loader2 } from "lucide-react"
 import { LinearListView, type ListItem } from "@/components/dashboard/linear-list-view"
-import { TodoForm } from "@/components/dashboard/todo-form"
+import { TaskForm } from "@/components/dashboard/task-form"
 import { useAuth } from "@/components/providers/auth-provider"
 import { useUploadAttachments } from "@/hooks/use-upload-attachments"
 
-export default function TodosPage() {
+export default function TasksPage() {
   const { apiKeyHash, isLoading: authLoading } = useAuth()
 
-  const todos = useQuery(
-    api.todos.list,
+  const tasks = useQuery(
+    api.tasks.list,
     apiKeyHash ? { apiKeyHash, globalOnly: true, limit: 100 } : "skip"
   )
 
-  const createTodo = useMutation(api.todos.create)
-  const updateTodo = useMutation(api.todos.update)
+  const createTask = useMutation(api.tasks.create)
+  const updateTask = useMutation(api.tasks.update)
   const uploadAttachments = useUploadAttachments(apiKeyHash)
 
   if (authLoading || !apiKeyHash) {
@@ -36,7 +36,7 @@ export default function TodosPage() {
     attachments?: File[]
   }) {
     if (!apiKeyHash) return
-    const created = await createTodo({
+    const created = await createTask({
       apiKeyHash,
       title: data.title,
       description: data.description,
@@ -44,20 +44,20 @@ export default function TodosPage() {
       tags: data.tags,
     })
     if (data.attachments?.length && created?._id) {
-      await uploadAttachments(data.attachments, { todoId: created._id as string })
+      await uploadAttachments(data.attachments, { taskId: created._id as string })
     }
   }
 
-  async function handleStatusChange(todoId: string, newStatus: string) {
+  async function handleStatusChange(taskId: string, newStatus: string) {
     if (!apiKeyHash) return
-    await updateTodo({
+    await updateTask({
       apiKeyHash,
-      id: todoId as never,
+      id: taskId as never,
       status: newStatus as "pending" | "in_progress" | "completed" | "cancelled",
     })
   }
 
-  const mapped: ListItem[] = (todos ?? []).map((t) => ({
+  const mapped: ListItem[] = (tasks ?? []).map((t) => ({
     _id: t._id as string,
     title: t.title,
     description: t.description,
@@ -73,18 +73,18 @@ export default function TodosPage() {
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold tracking-tight">Todos</h1>
+          <h1 className="text-lg font-semibold tracking-tight">Tasks</h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Global todos not scoped to any project
+            Global tasks not scoped to any project
           </p>
         </div>
-        <TodoForm onSubmit={handleCreate} />
+        <TaskForm onSubmit={handleCreate} />
       </div>
 
       <LinearListView
         items={mapped}
         onStatusChange={handleStatusChange}
-        emptyMessage="No global todos yet. Create one from the MCP server or the form above."
+        emptyMessage="No global tasks yet. Create one from the MCP server or the form above."
       />
     </div>
   )

@@ -19,13 +19,13 @@ export const generateUploadUrl = mutation({
 
 /**
  * Save an attachment record after the file has been uploaded to storage.
- * Validates that exactly one of todoId or issueId is provided.
+ * Validates that exactly one of taskId or issueId is provided.
  */
 export const save = mutation({
   args: {
     apiKeyHash: v.string(),
     storageId: v.id("_storage"),
-    todoId: v.optional(v.id("todos")),
+    taskId: v.optional(v.id("tasks")),
     issueId: v.optional(v.id("issues")),
     filename: v.string(),
     mimeType: v.string(),
@@ -36,22 +36,22 @@ export const save = mutation({
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
 
     // Validate exactly one parent is provided
-    if (!args.todoId && !args.issueId) {
-      throw new ConvexError("VALIDATION_ERROR: either todoId or issueId is required")
+    if (!args.taskId && !args.issueId) {
+      throw new ConvexError("VALIDATION_ERROR: either taskId or issueId is required")
     }
-    if (args.todoId && args.issueId) {
-      throw new ConvexError("VALIDATION_ERROR: provide only one of todoId or issueId, not both")
+    if (args.taskId && args.issueId) {
+      throw new ConvexError("VALIDATION_ERROR: provide only one of taskId or issueId, not both")
     }
 
     // Validate parent exists and belongs to user, extract projectId
-    // biome-ignore lint/suspicious/noExplicitAny: projectId comes from parent todo/issue lookup
+    // biome-ignore lint/suspicious/noExplicitAny: projectId comes from parent task/issue lookup
     let projectId: any
-    if (args.todoId) {
-      const todo = await ctx.db.get(args.todoId)
-      if (!todo || todo.userId !== user._id) {
+    if (args.taskId) {
+      const task = await ctx.db.get(args.taskId)
+      if (!task || task.userId !== user._id) {
         throw new ConvexError("NOT_FOUND")
       }
-      projectId = todo.projectId
+      projectId = task.projectId
     } else if (args.issueId) {
       const issue = await ctx.db.get(args.issueId)
       if (!issue || issue.userId !== user._id) {
@@ -65,7 +65,7 @@ export const save = mutation({
     const now = Date.now()
     const id = await ctx.db.insert("attachments", {
       userId: user._id,
-      todoId: args.todoId,
+      taskId: args.taskId,
       issueId: args.issueId,
       projectId,
       storageId: args.storageId,
@@ -85,23 +85,23 @@ export const save = mutation({
 })
 
 /**
- * List attachments for a given todo or issue.
+ * List attachments for a given task or issue.
  * Enriches each attachment with its download URL.
  */
 export const list = query({
   args: {
     apiKeyHash: v.string(),
-    todoId: v.optional(v.id("todos")),
+    taskId: v.optional(v.id("tasks")),
     issueId: v.optional(v.id("issues")),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
 
     let attachments
-    if (args.todoId) {
+    if (args.taskId) {
       attachments = await ctx.db
         .query("attachments")
-        .withIndex("by_todo", (q) => q.eq("todoId", args.todoId!))
+        .withIndex("by_task", (q) => q.eq("taskId", args.taskId!))
         .collect()
     } else if (args.issueId) {
       attachments = await ctx.db
@@ -109,7 +109,7 @@ export const list = query({
         .withIndex("by_issue", (q) => q.eq("issueId", args.issueId!))
         .collect()
     } else {
-      throw new ConvexError("VALIDATION_ERROR: either todoId or issueId is required")
+      throw new ConvexError("VALIDATION_ERROR: either taskId or issueId is required")
     }
 
     // Filter to only this user's attachments

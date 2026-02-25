@@ -9,7 +9,7 @@ export function useUploadAttachments(apiKeyHash: string | null) {
 
   async function uploadAttachments(
     files: File[],
-    parent: { todoId: string } | { issueId: string }
+    parent: { taskId: string } | { issueId: string }
   ) {
     if (!apiKeyHash || files.length === 0) return
 
@@ -31,8 +31,8 @@ export function useUploadAttachments(apiKeyHash: string | null) {
         return saveAttachment({
           apiKeyHash,
           storageId,
-          ...("todoId" in parent
-            ? { todoId: parent.todoId as never }
+          ...("taskId" in parent
+            ? { taskId: parent.taskId as never }
             : { issueId: parent.issueId as never }),
           filename: file.name,
           mimeType: file.type || "application/octet-stream",

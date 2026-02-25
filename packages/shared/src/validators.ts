@@ -1,6 +1,6 @@
 import { VALIDATION } from "./constants.js"
 
-/** Validate a todo title */
+/** Validate a task title */
 export function validateTitle(title: string): string | null {
   if (!title || title.trim().length === 0) {
     return "Title is required"

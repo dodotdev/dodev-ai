@@ -5,7 +5,7 @@ import { generateConfigId, incrementUsage } from "./lib/utils"
 
 const DEFAULT_STATUSES = [
   { name: "Backlog", category: "pending" as const, color: "#6b7280", position: 0 },
-  { name: "Todo", category: "pending" as const, color: "#f59e0b", position: 1 },
+  { name: "Task", category: "pending" as const, color: "#f59e0b", position: 1 },
   { name: "In Progress", category: "in_progress" as const, color: "#3b82f6", position: 2 },
   { name: "In Review", category: "in_progress" as const, color: "#8b5cf6", position: 3 },
   { name: "Done", category: "completed" as const, color: "#10b981", position: 4 },
@@ -69,7 +69,7 @@ export const create = mutation({
       slug,
       description: args.description,
       status: "active",
-      todoCounter: 0,
+      taskCounter: 0,
       issueCounter: 0,
       metadata: args.metadata,
       statuses: DEFAULT_STATUSES.map((s) => ({
@@ -77,7 +77,14 @@ export const create = mutation({
         id: generateConfigId("st"),
       })),
       labels: [],
-      members: [],
+      members: [
+        {
+          id: generateConfigId("mb"),
+          name: user.name || user.email,
+          role: "owner",
+          ...(user.avatarUrl ? { avatarUrl: user.avatarUrl } : {}),
+        },
+      ],
       estimateScale: DEFAULT_ESTIMATE_SCALE,
       createdAt: now,
       updatedAt: now,
@@ -118,8 +125,8 @@ export const list = query({
     if (args.includeStats) {
       return await Promise.all(
         projects.map(async (project) => {
-          const todos = await ctx.db
-            .query("todos")
+          const tasks = await ctx.db
+            .query("tasks")
             .withIndex("by_user_project", (q) =>
               q.eq("userId", user._id).eq("projectId", project._id)
             )
@@ -135,10 +142,10 @@ export const list = query({
           return {
             ...project,
             stats: {
-              totalTodos: todos.length,
-              pendingTodos: todos.filter((t) => t.status === "pending").length,
-              inProgressTodos: todos.filter((t) => t.status === "in_progress").length,
-              completedTodos: todos.filter((t) => t.status === "completed").length,
+              totalTasks: tasks.length,
+              pendingTasks: tasks.filter((t) => t.status === "pending").length,
+              inProgressTasks: tasks.filter((t) => t.status === "in_progress").length,
+              completedTasks: tasks.filter((t) => t.status === "completed").length,
               memoryCount: memories.length,
             },
           }
@@ -247,11 +254,11 @@ export const remove = mutation({
     }
 
     // Delete all project data
-    const todos = await ctx.db
-      .query("todos")
+    const tasks = await ctx.db
+      .query("tasks")
       .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.id))
       .collect()
-    for (const todo of todos) await ctx.db.delete(todo._id)
+    for (const task of tasks) await ctx.db.delete(task._id)
 
     const issues = await ctx.db
       .query("issues")
@@ -390,14 +397,14 @@ export const getContext = query({
   args: {
     apiKeyHash: v.string(),
     projectId: v.optional(v.id("projects")),
-    todoLimit: v.optional(v.number()),
+    taskLimit: v.optional(v.number()),
     memoryLimit: v.optional(v.number()),
     workspacePath: v.optional(v.string()),
     repoUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const todoLimit = args.todoLimit ?? 10
+    const taskLimit = args.taskLimit ?? 10
     const memoryLimit = args.memoryLimit ?? 5
 
     // Resolve project: explicit > workspace detection > default
@@ -440,27 +447,27 @@ export const getContext = query({
       activeProject = await ctx.db.get(user.settings.defaultProjectId)
     }
 
-    // Get pending todos (scoped to project if active)
-    let pendingTodos
+    // Get pending tasks (scoped to project if active)
+    let pendingTasks
     if (activeProject) {
-      pendingTodos = await ctx.db
-        .query("todos")
+      pendingTasks = await ctx.db
+        .query("tasks")
         .withIndex("by_user_project_status", (q) =>
           q.eq("userId", user._id).eq("projectId", activeProject!._id).eq("status", "pending")
         )
         .order("desc")
-        .take(todoLimit)
+        .take(taskLimit)
     } else {
-      pendingTodos = await ctx.db
-        .query("todos")
+      pendingTasks = await ctx.db
+        .query("tasks")
         .withIndex("by_user_status", (q) => q.eq("userId", user._id).eq("status", "pending"))
         .order("desc")
-        .take(todoLimit)
+        .take(taskLimit)
     }
 
-    // Get in-progress todos
-    const inProgressTodos = await ctx.db
-      .query("todos")
+    // Get in-progress tasks
+    const inProgressTasks = await ctx.db
+      .query("tasks")
       .withIndex("by_user_status", (q) => q.eq("userId", user._id).eq("status", "in_progress"))
       .collect()
 
@@ -520,10 +527,10 @@ export const getContext = query({
 
     return {
       activeProject,
-      todoSummary: {
-        pending: pendingTodos.length,
-        inProgress: inProgressTodos.length,
-        topPending: pendingTodos,
+      taskSummary: {
+        pending: pendingTasks.length,
+        inProgress: inProgressTasks.length,
+        topPending: pendingTasks,
       },
       recentMemories,
       memories: {

@@ -18,7 +18,7 @@ dodev.ai gives AI agents persistent memory and task tracking across sessions and
 
 AI agents are powerful but forgetful. Every new session starts from scratch — no memory of what was decided, what's pending, or what was learned. dodev.ai fixes this by giving agents a persistent brain:
 
-- **Todos** — Track tasks across sessions. An agent can pick up exactly where it left off.
+- **Tasks** — Track tasks across sessions. An agent can pick up exactly where it left off.
 - **Issues** — Track bugs, features, and improvements with type and severity.
 - **Memories** — Store decisions, context, and learnings. "We chose Postgres because..." is never lost.
 - **Projects** — Organize work across multiple codebases with Linear-like config: custom statuses, labels, members, estimates, and sprint cycles.
@@ -33,12 +33,12 @@ Agent: *checks dodev.ai* "3 pending tasks: implement refresh tokens,
 
 ## Features
 
-- **35 MCP tools** across 8 categories (todos, issues, memories, projects, config, cycles, context, linking)
+- **35 MCP tools** across 8 categories (tasks, issues, memories, projects, config, cycles, context, linking)
 - **Linear-like project management** — custom workflow statuses, labels, team members, estimate scales, sprint cycles
 - **AI personas** — per-project system prompts that shape how agents interact with your project
 - **Real-time sync** — Dashboard updates instantly when agents make changes (powered by Convex)
 - **Cross-agent** — Works with any MCP client (Claude Code, Cursor, Windsurf, custom agents)
-- **Context tool** — One call to get the full picture: active project, pending todos, recent memories, config, and active cycle
+- **Context tool** — One call to get the full picture: active project, pending tasks, recent memories, config, and active cycle
 - **Self-hosted** — Run locally with Docker, bring your own Convex deployment
 - **Cloud option** — Or just connect to [dodev.ai](https://dodev.ai) for a managed experience (planned)
 
@@ -117,16 +117,16 @@ Then configure your MCP client to use the installed binary.
 
 ## MCP Tools
 
-### Todos (6)
+### Tasks (6)
 
 | Tool | Description |
 |------|-------------|
-| `create_todo` | Create a todo with title, priority, severity, project, due date, labels, assignee, estimate, cycle |
-| `update_todo` | Update any field on a todo |
-| `complete_todo` | Mark a todo as done |
-| `list_todos` | List and filter todos by project, status, priority, severity, search |
-| `get_todo` | Get details of a specific todo |
-| `delete_todo` | Remove a todo |
+| `create_task` | Create a task with title, priority, severity, project, due date, labels, assignee, estimate, cycle |
+| `update_task` | Update any field on a task |
+| `complete_task` | Mark a task as done |
+| `list_tasks` | List and filter tasks by project, status, priority, severity, search |
+| `get_task` | Get details of a specific task |
+| `delete_task` | Remove a task |
 
 ### Issues (6)
 
@@ -186,7 +186,7 @@ Then configure your MCP client to use the installed binary.
 
 | Tool | Description |
 |------|-------------|
-| `get_context` | Session bootstrapper: active project, pending todos, recent memories, config, persona, active cycle |
+| `get_context` | Session bootstrapper: active project, pending tasks, recent memories, config, persona, active cycle |
 | `get_setup_instructions` | Get tailored CLAUDE.md instructions for configuring AI agents to use dodev.ai proactively |
 
 ### Linking (3)
@@ -206,7 +206,7 @@ dodev.ai works best when AI agents know to use it proactively. The `get_setup_in
 ```
 You: "Set up dodev.ai for this project"
 Agent: *calls get_setup_instructions* → gets markdown with session start behavior,
-       memory management, todo/issue tracking, and project-specific context
+       memory management, task/issue tracking, and project-specific context
 Agent: *adds the section to CLAUDE.md* → every future session uses dodev.ai automatically
 ```
 
@@ -235,7 +235,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full architecture docum
 | | Free | Pro ($10/mo) | Team ($20/mo) |
 |---|---|---|---|
 | Projects | 1 | Unlimited | Unlimited |
-| Todos | 100 | Unlimited | Unlimited |
+| Tasks | 100 | Unlimited | Unlimited |
 | Issues | 200 | Unlimited | Unlimited |
 | Memories | 50 | Unlimited | Unlimited |
 | Memory search | Full-text | Vector search | Vector search |

@@ -22,7 +22,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
 import { useAuth } from "@/components/providers/auth-provider"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -38,7 +38,7 @@ import { isCloud } from "@/lib/mode"
 import { cn } from "@/lib/utils"
 
 const SUB_ITEMS = [
-  { key: "todos", label: "Todos", icon: CheckSquare, href: "" },
+  { key: "tasks", label: "Tasks", icon: CheckSquare, href: "" },
   { key: "issues", label: "Issues", icon: AlertCircle, href: "/issues" },
   { key: "memories", label: "Memories", icon: Brain, href: "/memories" },
   { key: "activity", label: "Activity", icon: Activity, href: "/activity" },
@@ -46,7 +46,7 @@ const SUB_ITEMS = [
 
 const GLOBAL_ITEMS = [
   { label: "Memories", icon: Brain, href: "/dashboard/memories" },
-  { label: "Todos", icon: CheckSquare, href: "/dashboard/todos" },
+  { label: "Tasks", icon: CheckSquare, href: "/dashboard/tasks" },
   { label: "Issues", icon: AlertCircle, href: "/dashboard/issues" },
   { label: "Activity", icon: Activity, href: "/dashboard/activity" },
 ]
@@ -241,7 +241,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
             {userPlan === "free" ? (
               <>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  1 project &middot; 100 todos &middot; 50 memories
+                  1 project &middot; 100 tasks &middot; 50 memories
                 </p>
                 <Link
                   href="/dashboard/settings"
@@ -282,6 +282,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
               onClick={() => setUserMenuOpen(!userMenuOpen)}
             >
               <Avatar className="size-6">
+                {user?.avatarUrl && <AvatarImage src={user.avatarUrl} alt={userName} />}
                 <AvatarFallback className="bg-emerald-500/10 text-[10px] font-semibold text-emerald-600">
                   {initials}
                 </AvatarFallback>
@@ -416,7 +417,7 @@ function NewProjectDialog({
         <DialogHeader>
           <DialogTitle>New Project</DialogTitle>
           <DialogDescription>
-            Every project gets its own memories, todos, and issues.
+            Every project gets its own memories, tasks, and issues.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -640,12 +640,21 @@ function ItemRowContent({ item, onTitleClick }: { item: ListItem; onTitleClick?:
 
       {/* Assignee avatar */}
       {item.resolvedAssignee && (
-        <div
-          className="hidden size-5 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-[9px] font-semibold text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 sm:flex"
-          title={item.resolvedAssignee.name}
-        >
-          {initials}
-        </div>
+        item.resolvedAssignee.avatarUrl ? (
+          <img
+            src={item.resolvedAssignee.avatarUrl}
+            alt={item.resolvedAssignee.name}
+            title={item.resolvedAssignee.name}
+            className="hidden size-5 shrink-0 rounded-full object-cover sm:block"
+          />
+        ) : (
+          <div
+            className="hidden size-5 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-[9px] font-semibold text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 sm:flex"
+            title={item.resolvedAssignee.name}
+          >
+            {initials}
+          </div>
+        )
       )}
 
       {/* Date */}

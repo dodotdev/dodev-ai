@@ -9,18 +9,18 @@ export const API_KEY_LENGTH = 32
 /** Plan limits for free tier */
 export const PLAN_LIMITS: Record<
   PlanTier,
-  { todos: number; memories: number; projects: number; issues: number; attachments: number }
+  { tasks: number; memories: number; projects: number; issues: number; attachments: number }
 > = {
-  free: { todos: 100, memories: 50, projects: 1, issues: 200, attachments: 50 },
+  free: { tasks: 100, memories: 50, projects: 1, issues: 200, attachments: 50 },
   pro: {
-    todos: Infinity,
+    tasks: Infinity,
     memories: Infinity,
     projects: Infinity,
     issues: Infinity,
     attachments: Infinity,
   },
   team: {
-    todos: Infinity,
+    tasks: Infinity,
     memories: Infinity,
     projects: Infinity,
     issues: Infinity,
@@ -37,9 +37,9 @@ export const RATE_LIMITS: Record<PlanTier, { windowMs: number; maxRequests: numb
 
 /** Validation limits */
 export const VALIDATION = {
-  /** Maximum length for todo titles */
+  /** Maximum length for task titles */
   MAX_TITLE_LENGTH: 200,
-  /** Maximum length for todo/project descriptions */
+  /** Maximum length for task/project descriptions */
   MAX_DESCRIPTION_LENGTH: 5000,
   /** Maximum length for memory content */
   MAX_MEMORY_CONTENT_LENGTH: 10_000,
@@ -59,7 +59,7 @@ export const VALIDATION = {
   MAX_MEMORY_SEARCH_LIMIT: 50,
   /** Maximum attachment file size in bytes (10 MB) */
   MAX_ATTACHMENT_SIZE: 10 * 1024 * 1024,
-  /** Maximum number of attachments per todo or issue */
+  /** Maximum number of attachments per task or issue */
   MAX_ATTACHMENTS_PER_ITEM: 20,
   /** Maximum length for attachment filenames */
   MAX_ATTACHMENT_FILENAME: 255,
@@ -73,7 +73,7 @@ export const DEFAULT_STATUSES: {
   position: number
 }[] = [
   { name: "Backlog", category: "pending", color: "#6b7280", position: 0 },
-  { name: "Todo", category: "pending", color: "#f59e0b", position: 1 },
+  { name: "Task", category: "pending", color: "#f59e0b", position: 1 },
   { name: "In Progress", category: "in_progress", color: "#3b82f6", position: 2 },
   { name: "In Review", category: "in_progress", color: "#8b5cf6", position: 3 },
   { name: "Done", category: "completed", color: "#10b981", position: 4 },

@@ -162,9 +162,9 @@ This project has a connected dodev.ai MCP server. You MUST use it proactively:
 
 ### During Work
 - **Store memories** via `add_memory` for codebase facts, decisions, preferences, and gotchas.
-- **Create todos** via `create_todo` for follow-up work.
+- **Create tasks** via `create_task` for follow-up work.
 - **Create issues** via `create_issue` for bugs found during development.
-- **Update todos/issues** as you work — mark them `in_progress` when starting, `completed` when done.
+- **Update tasks/issues** as you work — mark them `in_progress` when starting, `completed` when done.
 ```
 
 Replace the generic section with output from `get_setup_instructions` to include project-specific context (name, slug, ID).

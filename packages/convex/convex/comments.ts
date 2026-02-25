@@ -3,14 +3,14 @@ import { mutation, query } from "./_generated/server"
 import { authenticateApiKey } from "./lib/auth"
 
 /**
- * Create a comment on a todo or issue.
- * Supports threaded replies via parentId — when provided, todoId/issueId/projectId
+ * Create a comment on a task or issue.
+ * Supports threaded replies via parentId — when provided, taskId/issueId/projectId
  * are inherited from the parent comment.
  */
 export const create = mutation({
   args: {
     apiKeyHash: v.string(),
-    todoId: v.optional(v.id("todos")),
+    taskId: v.optional(v.id("tasks")),
     issueId: v.optional(v.id("issues")),
     parentId: v.optional(v.id("comments")),
     body: v.string(),
@@ -20,38 +20,38 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
 
-    let todoId = args.todoId
+    let taskId = args.taskId
     let issueId = args.issueId
-    // biome-ignore lint/suspicious/noExplicitAny: projectId comes from parent todo/issue/comment lookup
+    // biome-ignore lint/suspicious/noExplicitAny: projectId comes from parent task/issue/comment lookup
     let projectId: any
 
-    // If parentId is provided, inherit todoId/issueId/projectId from parent
+    // If parentId is provided, inherit taskId/issueId/projectId from parent
     if (args.parentId) {
       const parent = await ctx.db.get(args.parentId)
       if (!parent || parent.userId !== user._id) {
         throw new ConvexError("NOT_FOUND")
       }
-      todoId = parent.todoId
+      taskId = parent.taskId
       issueId = parent.issueId
       projectId = parent.projectId
     }
 
-    // Validate exactly one of todoId/issueId is present
-    if (!todoId && !issueId) {
-      throw new ConvexError("VALIDATION_ERROR: either todoId or issueId is required")
+    // Validate exactly one of taskId/issueId is present
+    if (!taskId && !issueId) {
+      throw new ConvexError("VALIDATION_ERROR: either taskId or issueId is required")
     }
-    if (todoId && issueId) {
-      throw new ConvexError("VALIDATION_ERROR: provide only one of todoId or issueId, not both")
+    if (taskId && issueId) {
+      throw new ConvexError("VALIDATION_ERROR: provide only one of taskId or issueId, not both")
     }
 
-    // Validate parent todo/issue exists and belongs to user, derive projectId
-    if (todoId) {
-      const todo = await ctx.db.get(todoId)
-      if (!todo || todo.userId !== user._id) {
+    // Validate parent task/issue exists and belongs to user, derive projectId
+    if (taskId) {
+      const task = await ctx.db.get(taskId)
+      if (!task || task.userId !== user._id) {
         throw new ConvexError("NOT_FOUND")
       }
       if (!args.parentId) {
-        projectId = todo.projectId
+        projectId = task.projectId
       }
     } else if (issueId) {
       const issue = await ctx.db.get(issueId)
@@ -66,7 +66,7 @@ export const create = mutation({
     const now = Date.now()
     const id = await ctx.db.insert("comments", {
       userId: user._id,
-      todoId,
+      taskId,
       issueId,
       projectId,
       parentId: args.parentId,
@@ -82,23 +82,23 @@ export const create = mutation({
 })
 
 /**
- * List all comments for a todo or issue, sorted by createdAt ascending.
- * Exactly one of todoId or issueId must be provided.
+ * List all comments for a task or issue, sorted by createdAt ascending.
+ * Exactly one of taskId or issueId must be provided.
  */
 export const list = query({
   args: {
     apiKeyHash: v.string(),
-    todoId: v.optional(v.id("todos")),
+    taskId: v.optional(v.id("tasks")),
     issueId: v.optional(v.id("issues")),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
 
     let comments
-    if (args.todoId) {
+    if (args.taskId) {
       comments = await ctx.db
         .query("comments")
-        .withIndex("by_todo", (q) => q.eq("todoId", args.todoId!))
+        .withIndex("by_task", (q) => q.eq("taskId", args.taskId!))
         .collect()
     } else if (args.issueId) {
       comments = await ctx.db
@@ -106,7 +106,7 @@ export const list = query({
         .withIndex("by_issue", (q) => q.eq("issueId", args.issueId!))
         .collect()
     } else {
-      throw new ConvexError("VALIDATION_ERROR: either todoId or issueId is required")
+      throw new ConvexError("VALIDATION_ERROR: either taskId or issueId is required")
     }
 
     // Filter to only this user's comments and sort ascending by createdAt

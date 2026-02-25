@@ -16,7 +16,7 @@ import { useUploadAttachments } from "@/hooks/use-upload-attachments"
 export default function ProjectIssuesPage() {
   const { id } = useParams<{ id: string }>()
   const { apiKeyHash, isLoading: authLoading } = useAuth()
-  const [selectedItem, setSelectedItem] = useState<ListItem | null>(null)
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
 
   const project = useQuery(api.projects.get, apiKeyHash ? { apiKeyHash, id: id as never } : "skip")
 
@@ -28,11 +28,12 @@ export default function ProjectIssuesPage() {
   // Comments query (only when item selected)
   const comments = useQuery(
     api.comments.list,
-    selectedItem && apiKeyHash ? { apiKeyHash, issueId: selectedItem._id as never } : "skip"
+    selectedItemId && apiKeyHash ? { apiKeyHash, issueId: selectedItemId as never } : "skip"
   )
 
   const updateIssue = useMutation(api.issues.update)
   const createIssue = useMutation(api.issues.create)
+  const deleteIssue = useMutation(api.issues.remove)
   const createComment = useMutation(api.comments.create)
   const uploadAttachments = useUploadAttachments(apiKeyHash)
 
@@ -100,22 +101,28 @@ export default function ProjectIssuesPage() {
   }
 
   async function handleAddComment(body: string) {
-    if (!apiKeyHash || !selectedItem) return
+    if (!apiKeyHash || !selectedItemId) return
     await createComment({
       apiKeyHash,
-      issueId: selectedItem._id as never,
+      issueId: selectedItemId as never,
       body,
       authorType: "user" as const,
     })
   }
 
   async function handleUpdateItem(updates: Record<string, unknown>) {
-    if (!apiKeyHash || !selectedItem) return
+    if (!apiKeyHash || !selectedItemId) return
     await updateIssue({
       apiKeyHash,
-      id: selectedItem._id as never,
+      id: selectedItemId as never,
       ...updates,
     } as never)
+  }
+
+  async function handleDeleteItem() {
+    if (!apiKeyHash || !selectedItemId) return
+    await deleteIssue({ apiKeyHash, id: selectedItemId as never })
+    setSelectedItemId(null)
   }
 
   // Resolve labels and assignees for display
@@ -152,13 +159,16 @@ export default function ProjectIssuesPage() {
     }
   })
 
+  // Derive selected item from live query data
+  const selectedItem = selectedItemId ? mapped.find((i) => i._id === selectedItemId) ?? null : null
+
   // Navigation
   const currentIndex = selectedItem ? mapped.findIndex((i) => i._id === selectedItem._id) : -1
 
   function handleNavigate(direction: "prev" | "next") {
     const idx = direction === "prev" ? currentIndex - 1 : currentIndex + 1
     if (idx >= 0 && idx < mapped.length) {
-      setSelectedItem(mapped[idx])
+      setSelectedItemId(mapped[idx]._id)
     }
   }
 
@@ -176,7 +186,7 @@ export default function ProjectIssuesPage() {
             items={mapped}
             statuses={projectStatuses}
             onStatusChange={handleStatusChange}
-            onItemClick={setSelectedItem}
+            onItemClick={(item) => setSelectedItemId(item._id)}
             emptyMessage="No issues yet. Create one from the MCP server or the form above."
           />
         }
@@ -192,9 +202,10 @@ export default function ProjectIssuesPage() {
                 estimateScale: project?.estimateScale,
               }}
               comments={comments ?? []}
-              onBack={() => setSelectedItem(null)}
+              onBack={() => setSelectedItemId(null)}
               onAddComment={handleAddComment}
               onUpdateItem={handleUpdateItem}
+              onDeleteItem={handleDeleteItem}
               currentIndex={currentIndex}
               totalItems={mapped.length}
               onNavigate={handleNavigate}

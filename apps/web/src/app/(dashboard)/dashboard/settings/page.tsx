@@ -29,7 +29,7 @@ export default function SettingsPage() {
   const plan = (user.plan as "free" | "pro" | "team") || "free"
   const limits = PLAN_LIMITS[plan]
   const currentUsage = {
-    todoCount: usage?.todoCount ?? 0,
+    taskCount: usage?.taskCount ?? 0,
     memoryCount: usage?.memoryCount ?? 0,
     projectCount: usage?.projectCount ?? 0,
     apiCalls: usage?.apiCalls ?? 0,
@@ -76,7 +76,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="mt-6 space-y-4">
-              <UsageBar label="Todos" current={currentUsage.todoCount} limit={limits.todos} />
+              <UsageBar label="Tasks" current={currentUsage.taskCount} limit={limits.tasks} />
               <UsageBar
                 label="Memories"
                 current={currentUsage.memoryCount}

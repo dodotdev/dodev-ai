@@ -124,16 +124,16 @@ export const remove = mutation({
       throw new ConvexError("NOT_FOUND")
     }
 
-    // Clear cycleId from referencing todos
-    const todos = await ctx.db
-      .query("todos")
+    // Clear cycleId from referencing tasks
+    const tasks = await ctx.db
+      .query("tasks")
       .withIndex("by_user_project_cycle", (q) =>
         q.eq("userId", user._id).eq("projectId", cycle.projectId).eq("cycleId", args.id)
       )
       .collect()
 
-    for (const todo of todos) {
-      await ctx.db.patch(todo._id, { cycleId: undefined, updatedAt: Date.now() })
+    for (const task of tasks) {
+      await ctx.db.patch(task._id, { cycleId: undefined, updatedAt: Date.now() })
     }
 
     await ctx.db.delete(args.id)
