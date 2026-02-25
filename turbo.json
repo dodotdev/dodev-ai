@@ -11,6 +11,10 @@
       "cache": false,
       "persistent": true
     },
+    "dev:cloud": {
+      "cache": false,
+      "persistent": true
+    },
     "check": {
       "dependsOn": ["^check"]
     },

@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto"
 import { API_KEY_LENGTH, API_KEY_PREFIX } from "@dodev/shared"
+import { getAuthContext } from "./auth-context.js"
 
 /** Cached hash for the current session's API key */
 let cachedHash: string | null = null
@@ -24,8 +25,22 @@ export function hashApiKey(apiKey: string): string {
   return hash
 }
 
-/** Get the API key from environment and return its hash */
+/**
+ * Get the API key hash for the current request.
+ *
+ * In cloud mode: resolved from the per-request auth context (AsyncLocalStorage),
+ * which is set by the Streamable HTTP transport after JWT validation.
+ *
+ * In stdio mode: hashed from the DODEV_API_KEY environment variable.
+ */
 export function getApiKeyHash(): string {
+  // Cloud mode: check AsyncLocalStorage for per-request auth context
+  const authCtx = getAuthContext()
+  if (authCtx) {
+    return authCtx.apiKeyHash
+  }
+
+  // Stdio mode: use environment variable
   const apiKey = process.env.DODEV_API_KEY
   if (!apiKey) {
     throw new Error("DODEV_API_KEY environment variable is required")

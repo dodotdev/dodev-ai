@@ -20,16 +20,19 @@
   ],
   "scripts": {
     "build": "tsc",
-    "dev": "tsx src/index.ts",
+    "dev:cloud": "DODEV_MODE=cloud tsx --env-file=.env.local src/index.ts",
+    "dev:stdio": "tsx --env-file=.env.local src/index.ts",
     "typecheck": "tsc --noEmit",
     "generate-key": "tsx src/cli.ts generate-key"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
     "@dodev/shared": "workspace:*",
-    "convex": "^1.31.2"
+    "convex": "^1.31.2",
+    "express": "^5.1.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.0",
     "@types/node": "^25.3.0",
     "tsx": "^4.19.0",
     "typescript": "^5.8.0"

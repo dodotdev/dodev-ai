@@ -16,6 +16,7 @@ async function getCloudMiddleware() {
         "/auth/sign-in",
         "/auth/sign-in/(.*)",
         "/auth/sign-out",
+        "/auth/mcp",
         "/callback",
         "/api/auth/(.*)",
         "/api/health",

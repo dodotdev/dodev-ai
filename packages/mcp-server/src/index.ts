@@ -6,9 +6,9 @@ async function main() {
   const mode = process.env.DODEV_MODE ?? "self-hosted"
 
   if (mode === "cloud") {
-    // Streamable HTTP transport for cloud mode (Phase 3)
-    console.error("Cloud mode (Streamable HTTP) is not yet implemented. Use self-hosted mode.")
-    process.exit(1)
+    const { startCloudServer } = await import("./cloud-server.js")
+    await startCloudServer()
+    return
   }
 
   // Default: stdio transport for local MCP clients
