@@ -18,17 +18,13 @@ import {
   X,
 } from "lucide-react"
 import { useState } from "react"
+import { AttachmentDropzone, type PendingFile } from "@/components/dashboard/attachment-dropzone"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import {
   DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuCheckboxItem,
+  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -55,10 +51,11 @@ interface IssueFormData {
   labelIds?: string[]
   assigneeId?: string
   estimate?: string
+  attachments?: File[]
 }
 
 interface IssueFormProps {
-  onSubmit: (data: IssueFormData) => void
+  onSubmit: (data: IssueFormData) => void | Promise<void>
   projectConfig?: ProjectConfig
 }
 
@@ -99,6 +96,8 @@ export function IssueForm({ onSubmit, projectConfig }: IssueFormProps) {
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([])
   const [assigneeId, setAssigneeId] = useState("")
   const [estimate, setEstimate] = useState("")
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   function resetForm() {
     setTitle("")
@@ -111,30 +110,40 @@ export function IssueForm({ onSubmit, projectConfig }: IssueFormProps) {
     setSelectedLabelIds([])
     setAssigneeId("")
     setEstimate("")
+    // Revoke preview URLs before clearing
+    for (const pf of pendingFiles) {
+      if (pf.preview) URL.revokeObjectURL(pf.preview)
+    }
+    setPendingFiles([])
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!title.trim()) return
+    if (!title.trim() || isSubmitting) return
 
-    onSubmit({
-      title: title.trim(),
-      description: description.trim() || undefined,
-      type,
-      severity,
-      priority,
-      tags: tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
-      statusId: statusId || undefined,
-      labelIds: selectedLabelIds.length > 0 ? selectedLabelIds : undefined,
-      assigneeId: assigneeId || undefined,
-      estimate: estimate || undefined,
-    })
-
-    resetForm()
-    setOpen(false)
+    setIsSubmitting(true)
+    try {
+      await onSubmit({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        type,
+        severity,
+        priority,
+        tags: tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+        statusId: statusId || undefined,
+        labelIds: selectedLabelIds.length > 0 ? selectedLabelIds : undefined,
+        assigneeId: assigneeId || undefined,
+        estimate: estimate || undefined,
+        attachments: pendingFiles.length > 0 ? pendingFiles.map((pf) => pf.file) : undefined,
+      })
+      resetForm()
+      setOpen(false)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   function toggleLabel(labelId: string) {
@@ -157,7 +166,13 @@ export function IssueForm({ onSubmit, projectConfig }: IssueFormProps) {
   const TypeIcon = currentType?.icon ?? Circle
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm() }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v)
+        if (!v) resetForm()
+      }}
+    >
       <DialogTrigger asChild>
         <Button
           size="sm"
@@ -193,7 +208,25 @@ export function IssueForm({ onSubmit, projectConfig }: IssueFormProps) {
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
+        <form
+          onSubmit={handleSubmit}
+          onPaste={(e) => {
+            const clipboardFiles = e.clipboardData?.files
+            if (clipboardFiles && clipboardFiles.length > 0) {
+              e.preventDefault()
+              const incoming = Array.from(clipboardFiles)
+              const available = 20 - pendingFiles.length
+              if (available <= 0) return
+              const toAdd: PendingFile[] = incoming.slice(0, available).map((file) => ({
+                id: `file-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                file,
+                preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
+              }))
+              setPendingFiles((prev) => [...prev, ...toAdd])
+            }
+          }}
+          className="flex flex-1 flex-col"
+        >
           <div className="flex-1 px-5 py-2">
             {/* Title */}
             <input
@@ -404,7 +437,9 @@ export function IssueForm({ onSubmit, projectConfig }: IssueFormProps) {
                           </span>
                         ))}
                         {selectedLabels.length > 2 && (
-                          <span className="text-muted-foreground">+{selectedLabels.length - 2}</span>
+                          <span className="text-muted-foreground">
+                            +{selectedLabels.length - 2}
+                          </span>
                         )}
                       </span>
                     ) : (
@@ -455,11 +490,7 @@ export function IssueForm({ onSubmit, projectConfig }: IssueFormProps) {
                     {estimate === "" && <Check className="ml-auto size-3.5" />}
                   </DropdownMenuItem>
                   {projectConfig.estimateScale.values.map((v) => (
-                    <DropdownMenuItem
-                      key={v}
-                      onClick={() => setEstimate(v)}
-                      className="gap-2"
-                    >
+                    <DropdownMenuItem key={v} onClick={() => setEstimate(v)} className="gap-2">
                       {v}
                       {estimate === v && <Check className="ml-auto size-3.5" />}
                     </DropdownMenuItem>
@@ -476,11 +507,7 @@ export function IssueForm({ onSubmit, projectConfig }: IssueFormProps) {
                   className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-transparent px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   <Tags className="size-3.5" />
-                  {tags ? (
-                    <span className="max-w-[120px] truncate">{tags}</span>
-                  ) : (
-                    "Tags"
-                  )}
+                  {tags ? <span className="max-w-[120px] truncate">{tags}</span> : "Tags"}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[220px] p-2">
@@ -499,14 +526,17 @@ export function IssueForm({ onSubmit, projectConfig }: IssueFormProps) {
 
           {/* Footer */}
           <Separator />
-          <div className="flex items-center justify-end px-5 py-3">
+          <div className="flex items-center gap-3 px-5 py-3">
+            <div className="flex-1">
+              <AttachmentDropzone files={pendingFiles} onFilesChange={setPendingFiles} />
+            </div>
             <Button
               type="submit"
               size="sm"
-              disabled={!title.trim()}
-              className="bg-primary px-4 text-primary-foreground hover:bg-primary/90"
+              disabled={!title.trim() || isSubmitting}
+              className="shrink-0 bg-primary px-4 text-primary-foreground hover:bg-primary/90"
             >
-              Create issue
+              {isSubmitting ? "Creating..." : "Create issue"}
             </Button>
           </div>
         </form>

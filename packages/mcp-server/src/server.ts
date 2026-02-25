@@ -3,6 +3,8 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 import { createRequire } from "module"
 import { getApiKeyHash } from "./auth/api-key.js"
 import { api, getConvexClient } from "./convex-client.js"
+import { attachmentTools, handleAttachmentTool } from "./tools/attachments.js"
+import { commentTools, handleCommentTool } from "./tools/comments.js"
 import { configTools, handleConfigTool } from "./tools/config.js"
 import { contextTools, handleContextTool } from "./tools/context.js"
 import { cycleTools, handleCycleTool } from "./tools/cycles.js"
@@ -24,6 +26,8 @@ const allTools = [
   ...configTools,
   ...cycleTools,
   ...linkingTools,
+  ...attachmentTools,
+  ...commentTools,
 ]
 
 const todoToolNames = new Set(todoTools.map((t) => t.name))
@@ -34,6 +38,8 @@ const contextToolNames = new Set(contextTools.map((t) => t.name))
 const configToolNames = new Set(configTools.map((t) => t.name))
 const cycleToolNames = new Set(cycleTools.map((t) => t.name))
 const linkingToolNames = new Set(linkingTools.map((t) => t.name))
+const attachmentToolNames = new Set(attachmentTools.map((t) => t.name))
+const commentToolNames = new Set(commentTools.map((t) => t.name))
 
 /** Strip sensitive fields and return loggable args */
 function sanitizeArgs(toolArgs: Record<string, unknown>): Record<string, unknown> {
@@ -48,24 +54,26 @@ function writeLog(
   status: "ok" | "error",
   durationMs: number,
   errorCode?: string,
-  errorMessage?: string,
+  errorMessage?: string
 ) {
   try {
     const apiKeyHash = getApiKeyHash()
     const client = getConvexClient()
     const projectId = (args.projectId as string) || undefined
-    client.mutation(api.mcpLogs.write, {
-      apiKeyHash,
-      tool,
-      args: sanitizeArgs(args),
-      status,
-      durationMs,
-      projectId,
-      errorCode,
-      errorMessage,
-    }).catch(() => {
-      // Silently ignore log write failures — never block tool responses
-    })
+    client
+      .mutation(api.mcpLogs.write, {
+        apiKeyHash,
+        tool,
+        args: sanitizeArgs(args),
+        status,
+        durationMs,
+        projectId,
+        errorCode,
+        errorMessage,
+      })
+      .catch(() => {
+        // Silently ignore log write failures — never block tool responses
+      })
   } catch {
     // API key or client not available — skip logging
   }
@@ -98,9 +106,7 @@ export function createServer(): Server {
 
     if (isDev) {
       const safe = sanitizeArgs(toolArgs)
-      const argStr = Object.keys(safe).length > 0
-        ? ` ${JSON.stringify(safe)}`
-        : ""
+      const argStr = Object.keys(safe).length > 0 ? ` ${JSON.stringify(safe)}` : ""
       console.error(`[MCP] ${name}${argStr}`)
     }
 
@@ -140,6 +146,10 @@ export function createServer(): Server {
         result = await handleCycleTool(name, toolArgs)
       } else if (linkingToolNames.has(name)) {
         result = await handleLinkingTool(name, toolArgs)
+      } else if (attachmentToolNames.has(name)) {
+        result = await handleAttachmentTool(name, toolArgs)
+      } else if (commentToolNames.has(name)) {
+        result = await handleCommentTool(name, toolArgs)
       } else {
         if (isDev) console.error(`[MCP] ${name} → NOT_FOUND`)
         writeLog(name, toolArgs, "error", Date.now() - start, "NOT_FOUND")

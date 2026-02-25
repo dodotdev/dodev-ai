@@ -4,13 +4,19 @@ import { api } from "@domcp/convex/api"
 import { useMutation, useQuery } from "convex/react"
 import { Loader2 } from "lucide-react"
 import { useParams } from "next/navigation"
+import { useState } from "react"
 import { IssueForm } from "@/components/dashboard/issue-form"
+import { ItemDetailView } from "@/components/dashboard/item-detail-view"
 import { LinearListView, type ListItem } from "@/components/dashboard/linear-list-view"
+import { ProjectHeader } from "@/components/dashboard/project-header"
+import { SlideView } from "@/components/dashboard/slide-view"
 import { useAuth } from "@/components/providers/auth-provider"
+import { useUploadAttachments } from "@/hooks/use-upload-attachments"
 
 export default function ProjectIssuesPage() {
   const { id } = useParams<{ id: string }>()
   const { apiKeyHash, isLoading: authLoading } = useAuth()
+  const [selectedItem, setSelectedItem] = useState<ListItem | null>(null)
 
   const project = useQuery(api.projects.get, apiKeyHash ? { apiKeyHash, id: id as never } : "skip")
 
@@ -19,8 +25,16 @@ export default function ProjectIssuesPage() {
     apiKeyHash ? { apiKeyHash, projectId: id as never, limit: 100 } : "skip"
   )
 
+  // Comments query (only when item selected)
+  const comments = useQuery(
+    api.comments.list,
+    selectedItem && apiKeyHash ? { apiKeyHash, issueId: selectedItem._id as never } : "skip"
+  )
+
   const updateIssue = useMutation(api.issues.update)
   const createIssue = useMutation(api.issues.create)
+  const createComment = useMutation(api.comments.create)
+  const uploadAttachments = useUploadAttachments(apiKeyHash)
 
   if (authLoading || !apiKeyHash) {
     return (
@@ -63,9 +77,10 @@ export default function ProjectIssuesPage() {
     labelIds?: string[]
     assigneeId?: string
     estimate?: string
+    attachments?: File[]
   }) {
     if (!apiKeyHash) return
-    await createIssue({
+    const created = await createIssue({
       apiKeyHash,
       title: data.title,
       description: data.description,
@@ -79,6 +94,28 @@ export default function ProjectIssuesPage() {
       assigneeId: data.assigneeId,
       estimate: data.estimate,
     })
+    if (data.attachments?.length && created?._id) {
+      await uploadAttachments(data.attachments, { issueId: created._id as string })
+    }
+  }
+
+  async function handleAddComment(body: string) {
+    if (!apiKeyHash || !selectedItem) return
+    await createComment({
+      apiKeyHash,
+      issueId: selectedItem._id as never,
+      body,
+      authorType: "user" as const,
+    })
+  }
+
+  async function handleUpdateItem(updates: Record<string, unknown>) {
+    if (!apiKeyHash || !selectedItem) return
+    await updateIssue({
+      apiKeyHash,
+      id: selectedItem._id as never,
+      ...updates,
+    } as never)
   }
 
   // Resolve labels and assignees for display
@@ -115,23 +152,55 @@ export default function ProjectIssuesPage() {
     }
   })
 
+  // Navigation
+  const currentIndex = selectedItem ? mapped.findIndex((i) => i._id === selectedItem._id) : -1
+
+  function handleNavigate(direction: "prev" | "next") {
+    const idx = direction === "prev" ? currentIndex - 1 : currentIndex + 1
+    if (idx >= 0 && idx < mapped.length) {
+      setSelectedItem(mapped[idx])
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight">Issues</h1>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Track bugs, features, and improvements
-          </p>
-        </div>
-        <IssueForm onSubmit={handleCreate} />
-      </div>
+      <ProjectHeader
+        title="Issues"
+        actions={<IssueForm onSubmit={handleCreate} />}
+      />
 
-      <LinearListView
-        items={mapped}
-        statuses={projectStatuses}
-        onStatusChange={handleStatusChange}
-        emptyMessage="No issues yet. Create one from the MCP server or the form above."
+      <SlideView
+        showDetail={!!selectedItem}
+        listContent={
+          <LinearListView
+            items={mapped}
+            statuses={projectStatuses}
+            onStatusChange={handleStatusChange}
+            onItemClick={setSelectedItem}
+            emptyMessage="No issues yet. Create one from the MCP server or the form above."
+          />
+        }
+        detailContent={
+          selectedItem ? (
+            <ItemDetailView
+              item={selectedItem}
+              projectStub={projectStub}
+              projectConfig={{
+                statuses: projectStatuses,
+                labels: projectLabels,
+                members: projectMembers,
+                estimateScale: project?.estimateScale,
+              }}
+              comments={comments ?? []}
+              onBack={() => setSelectedItem(null)}
+              onAddComment={handleAddComment}
+              onUpdateItem={handleUpdateItem}
+              currentIndex={currentIndex}
+              totalItems={mapped.length}
+              onNavigate={handleNavigate}
+            />
+          ) : null
+        }
       />
     </div>
   )

@@ -21,7 +21,7 @@ export function DashboardProviders({
   return (
     <ConvexProvider>
       <AuthProvider workosUserId={workosUserId} email={email} name={name}>
-        <div className="relative isolate flex min-h-svh w-full bg-surface dark:bg-background">
+        <div className="relative flex min-h-svh w-full bg-surface dark:bg-background">
           <DashboardHeader />
 
           {/* Desktop sidebar */}

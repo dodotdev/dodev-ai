@@ -35,12 +35,16 @@ export default function MemoriesPage() {
   // Use search query when there's a search term, otherwise list all
   const searchResults = useQuery(
     api.memories.search,
-    apiKeyHash && search.length >= 2 ? { apiKeyHash, query: search, globalOnly: true, type: typeArg as any } : "skip"
+    apiKeyHash && search.length >= 2
+      ? { apiKeyHash, query: search, globalOnly: true, type: typeArg as any }
+      : "skip"
   )
 
   const allMemories = useQuery(
     api.memories.listMemories,
-    apiKeyHash && search.length < 2 ? { apiKeyHash, globalOnly: true, type: typeArg as any } : "skip"
+    apiKeyHash && search.length < 2
+      ? { apiKeyHash, globalOnly: true, type: typeArg as any }
+      : "skip"
   )
 
   const addMemory = useMutation(api.memories.add)

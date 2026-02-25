@@ -67,7 +67,6 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
 
   const createProject = useMutation(api.projects.create)
 
-
   const userName = user?.name || user?.email?.split("@")[0] || "User"
   const userEmail = user?.email || ""
   const userPlan = (user?.plan as string) || "free"
@@ -79,9 +78,8 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
     .slice(0, 2)
 
   // Auto-expand the project whose sub-page is currently active
-  const activeProjectId = projects?.find((p) =>
-    pathname.startsWith(`/dashboard/projects/${p._id}`)
-  )?._id as string | undefined
+  const activeProjectId = projects?.find((p) => pathname.startsWith(`/dashboard/projects/${p._id}`))
+    ?._id as string | undefined
 
   if (activeProjectId && !expandedProjects.has(activeProjectId)) {
     setExpandedProjects((prev) => new Set(prev).add(activeProjectId))
@@ -356,7 +354,6 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
           setNewProjectOpen(false)
         }}
       />
-
     </div>
   )
 }

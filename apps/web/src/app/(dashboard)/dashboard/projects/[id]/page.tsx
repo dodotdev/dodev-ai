@@ -4,13 +4,19 @@ import { api } from "@domcp/convex/api"
 import { useMutation, useQuery } from "convex/react"
 import { Loader2, Plus } from "lucide-react"
 import { useParams } from "next/navigation"
+import { useState } from "react"
+import { ItemDetailView } from "@/components/dashboard/item-detail-view"
 import { LinearListView, type ListItem } from "@/components/dashboard/linear-list-view"
+import { ProjectHeader } from "@/components/dashboard/project-header"
+import { SlideView } from "@/components/dashboard/slide-view"
 import { TodoForm } from "@/components/dashboard/todo-form"
 import { useAuth } from "@/components/providers/auth-provider"
+import { useUploadAttachments } from "@/hooks/use-upload-attachments"
 
 export default function ProjectTodosPage() {
   const { id } = useParams<{ id: string }>()
   const { apiKeyHash, isLoading: authLoading } = useAuth()
+  const [selectedItem, setSelectedItem] = useState<ListItem | null>(null)
 
   const project = useQuery(api.projects.get, apiKeyHash ? { apiKeyHash, id: id as never } : "skip")
 
@@ -19,8 +25,16 @@ export default function ProjectTodosPage() {
     apiKeyHash ? { apiKeyHash, projectId: id as never, limit: 100 } : "skip"
   )
 
+  // Comments query (only when item selected)
+  const comments = useQuery(
+    api.comments.list,
+    selectedItem && apiKeyHash ? { apiKeyHash, todoId: selectedItem._id as never } : "skip"
+  )
+
   const updateTodo = useMutation(api.todos.update)
   const createTodo = useMutation(api.todos.create)
+  const createComment = useMutation(api.comments.create)
+  const uploadAttachments = useUploadAttachments(apiKeyHash)
 
   if (authLoading || !apiKeyHash) {
     return (
@@ -61,9 +75,10 @@ export default function ProjectTodosPage() {
     labelIds?: string[]
     assigneeId?: string
     estimate?: string
+    attachments?: File[]
   }) {
     if (!apiKeyHash) return
-    await createTodo({
+    const created = await createTodo({
       apiKeyHash,
       title: data.title,
       description: data.description,
@@ -75,6 +90,28 @@ export default function ProjectTodosPage() {
       assigneeId: data.assigneeId,
       estimate: data.estimate,
     })
+    if (data.attachments?.length && created?._id) {
+      await uploadAttachments(data.attachments, { todoId: created._id as string })
+    }
+  }
+
+  async function handleAddComment(body: string) {
+    if (!apiKeyHash || !selectedItem) return
+    await createComment({
+      apiKeyHash,
+      todoId: selectedItem._id as never,
+      body,
+      authorType: "user" as const,
+    })
+  }
+
+  async function handleUpdateItem(updates: Record<string, unknown>) {
+    if (!apiKeyHash || !selectedItem) return
+    await updateTodo({
+      apiKeyHash,
+      id: selectedItem._id as never,
+      ...updates,
+    } as never)
   }
 
   // Resolve labels and assignees for display
@@ -109,37 +146,74 @@ export default function ProjectTodosPage() {
     }
   })
 
+  // Navigation
+  const currentIndex = selectedItem ? mapped.findIndex((i) => i._id === selectedItem._id) : -1
+
+  function handleNavigate(direction: "prev" | "next") {
+    const idx = direction === "prev" ? currentIndex - 1 : currentIndex + 1
+    if (idx >= 0 && idx < mapped.length) {
+      setSelectedItem(mapped[idx])
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight">Todos</h1>
-        </div>
-        <TodoForm
-          onSubmit={handleCreate}
-          projectConfig={{
-            statuses: projectStatuses,
-            labels: projectLabels,
-            members: projectMembers,
-            estimateScale: project?.estimateScale,
-          }}
-          trigger={
-            <button
-              type="button"
-              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              title="New todo"
-            >
-              <Plus className="size-4" />
-            </button>
-          }
-        />
-      </div>
+      <ProjectHeader
+        title="Todos"
+        actions={
+          <TodoForm
+            onSubmit={handleCreate}
+            projectConfig={{
+              statuses: projectStatuses,
+              labels: projectLabels,
+              members: projectMembers,
+              estimateScale: project?.estimateScale,
+            }}
+            trigger={
+              <button
+                type="button"
+                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                title="New todo"
+              >
+                <Plus className="size-4" />
+              </button>
+            }
+          />
+        }
+      />
 
-      <LinearListView
-        items={mapped}
-        statuses={projectStatuses}
-        onStatusChange={handleStatusChange}
-        emptyMessage="No todos yet. Create one from the MCP server or the form above."
+      <SlideView
+        showDetail={!!selectedItem}
+        listContent={
+          <LinearListView
+            items={mapped}
+            statuses={projectStatuses}
+            onStatusChange={handleStatusChange}
+            onItemClick={setSelectedItem}
+            emptyMessage="No todos yet. Create one from the MCP server or the form above."
+          />
+        }
+        detailContent={
+          selectedItem ? (
+            <ItemDetailView
+              item={selectedItem}
+              projectStub={projectStub}
+              projectConfig={{
+                statuses: projectStatuses,
+                labels: projectLabels,
+                members: projectMembers,
+                estimateScale: project?.estimateScale,
+              }}
+              comments={comments ?? []}
+              onBack={() => setSelectedItem(null)}
+              onAddComment={handleAddComment}
+              onUpdateItem={handleUpdateItem}
+              currentIndex={currentIndex}
+              totalItems={mapped.length}
+              onNavigate={handleNavigate}
+            />
+          ) : null
+        }
       />
     </div>
   )

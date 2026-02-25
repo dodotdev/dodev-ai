@@ -1,10 +1,6 @@
 "use client"
 
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-} from "lucide-react"
+import { AlertTriangle, CheckCircle2, Clock } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 
@@ -29,12 +25,22 @@ function timeAgo(ts: number): string {
 }
 
 function toolCategory(tool: string): string {
-  if (tool.startsWith("create_todo") || tool.startsWith("update_todo") || tool.startsWith("complete_todo") || tool.startsWith("list_todo") || tool.startsWith("get_todo") || tool.startsWith("delete_todo")) return "todo"
+  if (
+    tool.startsWith("create_todo") ||
+    tool.startsWith("update_todo") ||
+    tool.startsWith("complete_todo") ||
+    tool.startsWith("list_todo") ||
+    tool.startsWith("get_todo") ||
+    tool.startsWith("delete_todo")
+  )
+    return "todo"
   if (tool.includes("issue")) return "issue"
-  if (tool.includes("memory") || tool === "add_memory" || tool === "search_memories") return "memory"
+  if (tool.includes("memory") || tool === "add_memory" || tool === "search_memories")
+    return "memory"
   if (tool.includes("project") || tool.includes("archive_project")) return "project"
   if (tool.includes("cycle")) return "cycle"
-  if (tool.includes("context") || tool === "get_context" || tool === "get_setup_instructions") return "context"
+  if (tool.includes("context") || tool === "get_context" || tool === "get_setup_instructions")
+    return "context"
   if (tool.includes("link") || tool.includes("unlink")) return "linking"
   return "config"
 }

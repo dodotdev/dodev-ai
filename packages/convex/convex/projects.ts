@@ -234,33 +234,25 @@ export const remove = mutation({
     // Delete all project data
     const todos = await ctx.db
       .query("todos")
-      .withIndex("by_user_project", (q) =>
-        q.eq("userId", user._id).eq("projectId", args.id)
-      )
+      .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.id))
       .collect()
     for (const todo of todos) await ctx.db.delete(todo._id)
 
     const issues = await ctx.db
       .query("issues")
-      .withIndex("by_user_project", (q) =>
-        q.eq("userId", user._id).eq("projectId", args.id)
-      )
+      .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.id))
       .collect()
     for (const issue of issues) await ctx.db.delete(issue._id)
 
     const memories = await ctx.db
       .query("memories")
-      .withIndex("by_user_project", (q) =>
-        q.eq("userId", user._id).eq("projectId", args.id)
-      )
+      .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.id))
       .collect()
     for (const memory of memories) await ctx.db.delete(memory._id)
 
     const cycles = await ctx.db
       .query("cycles")
-      .withIndex("by_user_project", (q) =>
-        q.eq("userId", user._id).eq("projectId", args.id)
-      )
+      .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.id))
       .collect()
     for (const cycle of cycles) await ctx.db.delete(cycle._id)
 

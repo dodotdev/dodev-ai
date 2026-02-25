@@ -11,7 +11,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -90,9 +89,7 @@ export function MemoryGrid({ memories }: MemoryGridProps) {
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <Brain className="mb-3 size-8 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">No memories yet</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Your AI agent will store memories here
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">Your AI agent will store memories here</p>
       </div>
     )
   }
@@ -293,9 +290,7 @@ function MemoryDetailDialog({
             )}
           </div>
           <DialogTitle className="sr-only">Memory Detail</DialogTitle>
-          <DialogDescription className="sr-only">
-            View and manage memory details
-          </DialogDescription>
+          <DialogDescription className="sr-only">View and manage memory details</DialogDescription>
         </DialogHeader>
 
         {isEditing ? (
@@ -370,12 +365,7 @@ function MemoryDetailDialog({
               <Button variant="ghost" size="sm" onClick={onDeleteToggle} disabled={saving}>
                 Cancel
               </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDelete}
-                disabled={saving}
-              >
+              <Button variant="destructive" size="sm" onClick={handleDelete} disabled={saving}>
                 {saving ? "Deleting..." : "Delete Memory"}
               </Button>
             </div>
@@ -393,7 +383,6 @@ function MemoryDetailDialog({
                 ))}
               </div>
             )}
-
           </div>
         )}
 

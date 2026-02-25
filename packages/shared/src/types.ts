@@ -177,6 +177,38 @@ export interface Memory {
   updatedAt: number
 }
 
+/** File attachment linked to a todo or issue */
+export interface Attachment {
+  _id: string
+  userId: string
+  todoId?: string
+  issueId?: string
+  projectId?: string
+  storageId: string
+  filename: string
+  mimeType: string
+  size: number
+  description?: string
+  aiDescription?: string
+  url?: string
+  createdAt: number
+}
+
+/** Comment on a todo or issue */
+export interface Comment {
+  _id: string
+  userId: string
+  todoId?: string
+  issueId?: string
+  projectId?: string
+  parentId?: string
+  body: string
+  authorName?: string
+  authorType?: "user" | "agent"
+  createdAt: number
+  updatedAt: number
+}
+
 /** Project as returned from Convex */
 export interface Project {
   _id: string

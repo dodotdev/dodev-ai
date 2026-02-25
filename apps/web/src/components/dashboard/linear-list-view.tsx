@@ -12,7 +12,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core"
-import { ChevronRight, Circle, GripVertical } from "lucide-react"
+import { ChevronRight, Circle, GripVertical, Paperclip } from "lucide-react"
 import { useMemo, useState } from "react"
 import { cn, formatRelativeTime } from "@/lib/utils"
 
@@ -59,6 +59,7 @@ export interface ListItem {
   issueId?: string
   resolvedLabels?: ResolvedLabel[]
   resolvedAssignee?: ResolvedAssignee
+  attachmentCount?: number
 }
 
 const priorityIcons: Record<string, string> = {
@@ -79,6 +80,7 @@ interface LinearListViewProps {
   items: ListItem[]
   statuses?: WorkflowStatus[]
   onStatusChange?: (itemId: string, newStatus: ItemStatus, statusId?: string) => void
+  onItemClick?: (item: ListItem) => void
   emptyMessage?: string
 }
 
@@ -86,6 +88,7 @@ export function LinearListView({
   items,
   statuses,
   onStatusChange,
+  onItemClick,
   emptyMessage = "No items yet",
 }: LinearListViewProps) {
   const [activeFilter, setActiveFilter] = useState<string>("all")
@@ -287,6 +290,7 @@ export function LinearListView({
                       statusColor={col.color}
                       isFirst={itemIdx === 0}
                       onCycleStatus={() => cycleStatus(item)}
+                      onItemClick={onItemClick ? () => onItemClick(item) : undefined}
                     />
                   ))}
               </DroppableGroup>
@@ -354,9 +358,7 @@ function DroppableGroup({
         <span className="text-xs text-muted-foreground">{count}</span>
       </button>
       {!isCollapsed && count > 0 && (
-        <div className="overflow-hidden rounded-lg border border-border/40 bg-card">
-          {children}
-        </div>
+        <div className="overflow-hidden rounded-lg border border-border/40 bg-card">{children}</div>
       )}
     </div>
   )
@@ -469,9 +471,16 @@ interface DraggableItemRowProps {
   statusColor: string
   isFirst?: boolean
   onCycleStatus: () => void
+  onItemClick?: () => void
 }
 
-function DraggableItemRow({ item, statusColor, isFirst, onCycleStatus }: DraggableItemRowProps) {
+function DraggableItemRow({
+  item,
+  statusColor,
+  isFirst,
+  onCycleStatus,
+  onItemClick,
+}: DraggableItemRowProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: item._id,
   })
@@ -506,7 +515,7 @@ function DraggableItemRow({ item, statusColor, isFirst, onCycleStatus }: Draggab
         />
       </button>
 
-      <ItemRowContent item={item} />
+      <ItemRowContent item={item} onTitleClick={onItemClick} />
     </div>
   )
 }
@@ -530,7 +539,7 @@ function ItemRowOverlay({ item, statusColor }: { item: ListItem; statusColor: st
 
 // -- Shared item row content (used by both real row and overlay) --
 
-function ItemRowContent({ item }: { item: ListItem }) {
+function ItemRowContent({ item, onTitleClick }: { item: ListItem; onTitleClick?: () => void }) {
   const isCompleted = item.status === "completed"
 
   const initials = item.resolvedAssignee?.name
@@ -562,8 +571,29 @@ function ItemRowContent({ item }: { item: ListItem }) {
       <span
         className={cn(
           "min-w-0 flex-1 truncate text-sm",
-          isCompleted && "text-muted-foreground line-through"
+          isCompleted && "text-muted-foreground line-through",
+          onTitleClick && "cursor-pointer hover:text-foreground hover:underline"
         )}
+        onClick={
+          onTitleClick
+            ? (e) => {
+                e.stopPropagation()
+                onTitleClick()
+              }
+            : undefined
+        }
+        onKeyDown={
+          onTitleClick
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.stopPropagation()
+                  onTitleClick()
+                }
+              }
+            : undefined
+        }
+        role={onTitleClick ? "button" : undefined}
+        tabIndex={onTitleClick ? 0 : undefined}
       >
         {item.title}
       </span>
@@ -597,6 +627,14 @@ function ItemRowContent({ item }: { item: ListItem }) {
       {item.estimate && (
         <span className="hidden shrink-0 rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline">
           {item.estimate}
+        </span>
+      )}
+
+      {/* Attachment count */}
+      {item.attachmentCount != null && item.attachmentCount > 0 && (
+        <span className="hidden shrink-0 items-center gap-0.5 text-muted-foreground sm:inline-flex">
+          <Paperclip className="size-3" />
+          <span className="text-[10px]">{item.attachmentCount}</span>
         </span>
       )}
 

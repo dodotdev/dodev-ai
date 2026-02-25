@@ -30,11 +30,11 @@ export async function authenticateApiKey(
 export async function checkQuota(
   ctx: QueryCtx | MutationCtx,
   user: Doc<"users">,
-  resource: "todos" | "memories" | "projects" | "issues"
+  resource: "todos" | "memories" | "projects" | "issues" | "attachments"
 ): Promise<void> {
   if (user.plan !== "free") return
 
-  const limits = { todos: 100, memories: 50, projects: 1, issues: 200 }
+  const limits = { todos: 100, memories: 50, projects: 1, issues: 200, attachments: 50 }
   const period = getCurrentPeriod()
 
   const usage = await ctx.db
@@ -47,6 +47,7 @@ export async function checkQuota(
     | "memoryCount"
     | "projectCount"
     | "issueCount"
+    | "attachmentCount"
   const count = usage?.[countField] ?? 0
   if (count >= limits[resource]) {
     throw new ConvexError("QUOTA_EXCEEDED")

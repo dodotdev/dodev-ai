@@ -13,10 +13,9 @@ interface McpLog {
 export default function ActivityPage() {
   const { apiKeyHash, isLoading: authLoading } = useAuth()
 
-  const logs = useQuery(
-    api.mcpLogs.list,
-    apiKeyHash ? { apiKeyHash, limit: 100 } : "skip"
-  ) as McpLog[] | undefined
+  const logs = useQuery(api.mcpLogs.list, apiKeyHash ? { apiKeyHash, limit: 100 } : "skip") as
+    | McpLog[]
+    | undefined
 
   if (authLoading || !apiKeyHash) {
     return (

@@ -8,6 +8,9 @@
  * @module
  */
 
+import type * as attachments from "../attachments.js";
+import type * as attachmentsInternal from "../attachmentsInternal.js";
+import type * as comments from "../comments.js";
 import type * as crons from "../crons.js";
 import type * as cycles from "../cycles.js";
 import type * as http from "../http.js";
@@ -32,6 +35,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  attachments: typeof attachments;
+  attachmentsInternal: typeof attachmentsInternal;
+  comments: typeof comments;
   crons: typeof crons;
   cycles: typeof cycles;
   http: typeof http;

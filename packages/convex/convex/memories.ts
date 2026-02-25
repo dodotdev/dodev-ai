@@ -143,9 +143,7 @@ export const listMemories = query({
       // Only return memories with no projectId
       memoryQuery = ctx.db
         .query("memories")
-        .withIndex("by_user_project", (q) =>
-          q.eq("userId", user._id).eq("projectId", undefined)
-        )
+        .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", undefined))
     } else {
       memoryQuery = ctx.db
         .query("memories")

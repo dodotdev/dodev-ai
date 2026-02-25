@@ -85,14 +85,11 @@ export async function handleContextTool(
         const workspace = detectWorkspace()
         if (workspace.workspacePath || workspace.repoUrl) {
           try {
-            project = (await client.query(
-              api.projects.resolveProjectByWorkspace,
-              {
-                apiKeyHash,
-                workspacePath: workspace.workspacePath,
-                repoUrl: workspace.repoUrl,
-              }
-            )) as { name: string; stub: string; _id: string } | null
+            project = (await client.query(api.projects.resolveProjectByWorkspace, {
+              apiKeyHash,
+              workspacePath: workspace.workspacePath,
+              repoUrl: workspace.repoUrl,
+            })) as { name: string; stub: string; _id: string } | null
           } catch {
             // No linked project — fall through to generic instructions
           }

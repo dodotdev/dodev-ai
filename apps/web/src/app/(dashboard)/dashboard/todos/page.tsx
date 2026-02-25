@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react"
 import { LinearListView, type ListItem } from "@/components/dashboard/linear-list-view"
 import { TodoForm } from "@/components/dashboard/todo-form"
 import { useAuth } from "@/components/providers/auth-provider"
+import { useUploadAttachments } from "@/hooks/use-upload-attachments"
 
 export default function TodosPage() {
   const { apiKeyHash, isLoading: authLoading } = useAuth()
@@ -17,6 +18,7 @@ export default function TodosPage() {
 
   const createTodo = useMutation(api.todos.create)
   const updateTodo = useMutation(api.todos.update)
+  const uploadAttachments = useUploadAttachments(apiKeyHash)
 
   if (authLoading || !apiKeyHash) {
     return (
@@ -31,15 +33,19 @@ export default function TodosPage() {
     description?: string
     priority: string
     tags?: string[]
+    attachments?: File[]
   }) {
     if (!apiKeyHash) return
-    await createTodo({
+    const created = await createTodo({
       apiKeyHash,
       title: data.title,
       description: data.description,
       priority: data.priority as "low" | "medium" | "high" | "urgent",
       tags: data.tags,
     })
+    if (data.attachments?.length && created?._id) {
+      await uploadAttachments(data.attachments, { todoId: created._id as string })
+    }
   }
 
   async function handleStatusChange(todoId: string, newStatus: string) {

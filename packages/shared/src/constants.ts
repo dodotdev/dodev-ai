@@ -9,11 +9,23 @@ export const API_KEY_LENGTH = 32
 /** Plan limits for free tier */
 export const PLAN_LIMITS: Record<
   PlanTier,
-  { todos: number; memories: number; projects: number; issues: number }
+  { todos: number; memories: number; projects: number; issues: number; attachments: number }
 > = {
-  free: { todos: 100, memories: 50, projects: 1, issues: 200 },
-  pro: { todos: Infinity, memories: Infinity, projects: Infinity, issues: Infinity },
-  team: { todos: Infinity, memories: Infinity, projects: Infinity, issues: Infinity },
+  free: { todos: 100, memories: 50, projects: 1, issues: 200, attachments: 50 },
+  pro: {
+    todos: Infinity,
+    memories: Infinity,
+    projects: Infinity,
+    issues: Infinity,
+    attachments: Infinity,
+  },
+  team: {
+    todos: Infinity,
+    memories: Infinity,
+    projects: Infinity,
+    issues: Infinity,
+    attachments: Infinity,
+  },
 }
 
 /** Rate limits per plan (requests per minute) */
@@ -45,6 +57,12 @@ export const VALIDATION = {
   DEFAULT_MEMORY_SEARCH_LIMIT: 10,
   /** Maximum memory search limit */
   MAX_MEMORY_SEARCH_LIMIT: 50,
+  /** Maximum attachment file size in bytes (10 MB) */
+  MAX_ATTACHMENT_SIZE: 10 * 1024 * 1024,
+  /** Maximum number of attachments per todo or issue */
+  MAX_ATTACHMENTS_PER_ITEM: 20,
+  /** Maximum length for attachment filenames */
+  MAX_ATTACHMENT_FILENAME: 255,
 } as const
 
 /** Default workflow statuses for new projects */

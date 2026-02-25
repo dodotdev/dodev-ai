@@ -168,6 +168,26 @@ export const remove = mutation({
     if (!todo || todo.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
+
+    // Cascade delete associated attachments
+    const attachments = await ctx.db
+      .query("attachments")
+      .withIndex("by_todo", (q) => q.eq("todoId", args.id))
+      .collect()
+    for (const att of attachments) {
+      await ctx.storage.delete(att.storageId)
+      await ctx.db.delete(att._id)
+    }
+
+    // Cascade delete associated comments
+    const comments = await ctx.db
+      .query("comments")
+      .withIndex("by_todo", (q) => q.eq("todoId", args.id))
+      .collect()
+    for (const comment of comments) {
+      await ctx.db.delete(comment._id)
+    }
+
     await ctx.db.delete(args.id)
     return { deleted: true, id: args.id }
   },
@@ -218,15 +238,11 @@ export const list = query({
       // Global-only with status: fetch unscoped, then filter
       todoQuery = ctx.db
         .query("todos")
-        .withIndex("by_user_project", (q) =>
-          q.eq("userId", user._id).eq("projectId", undefined)
-        )
+        .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", undefined))
     } else if (args.globalOnly) {
       todoQuery = ctx.db
         .query("todos")
-        .withIndex("by_user_project", (q) =>
-          q.eq("userId", user._id).eq("projectId", undefined)
-        )
+        .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", undefined))
     } else if (args.status) {
       todoQuery = ctx.db
         .query("todos")

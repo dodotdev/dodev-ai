@@ -290,6 +290,42 @@ export default defineSchema({
     lastActiveAt: v.number(),
   }).index("by_user_agent", ["userId", "agentId"]),
 
+  attachments: defineTable({
+    userId: v.id("users"),
+    todoId: v.optional(v.id("todos")),
+    issueId: v.optional(v.id("issues")),
+    projectId: v.optional(v.id("projects")),
+    storageId: v.id("_storage"),
+    filename: v.string(),
+    mimeType: v.string(),
+    size: v.number(),
+    description: v.optional(v.string()),
+    aiDescription: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_todo", ["todoId"])
+    .index("by_issue", ["issueId"])
+    .index("by_user_project", ["userId", "projectId"])
+    .index("by_storage_id", ["storageId"]),
+
+  comments: defineTable({
+    userId: v.id("users"),
+    todoId: v.optional(v.id("todos")),
+    issueId: v.optional(v.id("issues")),
+    projectId: v.optional(v.id("projects")),
+    parentId: v.optional(v.id("comments")),
+    body: v.string(),
+    authorName: v.optional(v.string()),
+    authorType: v.optional(v.union(v.literal("user"), v.literal("agent"))),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_todo", ["todoId"])
+    .index("by_issue", ["issueId"])
+    .index("by_user", ["userId"])
+    .index("by_parent", ["parentId"]),
+
   usage: defineTable({
     userId: v.id("users"),
     period: v.string(),
@@ -297,6 +333,7 @@ export default defineSchema({
     memoryCount: v.number(),
     projectCount: v.number(),
     issueCount: v.number(),
+    attachmentCount: v.optional(v.number()),
     apiCalls: v.number(),
   }).index("by_user_period", ["userId", "period"]),
 

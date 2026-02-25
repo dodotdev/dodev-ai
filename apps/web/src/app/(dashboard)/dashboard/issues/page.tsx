@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react"
 import { IssueForm } from "@/components/dashboard/issue-form"
 import { LinearListView, type ListItem } from "@/components/dashboard/linear-list-view"
 import { useAuth } from "@/components/providers/auth-provider"
+import { useUploadAttachments } from "@/hooks/use-upload-attachments"
 
 export default function IssuesPage() {
   const { apiKeyHash, isLoading: authLoading } = useAuth()
@@ -17,6 +18,7 @@ export default function IssuesPage() {
 
   const createIssue = useMutation(api.issues.create)
   const updateIssue = useMutation(api.issues.update)
+  const uploadAttachments = useUploadAttachments(apiKeyHash)
 
   if (authLoading || !apiKeyHash) {
     return (
@@ -33,9 +35,10 @@ export default function IssuesPage() {
     severity: string
     priority: string
     tags?: string[]
+    attachments?: File[]
   }) {
     if (!apiKeyHash) return
-    await createIssue({
+    const created = await createIssue({
       apiKeyHash,
       title: data.title,
       description: data.description,
@@ -44,6 +47,9 @@ export default function IssuesPage() {
       priority: data.priority as "low" | "medium" | "high" | "urgent",
       tags: data.tags,
     })
+    if (data.attachments?.length && created?._id) {
+      await uploadAttachments(data.attachments, { issueId: created._id as string })
+    }
   }
 
   async function handleStatusChange(issueId: string, newStatus: string) {

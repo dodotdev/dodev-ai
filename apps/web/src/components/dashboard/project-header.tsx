@@ -37,7 +37,13 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]["key"]
 
-export function ProjectHeader() {
+export function ProjectHeader({
+  title,
+  actions,
+}: {
+  title: string
+  actions?: React.ReactNode
+}) {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const { apiKeyHash } = useAuth()
@@ -55,16 +61,19 @@ export function ProjectHeader() {
 
   return (
     <>
-      <div className="flex items-center justify-between border-b border-border px-6 py-3">
-        <h2 className="text-2xl font-bold tracking-tight">{project.name}</h2>
-        <button
-          type="button"
-          onClick={() => setSettingsOpen(true)}
-          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          title="Project settings"
-        >
-          <Settings className="size-4" />
-        </button>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        <div className="flex items-center gap-1">
+          {actions}
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            title="Project settings"
+          >
+            <Settings className="size-4" />
+          </button>
+        </div>
       </div>
 
       {settingsOpen && (
