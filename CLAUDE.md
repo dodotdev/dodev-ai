@@ -35,7 +35,7 @@ This project has a connected dodev.ai MCP server. You MUST use it proactively:
 - Update existing memories rather than creating duplicates.
 
 ### Project Context
-- The active dodev.ai project is **"dodev.ai"** (stub: DODEV, ID: `jd71k24g625k3dqk4xq71szmqd81qbdv`).
+- The active dodev.ai project is **"dodev"** (slug: DODEV, ID: `jd7c2ehq03hap29srh1sv895xx81va1e`).
 - Always scope todos, issues, and memories to this project using the `projectId` parameter.
 
 ## Architecture

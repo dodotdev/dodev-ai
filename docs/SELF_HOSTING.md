@@ -167,7 +167,7 @@ This project has a connected dodev.ai MCP server. You MUST use it proactively:
 - **Update todos/issues** as you work — mark them `in_progress` when starting, `completed` when done.
 ```
 
-Replace the generic section with output from `get_setup_instructions` to include project-specific context (name, stub, ID).
+Replace the generic section with output from `get_setup_instructions` to include project-specific context (name, slug, ID).
 
 ## Enabling Vector Search (Optional)
 

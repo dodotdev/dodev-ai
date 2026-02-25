@@ -1,6 +1,6 @@
 interface ProjectInfo {
   projectName: string
-  projectStub: string
+  projectSlug: string
   projectId: string
 }
 
@@ -11,7 +11,7 @@ interface ProjectInfo {
 export function generateSetupInstructions(project?: ProjectInfo): string {
   const projectSection = project
     ? `### Project Context
-- The active dodev.ai project is **"${project.projectName}"** (stub: ${project.projectStub}, ID: \`${project.projectId}\`).
+- The active dodev.ai project is **"${project.projectName}"** (slug: ${project.projectSlug}, ID: \`${project.projectId}\`).
 - Always scope todos, issues, and memories to this project using the \`projectId\` parameter.`
     : `### Project Context
 - No project is linked to this workspace yet. Create one with \`create_project\` and link it with \`link_project\`.`

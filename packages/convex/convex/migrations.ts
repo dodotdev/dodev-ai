@@ -15,8 +15,8 @@ const DEFAULT_ESTIMATE_SCALE = {
   values: ["1", "2", "3", "5", "8", "13", "21"],
 }
 
-/** Derive a stub from a project name */
-function deriveStub(name: string): string {
+/** Derive a slug from a project name */
+function deriveSlug(name: string): string {
   const words = name.trim().split(/\s+/)
   if (words.length >= 2) {
     return words
@@ -28,14 +28,14 @@ function deriveStub(name: string): string {
   return words[0].toUpperCase().slice(0, 5)
 }
 
-/** Backfill existing projects with default config fields, stub, and todoCounter */
+/** Backfill existing projects with default config fields, slug, and todoCounter */
 export const backfillProjectConfig = internalMutation({
   handler: async (ctx) => {
     const projects = await ctx.db.query("projects").collect()
     let updated = 0
 
-    // Track used stubs per user for uniqueness
-    const usedStubs = new Map<string, Set<string>>()
+    // Track used slugs per user for uniqueness
+    const usedSlugs = new Map<string, Set<string>>()
 
     for (const project of projects) {
       const raw = project as Record<string, unknown>
@@ -51,20 +51,20 @@ export const backfillProjectConfig = internalMutation({
         patches.estimateScale = DEFAULT_ESTIMATE_SCALE
       }
 
-      if (!raw.stub) {
+      if (!raw.slug) {
         const userId = String(project.userId)
-        if (!usedStubs.has(userId)) usedStubs.set(userId, new Set())
-        const userStubs = usedStubs.get(userId)!
+        if (!usedSlugs.has(userId)) usedSlugs.set(userId, new Set())
+        const userSlugs = usedSlugs.get(userId)!
 
-        const stub = deriveStub(project.name).replace(/[^A-Z0-9]/g, "") || "PRJ"
-        let candidate = stub
+        const slug = deriveSlug(project.name).replace(/[^A-Z0-9]/g, "") || "PRJ"
+        let candidate = slug
         let suffix = 1
-        while (userStubs.has(candidate)) {
-          candidate = `${stub}${suffix}`
+        while (userSlugs.has(candidate)) {
+          candidate = `${slug}${suffix}`
           suffix++
         }
-        userStubs.add(candidate)
-        patches.stub = candidate
+        userSlugs.add(candidate)
+        patches.slug = candidate
       }
 
       if (raw.todoCounter === undefined) {
@@ -86,5 +86,48 @@ export const backfillProjectConfig = internalMutation({
     }
 
     return { updated, total: projects.length }
+  },
+})
+
+/** Rename the `stub` field to `slug` on all existing projects */
+export const renameStubToSlug = internalMutation({
+  handler: async (ctx) => {
+    const projects = await ctx.db.query("projects").collect()
+    let updated = 0
+
+    for (const project of projects) {
+      const raw = project as Record<string, unknown>
+      // If document has `stub` but no `slug`, copy it over
+      if (raw.stub && !raw.slug) {
+        await ctx.db.patch(project._id, {
+          slug: raw.stub as string,
+          updatedAt: Date.now(),
+        })
+        updated++
+      }
+    }
+
+    return { updated, total: projects.length }
+  },
+})
+
+/** Rename the DoMCP project to dodev */
+export const renameDoMCPToDodev = internalMutation({
+  handler: async (ctx) => {
+    const projects = await ctx.db.query("projects").collect()
+    const results = []
+
+    for (const project of projects) {
+      if (project.name === "DoMCP") {
+        await ctx.db.patch(project._id, {
+          name: "dodev",
+          slug: "DODEV",
+          updatedAt: Date.now(),
+        })
+        results.push({ id: project._id, from: "DoMCP/DOMCP", to: "dodev/DODEV" })
+      }
+    }
+
+    return { renamed: results.length, results }
   },
 })

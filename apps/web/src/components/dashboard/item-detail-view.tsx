@@ -31,7 +31,7 @@ interface Comment {
 
 interface ItemDetailViewProps {
   item: ListItem
-  projectStub?: string
+  projectSlug?: string
   projectConfig?: ProjectConfig
   comments: Comment[]
   onBack: () => void
@@ -51,7 +51,7 @@ const priorityColors: Record<string, string> = {
 
 export function ItemDetailView({
   item,
-  projectStub,
+  projectSlug,
   projectConfig,
   comments,
   onBack,
@@ -97,7 +97,7 @@ export function ItemDetailView({
 
   // Item display ID
   const itemDisplayId =
-    item.issueId ?? (projectStub && item.number ? `${projectStub}-${item.number}` : undefined)
+    item.issueId ?? (projectSlug && item.number ? `${projectSlug}-${item.number}` : undefined)
 
   // Assignee
   const assigneeName = item.resolvedAssignee?.name
@@ -114,10 +114,10 @@ export function ItemDetailView({
       <div className="mb-3 flex items-center justify-between px-1">
         {/* Breadcrumb */}
         <div className="flex min-w-0 items-center gap-1.5 text-sm">
-          {projectStub && (
+          {projectSlug && (
             <>
               <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs font-medium text-muted-foreground dark:bg-zinc-800">
-                {projectStub}
+                {projectSlug}
               </span>
               <span className="shrink-0 text-muted-foreground/40">/</span>
             </>
@@ -323,11 +323,11 @@ export function ItemDetailView({
               )}
             </PropertyRow>
 
-            {/* Project stub */}
-            {projectStub && (
+            {/* Project slug */}
+            {projectSlug && (
               <PropertyRow label="Project">
                 <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs font-medium text-muted-foreground dark:bg-zinc-800">
-                  {projectStub}
+                  {projectSlug}
                 </span>
               </PropertyRow>
             )}

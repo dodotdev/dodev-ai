@@ -117,7 +117,7 @@ export default function ProjectTodosPage() {
   // Resolve labels and assignees for display
   const labelMap = new Map(projectLabels.map((l) => [l.id, l]))
   const memberMap = new Map(projectMembers.map((m) => [m.id, m]))
-  const projectStub = project?.stub
+  const projectSlug = project?.slug
 
   const mapped: ListItem[] = (todos ?? []).map((t) => {
     const raw = t as Record<string, unknown>
@@ -138,7 +138,7 @@ export default function ProjectTodosPage() {
       cycleId: raw.cycleId as string | undefined,
       createdAt: t.createdAt,
       updatedAt: t.updatedAt,
-      issueId: projectStub && todoNumber ? `${projectStub}-${todoNumber}` : undefined,
+      issueId: projectSlug && todoNumber ? `${projectSlug}-${todoNumber}` : undefined,
       resolvedLabels: (raw.labelIds as string[] | undefined)
         ?.map((lid) => labelMap.get(lid))
         .filter(Boolean) as Array<{ id: string; name: string; color: string }> | undefined,
@@ -197,7 +197,7 @@ export default function ProjectTodosPage() {
           selectedItem ? (
             <ItemDetailView
               item={selectedItem}
-              projectStub={projectStub}
+              projectSlug={projectSlug}
               projectConfig={{
                 statuses: projectStatuses,
                 labels: projectLabels,

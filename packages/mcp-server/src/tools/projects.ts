@@ -11,10 +11,10 @@ export const projectTools: Tool[] = [
       type: "object" as const,
       properties: {
         name: { type: "string", description: "Project name (max 100 chars)" },
-        stub: {
+        slug: {
           type: "string",
           description:
-            'Short uppercase identifier for issues (e.g. "DO"). Auto-derived from name if omitted. Issues will be numbered as STUB-1, STUB-2, etc.',
+            'Short uppercase identifier for issues (e.g. "DO"). Auto-derived from name if omitted. Issues will be numbered as SLUG-1, SLUG-2, etc.',
         },
         description: { type: "string", description: "Project description" },
         metadata: {
@@ -57,12 +57,13 @@ export const projectTools: Tool[] = [
   },
   {
     name: "update_project",
-    description: "Update a project's name, description, status, or metadata.",
+    description: "Update a project's name, slug, description, status, or metadata.",
     inputSchema: {
       type: "object" as const,
       properties: {
         id: { type: "string", description: "The project ID" },
         name: { type: "string", description: "New name" },
+        slug: { type: "string", description: "New slug (uppercase identifier)" },
         description: { type: "string", description: "New description" },
         status: {
           type: "string",
@@ -114,7 +115,7 @@ export async function handleProjectTool(
       return await client.mutation(api.projects.create, {
         apiKeyHash,
         name: args.name as string,
-        stub: args.stub as string | undefined,
+        slug: args.slug as string | undefined,
         description: args.description as string | undefined,
         metadata: args.metadata as Record<string, unknown> | undefined,
       })
@@ -140,6 +141,7 @@ export async function handleProjectTool(
         apiKeyHash,
         id: args.id as string,
         name: args.name as string | undefined,
+        slug: args.slug as string | undefined,
         description: args.description as string | undefined,
         status: args.status as "active" | "paused" | "completed" | "archived" | undefined,
         metadata: args.metadata as Record<string, unknown> | undefined,

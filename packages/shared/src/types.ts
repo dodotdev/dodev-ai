@@ -214,7 +214,7 @@ export interface Project {
   _id: string
   userId: string
   name: string
-  stub: string
+  slug: string
   description?: string
   status: ProjectLifecycle
   todoCounter: number

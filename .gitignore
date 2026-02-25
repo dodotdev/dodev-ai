@@ -41,6 +41,7 @@ docker-compose.override.yml
 
 # Claude Code (local dev tool config)
 .claude
+.mcp.json
 
 # Shell dotfiles (container artifacts)
 .bash_logout

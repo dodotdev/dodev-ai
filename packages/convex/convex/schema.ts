@@ -52,7 +52,9 @@ export default defineSchema({
   projects: defineTable({
     userId: v.id("users"),
     name: v.string(),
-    stub: v.string(),
+    slug: v.optional(v.string()),
+    /** @deprecated Use slug instead — kept for migration compatibility */
+    stub: v.optional(v.string()),
     description: v.optional(v.string()),
     status: v.union(
       v.literal("active"),
@@ -122,6 +124,7 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_status", ["userId", "status"])
+    .index("by_user_slug", ["userId", "slug"])
     .index("by_user_stub", ["userId", "stub"]),
 
   todos: defineTable({

@@ -26,12 +26,12 @@ export default function ProjectsPage() {
     )
   }
 
-  async function handleCreate(data: { name: string; stub?: string; description?: string }) {
+  async function handleCreate(data: { name: string; slug?: string; description?: string }) {
     if (!apiKeyHash) return
     await createProject({
       apiKeyHash,
       name: data.name,
-      stub: data.stub,
+      slug: data.slug,
       description: data.description,
     })
   }

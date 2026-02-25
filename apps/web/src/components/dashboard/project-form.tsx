@@ -15,16 +15,16 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
 interface ProjectFormProps {
-  onSubmit: (data: { name: string; stub?: string; description?: string }) => void
+  onSubmit: (data: { name: string; slug?: string; description?: string }) => void
 }
 
 export function ProjectForm({ onSubmit }: ProjectFormProps) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
-  const [stub, setStub] = useState("")
+  const [slug, setSlug] = useState("")
   const [description, setDescription] = useState("")
 
-  function deriveStub(projectName: string): string {
+  function deriveSlug(projectName: string): string {
     const words = projectName.trim().split(/\s+/)
     if (words.length >= 2) {
       return words
@@ -42,17 +42,17 @@ export function ProjectForm({ onSubmit }: ProjectFormProps) {
 
     onSubmit({
       name: name.trim(),
-      stub: stub.trim().toUpperCase() || undefined,
+      slug: slug.trim().toUpperCase() || undefined,
       description: description.trim() || undefined,
     })
 
     setName("")
-    setStub("")
+    setSlug("")
     setDescription("")
     setOpen(false)
   }
 
-  const previewStub = stub.trim().toUpperCase() || deriveStub(name)
+  const previewSlug = slug.trim().toUpperCase() || deriveSlug(name)
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -82,29 +82,29 @@ export function ProjectForm({ onSubmit }: ProjectFormProps) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="stub">Identifier</Label>
+              <Label htmlFor="slug">Identifier</Label>
               <Input
-                id="stub"
-                value={stub}
+                id="slug"
+                value={slug}
                 onChange={(e) =>
-                  setStub(
+                  setSlug(
                     e.target.value
                       .toUpperCase()
                       .replace(/[^A-Z0-9]/g, "")
                       .slice(0, 5)
                   )
                 }
-                placeholder={deriveStub(name) || "ABC"}
+                placeholder={deriveSlug(name) || "ABC"}
                 className="w-20 text-center font-mono uppercase"
                 maxLength={5}
               />
             </div>
           </div>
-          {previewStub && (
+          {previewSlug && (
             <p className="text-xs text-muted-foreground">
               Issues will be numbered{" "}
-              <span className="font-mono font-medium text-foreground">{previewStub}-1</span>,{" "}
-              <span className="font-mono font-medium text-foreground">{previewStub}-2</span>, ...
+              <span className="font-mono font-medium text-foreground">{previewSlug}-1</span>,{" "}
+              <span className="font-mono font-medium text-foreground">{previewSlug}-2</span>, ...
             </p>
           )}
           <div className="space-y-1.5">

@@ -17,8 +17,8 @@ const DEFAULT_ESTIMATE_SCALE = {
   values: ["1", "2", "3", "5", "8", "13", "21"],
 }
 
-/** Derive a stub from a project name: take uppercase initials, or first word uppercase, max 5 chars */
-function deriveStub(name: string): string {
+/** Derive a slug from a project name: take uppercase initials, or first word uppercase, max 5 chars */
+function deriveSlug(name: string): string {
   const words = name.trim().split(/\s+/)
   if (words.length >= 2) {
     // Use initials: "My Project" -> "MP"
@@ -36,7 +36,7 @@ export const create = mutation({
   args: {
     apiKeyHash: v.string(),
     name: v.string(),
-    stub: v.optional(v.string()),
+    slug: v.optional(v.string()),
     description: v.optional(v.string()),
     metadata: v.optional(v.any()),
   },
@@ -44,29 +44,29 @@ export const create = mutation({
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
     await checkQuota(ctx, user, "projects")
 
-    // Determine stub: use provided or derive from name
-    let stub = (args.stub?.trim().toUpperCase() || deriveStub(args.name)).replace(/[^A-Z0-9]/g, "")
-    if (!stub) stub = "PRJ"
+    // Determine slug: use provided or derive from name
+    let slug = (args.slug?.trim().toUpperCase() || deriveSlug(args.name)).replace(/[^A-Z0-9]/g, "")
+    if (!slug) slug = "PRJ"
 
     // Ensure uniqueness for this user -- append a digit if taken
-    let candidate = stub
+    let candidate = slug
     let suffix = 1
     while (true) {
       const existing = await ctx.db
         .query("projects")
-        .withIndex("by_user_stub", (q) => q.eq("userId", user._id).eq("stub", candidate))
+        .withIndex("by_user_slug", (q) => q.eq("userId", user._id).eq("slug", candidate))
         .first()
       if (!existing) break
-      candidate = `${stub}${suffix}`
+      candidate = `${slug}${suffix}`
       suffix++
     }
-    stub = candidate
+    slug = candidate
 
     const now = Date.now()
     const id = await ctx.db.insert("projects", {
       userId: user._id,
       name: args.name,
-      stub,
+      slug,
       description: args.description,
       status: "active",
       todoCounter: 0,
@@ -170,6 +170,7 @@ export const update = mutation({
     apiKeyHash: v.string(),
     id: v.id("projects"),
     name: v.optional(v.string()),
+    slug: v.optional(v.string()),
     description: v.optional(v.string()),
     status: v.optional(
       v.union(
@@ -193,6 +194,20 @@ export const update = mutation({
     if (args.description !== undefined) updates.description = args.description
     if (args.status !== undefined) updates.status = args.status
     if (args.metadata !== undefined) updates.metadata = args.metadata
+
+    if (args.slug !== undefined) {
+      const newSlug = args.slug.trim().toUpperCase().replace(/[^A-Z0-9]/g, "")
+      if (!newSlug) throw new ConvexError("INVALID_SLUG")
+      // Ensure uniqueness for this user
+      const existing = await ctx.db
+        .query("projects")
+        .withIndex("by_user_slug", (q) => q.eq("userId", user._id).eq("slug", newSlug))
+        .first()
+      if (existing && existing._id !== args.id) {
+        throw new ConvexError("SLUG_ALREADY_EXISTS")
+      }
+      updates.slug = newSlug
+    }
 
     await ctx.db.patch(args.id, updates)
     return await ctx.db.get(args.id)

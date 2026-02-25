@@ -113,11 +113,11 @@ export async function handleLinkingTool(
         projectId: args.projectId as string,
         path: args.path as string | undefined,
         repo: args.repo as string | undefined,
-      })) as { _id: string; name: string; stub: string }
+      })) as { _id: string; name: string; slug: string }
 
       const setupInstructions = generateSetupInstructions({
         projectName: project.name,
-        projectStub: project.stub,
+        projectSlug: project.slug,
         projectId: project._id,
       })
 

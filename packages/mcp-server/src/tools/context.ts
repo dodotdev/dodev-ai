@@ -31,7 +31,7 @@ export const contextTools: Tool[] = [
   {
     name: "get_setup_instructions",
     description:
-      "Get CLAUDE.md instructions for configuring AI agents to use dodev.ai proactively. Returns a markdown section you should add to the project's CLAUDE.md file. If a project is linked or specified, the instructions include project-specific context (name, stub, ID). Call this after setting up dodev.ai in a new project, or when you need to add/update dodev.ai instructions in CLAUDE.md.",
+      "Get CLAUDE.md instructions for configuring AI agents to use dodev.ai proactively. Returns a markdown section you should add to the project's CLAUDE.md file. If a project is linked or specified, the instructions include project-specific context (name, slug, ID). Call this after setting up dodev.ai in a new project, or when you need to add/update dodev.ai instructions in CLAUDE.md.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -68,7 +68,7 @@ export async function handleContextTool(
     }
 
     case "get_setup_instructions": {
-      let project: { name: string; stub: string; _id: string } | null = null
+      let project: { name: string; slug: string; _id: string } | null = null
 
       if (args.projectId) {
         // Explicit project ID provided
@@ -76,7 +76,7 @@ export async function handleContextTool(
           project = (await client.query(api.projects.get, {
             apiKeyHash,
             id: args.projectId as string,
-          })) as { name: string; stub: string; _id: string } | null
+          })) as { name: string; slug: string; _id: string } | null
         } catch {
           // Project not found — fall through to generic instructions
         }
@@ -89,7 +89,7 @@ export async function handleContextTool(
               apiKeyHash,
               workspacePath: workspace.workspacePath,
               repoUrl: workspace.repoUrl,
-            })) as { name: string; stub: string; _id: string } | null
+            })) as { name: string; slug: string; _id: string } | null
           } catch {
             // No linked project — fall through to generic instructions
           }
@@ -100,7 +100,7 @@ export async function handleContextTool(
         project
           ? {
               projectName: project.name,
-              projectStub: project.stub,
+              projectSlug: project.slug,
               projectId: project._id,
             }
           : undefined
@@ -111,7 +111,7 @@ export async function handleContextTool(
         project: project
           ? {
               projectName: project.name,
-              projectStub: project.stub,
+              projectSlug: project.slug,
               projectId: project._id,
             }
           : null,
