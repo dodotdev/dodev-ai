@@ -1,5 +1,5 @@
 {
-  "name": "@domcp/web",
+  "name": "@dodev/web",
   "version": "0.0.7",
   "private": true,
   "type": "module",
@@ -13,8 +13,8 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@domcp/convex": "workspace:*",
-    "@domcp/shared": "workspace:*",
+    "@dodev/convex": "workspace:*",
+    "@dodev/shared": "workspace:*",
     "@workos-inc/authkit-nextjs": "^2.14.0",
     "@workos-inc/node": "^8.5.0",
     "class-variance-authority": "^0.7.1",

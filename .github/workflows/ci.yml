@@ -46,5 +46,5 @@ jobs:
           file: docker/Dockerfile
           push: true
           tags: |
-            ghcr.io/dodotdev/domcp-ai:latest
-            ghcr.io/dodotdev/domcp-ai:${{ github.sha }}
+            ghcr.io/dodotdev/dodev-ai:latest
+            ghcr.io/dodotdev/dodev-ai:${{ github.sha }}

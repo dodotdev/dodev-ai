@@ -1,11 +1,11 @@
 {
-  "name": "@domcp/mcp-server",
+  "name": "@dodev/mcp-server",
   "version": "0.0.7",
   "type": "module",
-  "description": "DoMCP MCP server — AI-native task and memory management",
+  "description": "dodev.ai MCP server — AI-native task and memory management",
   "license": "MIT",
   "bin": {
-    "domcp": "./dist/cli.js"
+    "dodev": "./dist/cli.js"
   },
   "exports": {
     ".": {
@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
-    "@domcp/shared": "workspace:*",
+    "@dodev/shared": "workspace:*",
     "convex": "^1.31.2"
   },
   "devDependencies": {

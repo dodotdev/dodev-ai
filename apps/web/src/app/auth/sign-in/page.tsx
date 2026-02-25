@@ -115,7 +115,7 @@ export default function SignInPage() {
               <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600">
                 <ListTodo className="size-4 text-white" strokeWidth={2.5} />
               </div>
-              <span className="text-lg font-semibold tracking-tight">DoMCP.ai</span>
+              <span className="text-lg font-semibold tracking-tight">dodev.ai</span>
             </Link>
             <h1 className="mt-6 text-2xl font-bold tracking-tight">Get on the waitlist</h1>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -300,7 +300,7 @@ export default function SignInPage() {
           </h2>
 
           <p className="mt-4 text-sm leading-relaxed text-emerald-200/50">
-            DoMCP connects your AI tools to a shared task and memory system via the Model Context
+            dodev.ai connects your AI tools to a shared task and memory system via the Model Context
             Protocol.
           </p>
 

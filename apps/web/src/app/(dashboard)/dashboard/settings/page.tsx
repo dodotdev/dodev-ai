@@ -1,7 +1,7 @@
 "use client"
 
-import { api } from "@domcp/convex/api"
-import { PLAN_LIMITS } from "@domcp/shared"
+import { api } from "@dodev/convex/api"
+import { PLAN_LIMITS } from "@dodev/shared"
 import { useMutation, useQuery } from "convex/react"
 import { Loader2 } from "lucide-react"
 import { ApiKeyDisplay } from "@/components/dashboard/api-key-display"

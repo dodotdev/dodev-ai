@@ -3,7 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { createServer } from "./server.js"
 
 async function main() {
-  const mode = process.env.DOMCP_MODE ?? "self-hosted"
+  const mode = process.env.DODEV_MODE ?? "self-hosted"
 
   if (mode === "cloud") {
     // Streamable HTTP transport for cloud mode (Phase 3)
@@ -16,7 +16,7 @@ async function main() {
   const transport = new StdioServerTransport()
 
   await server.connect(transport)
-  console.error("DoMCP server started (stdio mode)")
+  console.error("dodev.ai server started (stdio mode)")
 }
 
 main().catch((error) => {

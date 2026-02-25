@@ -1,4 +1,4 @@
-import { api } from "@domcp/convex/api"
+import { api } from "@dodev/convex/api"
 import { saveSession } from "@workos-inc/authkit-nextjs"
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"

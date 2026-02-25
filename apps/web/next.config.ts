@@ -7,12 +7,12 @@ const rootPkg = JSON.parse(
 ) as { version: string }
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@domcp/shared", "@domcp/convex"],
+  transpilePackages: ["@dodev/shared", "@dodev/convex"],
   devIndicators: false,
   env: {
     NEXT_PUBLIC_APP_VERSION: rootPkg.version,
-    NEXT_PUBLIC_DOMCP_MODE:
-      process.env.NEXT_PUBLIC_DOMCP_MODE ||
+    NEXT_PUBLIC_DODEV_MODE:
+      process.env.NEXT_PUBLIC_DODEV_MODE ||
       (process.env.WORKOS_CLIENT_ID ? "cloud" : "self-hosted"),
   },
 }

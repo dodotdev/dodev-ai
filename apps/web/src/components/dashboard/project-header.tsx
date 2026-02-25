@@ -1,6 +1,6 @@
 "use client"
 
-import { api } from "@domcp/convex/api"
+import { api } from "@dodev/convex/api"
 import { useMutation, useQuery } from "convex/react"
 import { Archive, Loader2, Settings, Trash2 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"

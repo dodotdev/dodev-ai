@@ -1,4 +1,4 @@
-import { api } from "@domcp/convex/api"
+import { api } from "@dodev/convex/api"
 import { redirect } from "next/navigation"
 import { getUser } from "@/lib/auth"
 import { getConvexClient } from "@/lib/convex"
@@ -6,7 +6,7 @@ import { getConvexClient } from "@/lib/convex"
 export const dynamic = "force-dynamic"
 
 export const metadata = {
-  title: "You're on the Waitlist - DoMCP",
+  title: "You're on the Waitlist - dodev.ai",
 }
 
 async function sendWaitlistEmail(email: string, name?: string) {
@@ -30,7 +30,7 @@ async function sendWaitlistEmail(email: string, name?: string) {
           <tr>
             <td style="padding:32px 40px 24px;text-align:center;">
               <h1 style="margin:0;font-size:24px;font-weight:700;color:#18181b;">
-                <span style="color:#059669;">DoMCP</span>
+                <span style="color:#059669;">dodev.ai</span>
               </h1>
             </td>
           </tr>
@@ -43,7 +43,7 @@ async function sendWaitlistEmail(email: string, name?: string) {
                 ${greeting}
               </p>
               <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#3f3f46;">
-                Thanks for signing up for early access to DoMCP &mdash; the open-source AI task and memory management system built on the Model Context Protocol.
+                Thanks for signing up for early access to dodev.ai &mdash; the open-source AI task and memory management system built on the Model Context Protocol.
               </p>
               <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#3f3f46;">
                 We're setting things up and will let you know when your account is ready. In the meantime, follow us on X to stay in the loop.
@@ -56,7 +56,7 @@ async function sendWaitlistEmail(email: string, name?: string) {
                     </a>
                   </td>
                   <td align="center">
-                    <a href="https://github.com/dodotdev/domcp-ai" target="_blank" style="font-size:14px;font-weight:500;color:#3f3f46;text-decoration:none;">
+                    <a href="https://github.com/dodotdev/dodev-ai" target="_blank" style="font-size:14px;font-weight:500;color:#3f3f46;text-decoration:none;">
                       <img src="https://cdn.simpleicons.org/github/3f3f46" alt="GitHub" width="16" height="16" style="display:inline-block;vertical-align:middle;margin-right:6px;" />GitHub
                     </a>
                   </td>
@@ -67,7 +67,7 @@ async function sendWaitlistEmail(email: string, name?: string) {
           <tr>
             <td style="padding:24px 40px;border-top:1px solid #e4e4e7;text-align:center;">
               <p style="margin:0;font-size:12px;color:#a1a1aa;">
-                domcp.ai &middot; Open Source &middot; MIT Licensed
+                dodev.ai &middot; Open Source &middot; MIT Licensed
               </p>
             </td>
           </tr>
@@ -87,11 +87,11 @@ async function sendWaitlistEmail(email: string, name?: string) {
       },
       body: JSON.stringify({
         from: {
-          email: process.env.SENDDEV_FROM_EMAIL || "no-reply@domcp.ai",
+          email: process.env.SENDDEV_FROM_EMAIL || "no-reply@dodev.ai",
           name: process.env.SENDDEV_FROM_NAME || "No Reply",
         },
         to: email,
-        subject: "You're on the DoMCP waitlist!",
+        subject: "You're on the dodev.ai waitlist!",
         html,
       }),
     })

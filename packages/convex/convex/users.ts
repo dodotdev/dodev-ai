@@ -92,7 +92,7 @@ export const createOrUpdateFromWorkOS = mutation({
     const keyBytes = new Uint8Array(32)
     crypto.getRandomValues(keyBytes)
     const apiKey =
-      "domcp_sk_" +
+      "dodev_sk_" +
       Array.from(keyBytes)
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("")
@@ -136,7 +136,7 @@ export const createSelfHostedUser = mutation({
     const keyBytes = new Uint8Array(32)
     crypto.getRandomValues(keyBytes)
     const apiKey =
-      "domcp_sk_" +
+      "dodev_sk_" +
       Array.from(keyBytes)
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("")
@@ -200,7 +200,7 @@ export const regenerateApiKey = mutation({
     const keyBytes = new Uint8Array(32)
     crypto.getRandomValues(keyBytes)
     const apiKey =
-      "domcp_sk_" +
+      "dodev_sk_" +
       Array.from(keyBytes)
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("")

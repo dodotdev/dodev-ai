@@ -31,7 +31,7 @@ export const contextTools: Tool[] = [
   {
     name: "get_setup_instructions",
     description:
-      "Get CLAUDE.md instructions for configuring AI agents to use DoMCP proactively. Returns a markdown section you should add to the project's CLAUDE.md file. If a project is linked or specified, the instructions include project-specific context (name, stub, ID). Call this after setting up DoMCP in a new project, or when you need to add/update DoMCP instructions in CLAUDE.md.",
+      "Get CLAUDE.md instructions for configuring AI agents to use dodev.ai proactively. Returns a markdown section you should add to the project's CLAUDE.md file. If a project is linked or specified, the instructions include project-specific context (name, stub, ID). Call this after setting up dodev.ai in a new project, or when you need to add/update dodev.ai instructions in CLAUDE.md.",
     inputSchema: {
       type: "object" as const,
       properties: {

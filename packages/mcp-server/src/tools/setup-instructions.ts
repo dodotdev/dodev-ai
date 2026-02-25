@@ -5,20 +5,20 @@ interface ProjectInfo {
 }
 
 /**
- * Generate a CLAUDE.md section with DoMCP usage instructions.
+ * Generate a CLAUDE.md section with dodev.ai usage instructions.
  * Pure helper — no Convex calls.
  */
 export function generateSetupInstructions(project?: ProjectInfo): string {
   const projectSection = project
     ? `### Project Context
-- The active DoMCP project is **"${project.projectName}"** (stub: ${project.projectStub}, ID: \`${project.projectId}\`).
+- The active dodev.ai project is **"${project.projectName}"** (stub: ${project.projectStub}, ID: \`${project.projectId}\`).
 - Always scope todos, issues, and memories to this project using the \`projectId\` parameter.`
     : `### Project Context
 - No project is linked to this workspace yet. Create one with \`create_project\` and link it with \`link_project\`.`
 
-  return `## DoMCP Usage (MANDATORY)
+  return `## dodev.ai Usage (MANDATORY)
 
-This project has a connected DoMCP MCP server. You MUST use it proactively:
+This project has a connected dodev.ai MCP server. You MUST use it proactively:
 
 ### Session Start
 - **Always** call \`get_context\` at the beginning of every session to load the active project, pending todos, recent memories, and project config.

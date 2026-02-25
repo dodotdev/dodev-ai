@@ -32,7 +32,7 @@ export function OpenSource() {
             </h2>
 
             <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-              DoMCP is MIT licensed and open to contributions. Star us on GitHub, report issues, or
+              dodev.ai is MIT licensed and open to contributions. Star us on GitHub, report issues, or
               submit a PR.
             </p>
 
@@ -43,7 +43,7 @@ export function OpenSource() {
                 asChild
               >
                 <a
-                  href="https://github.com/dodotdev/domcp-ai"
+                  href="https://github.com/dodotdev/dodev-ai"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -53,7 +53,7 @@ export function OpenSource() {
               </Button>
               <Button variant="outline" size="lg" asChild>
                 <a
-                  href="https://github.com/dodotdev/domcp-ai"
+                  href="https://github.com/dodotdev/dodev-ai"
                   target="_blank"
                   rel="noopener noreferrer"
                 >

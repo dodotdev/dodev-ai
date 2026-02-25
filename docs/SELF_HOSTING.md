@@ -1,6 +1,6 @@
-# Self-Hosting DoMCP
+# Self-Hosting dodev.ai
 
-This guide walks you through running DoMCP on your own infrastructure. Self-hosted DoMCP is completely free with no feature limits beyond vector search (which requires an embedding API).
+This guide walks you through running dodev.ai on your own infrastructure. Self-hosted dodev.ai is completely free with no feature limits beyond vector search (which requires an embedding API).
 
 ## Prerequisites
 
@@ -12,8 +12,8 @@ This guide walks you through running DoMCP on your own infrastructure. Self-host
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/dodotdev/domcp-ai.git
-cd domcp
+git clone https://github.com/dodotdev/dodev-ai.git
+cd dodev-ai
 ```
 
 ### 2. Set up Convex
@@ -41,19 +41,19 @@ Edit `.env`:
 CONVEX_URL=https://your-deployment-123.convex.cloud
 
 # Generated in step 4
-DOMCP_API_KEY=
+DODEV_API_KEY=
 ```
 
 ### 4. Generate an API key
 
 ```bash
-docker compose -f docker/docker-compose.yml run --rm domcp generate-key
+docker compose -f docker/docker-compose.yml run --rm dodev generate-key
 ```
 
 This outputs an API key and stores its hash in your Convex database. Add the key to your `.env`:
 
 ```env
-DOMCP_API_KEY=domcp_sk_abc123...
+DODEV_API_KEY=dodev_sk_abc123...
 ```
 
 ### 5. Start the server
@@ -72,11 +72,11 @@ The MCP server is now running. By default it operates in **stdio mode** (for dir
 // ~/.claude/claude_code_config.json
 {
   "mcpServers": {
-    "domcp": {
+    "dodev": {
       "command": "docker",
-      "args": ["exec", "-i", "domcp", "node", "dist/index.js"],
+      "args": ["exec", "-i", "dodev", "node", "dist/index.js"],
       "env": {
-        "DOMCP_API_KEY": "domcp_sk_abc123..."
+        "DODEV_API_KEY": "dodev_sk_abc123..."
       }
     }
   }
@@ -88,13 +88,13 @@ The MCP server is now running. By default it operates in **stdio mode** (for dir
 ```json
 {
   "mcpServers": {
-    "domcp": {
+    "dodev": {
       "command": "npx",
-      "args": ["-y", "@domcp/mcp-server"],
+      "args": ["-y", "@dodev/mcp-server"],
       "env": {
         "CONVEX_URL": "https://your-deployment-123.convex.cloud",
-        "DOMCP_API_KEY": "domcp_sk_abc123...",
-        "DOMCP_MODE": "self-hosted"
+        "DODEV_API_KEY": "dodev_sk_abc123...",
+        "DODEV_MODE": "self-hosted"
       }
     }
   }
@@ -106,8 +106,8 @@ The MCP server is now running. By default it operates in **stdio mode** (for dir
 If you prefer not to use Docker:
 
 ```bash
-git clone https://github.com/dodotdev/domcp-ai.git
-cd domcp
+git clone https://github.com/dodotdev/dodev-ai.git
+cd dodev-ai
 pnpm install
 pnpm build
 
@@ -120,27 +120,27 @@ cd ../..
 node packages/mcp-server/dist/cli.js generate-key
 
 # Run
-CONVEX_URL=https://... DOMCP_API_KEY=domcp_sk_... node packages/mcp-server/dist/index.js
+CONVEX_URL=https://... DODEV_API_KEY=dodev_sk_... node packages/mcp-server/dist/index.js
 ```
 
 ## Option C: npm global install
 
 ```bash
-npm install -g @domcp/mcp-server
-domcp generate-key
-domcp serve
+npm install -g @dodev/mcp-server
+dodev generate-key
+dodev serve
 ```
 
 ## CLAUDE.md Setup
 
-For AI agents to use DoMCP proactively in every session, add usage instructions to your project's `CLAUDE.md`.
+For AI agents to use dodev.ai proactively in every session, add usage instructions to your project's `CLAUDE.md`.
 
 ### Automatic (Recommended)
 
 After linking your project, ask the agent:
 
 ```
-"Get the DoMCP setup instructions and add them to CLAUDE.md"
+"Get the dodev.ai setup instructions and add them to CLAUDE.md"
 ```
 
 The agent will call `get_setup_instructions`, which returns a tailored markdown section, and add it to your `CLAUDE.md`.
@@ -152,9 +152,9 @@ This also happens automatically when you call `link_project` — the response in
 Add the following to your project's `CLAUDE.md`:
 
 ```markdown
-## DoMCP Usage (MANDATORY)
+## dodev.ai Usage (MANDATORY)
 
-This project has a connected DoMCP MCP server. You MUST use it proactively:
+This project has a connected dodev.ai MCP server. You MUST use it proactively:
 
 ### Session Start
 - **Always** call `get_context` at the beginning of every session.
@@ -184,7 +184,7 @@ With vector search enabled, `search_memories` will use cosine similarity for mor
 ## Updating
 
 ```bash
-cd domcp
+cd dodev-ai
 git pull
 docker compose -f docker/docker-compose.yml pull
 docker compose -f docker/docker-compose.yml up -d
@@ -192,7 +192,7 @@ docker compose -f docker/docker-compose.yml up -d
 
 Or if using npm:
 ```bash
-npm update -g @domcp/mcp-server
+npm update -g @dodev/mcp-server
 ```
 
 ## Data Backup
@@ -205,10 +205,10 @@ Your data lives in your Convex deployment. Convex provides:
 ## Troubleshooting
 
 **"UNAUTHORIZED" errors:**
-Regenerate your API key with `domcp generate-key` and update your `.env` and MCP client config.
+Regenerate your API key with `dodev generate-key` and update your `.env` and MCP client config.
 
 **Convex connection issues:**
 Verify your `CONVEX_URL` is correct and that your deployment is active at [dashboard.convex.dev](https://dashboard.convex.dev).
 
 **MCP client can't connect:**
-Ensure the MCP server process is running. Check logs with `docker compose -f docker/docker-compose.yml logs domcp`.
+Ensure the MCP server process is running. Check logs with `docker compose -f docker/docker-compose.yml logs dodev`.

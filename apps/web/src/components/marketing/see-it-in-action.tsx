@@ -22,7 +22,7 @@ export function SeeItInAction() {
             </span>
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-zinc-400">
-            Watch how DoMCP gives your AI persistent memory across sessions.
+            Watch how dodev.ai gives your AI persistent memory across sessions.
           </p>
         </motion.div>
 

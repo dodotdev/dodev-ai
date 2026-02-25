@@ -1,6 +1,6 @@
 "use client"
 
-import { api } from "@domcp/convex/api"
+import { api } from "@dodev/convex/api"
 import { useMutation, useQuery } from "convex/react"
 import { Loader2, Search } from "lucide-react"
 import { useState } from "react"

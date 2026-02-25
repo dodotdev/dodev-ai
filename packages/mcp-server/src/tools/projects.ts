@@ -154,7 +154,7 @@ export async function handleProjectTool(
     case "set_active_project":
       return await client.mutation(api.sessions.setActiveProject, {
         apiKeyHash,
-        agentId: process.env.DOMCP_AGENT_ID ?? "default",
+        agentId: process.env.DODEV_AGENT_ID ?? "default",
         projectId: args.id as string | null | undefined,
       })
 

@@ -7,16 +7,16 @@ const steps = [
     number: "01",
     title: "Install",
     description: "One command. No account required.",
-    code: "npx @domcp/mcp-server@latest",
+    code: "npx @dodev/mcp-server@latest",
   },
   {
     number: "02",
     title: "Configure",
     description: "Add to your AI agent's MCP config.",
     code: `{
-  "domcp": {
+  "dodev": {
     "command": "npx",
-    "args": ["@domcp/mcp-server"]
+    "args": ["@dodev/mcp-server"]
   }
 }`,
   },

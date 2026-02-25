@@ -1,4 +1,4 @@
-import { api } from "@domcp/convex/api"
+import { api } from "@dodev/convex/api"
 import { redirect } from "next/navigation"
 import { DashboardProviders } from "@/components/providers/dashboard-providers"
 import { getUser } from "@/lib/auth"
@@ -16,7 +16,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (isSelfHosted()) {
     const convexUser = await getSelfHostedUser()
     if (!convexUser) {
-      throw new Error("Failed to resolve self-hosted user. Check DOMCP_API_KEY.")
+      throw new Error("Failed to resolve self-hosted user. Check DODEV_API_KEY.")
     }
     return (
       <DashboardProviders

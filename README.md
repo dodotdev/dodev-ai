@@ -1,22 +1,22 @@
-# DoMCP
+# dodev.ai
 
 > **WARNING: This project is under active development and is NOT ready for production use.** APIs, schemas, and features are unstable and will change without notice. Do not rely on this for anything critical. We're building in public — contributions and feedback are welcome, but expect breaking changes frequently.
 
 **AI-native task and memory management via the Model Context Protocol.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/dodotdev/domcp-ai)](https://github.com/dodotdev/domcp-ai)
+[![GitHub Stars](https://img.shields.io/github/stars/dodotdev/dodev-ai)](https://github.com/dodotdev/dodev-ai)
 ![Status](https://img.shields.io/badge/status-in%20development-orange)
 
-DoMCP gives AI agents persistent memory and task tracking across sessions and projects. Built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io), it works with Claude Code, Cursor, Windsurf, and any MCP-compatible client.
+dodev.ai gives AI agents persistent memory and task tracking across sessions and projects. Built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io), it works with Claude Code, Cursor, Windsurf, and any MCP-compatible client.
 
-**Website:** [domcp.ai](https://domcp.ai)
+**Website:** [dodev.ai](https://dodev.ai)
 
 ---
 
-## Why DoMCP?
+## Why dodev.ai?
 
-AI agents are powerful but forgetful. Every new session starts from scratch — no memory of what was decided, what's pending, or what was learned. DoMCP fixes this by giving agents a persistent brain:
+AI agents are powerful but forgetful. Every new session starts from scratch — no memory of what was decided, what's pending, or what was learned. dodev.ai fixes this by giving agents a persistent brain:
 
 - **Todos** — Track tasks across sessions. An agent can pick up exactly where it left off.
 - **Issues** — Track bugs, features, and improvements with type and severity.
@@ -25,7 +25,7 @@ AI agents are powerful but forgetful. Every new session starts from scratch — 
 
 ```
 You: "What's left to do on the auth system?"
-Agent: *checks DoMCP* "3 pending tasks: implement refresh tokens,
+Agent: *checks dodev.ai* "3 pending tasks: implement refresh tokens,
        add rate limiting to login, and write integration tests.
        Memory note from last session: we decided to use httpOnly
        cookies instead of localStorage for token storage."
@@ -40,7 +40,7 @@ Agent: *checks DoMCP* "3 pending tasks: implement refresh tokens,
 - **Cross-agent** — Works with any MCP client (Claude Code, Cursor, Windsurf, custom agents)
 - **Context tool** — One call to get the full picture: active project, pending todos, recent memories, config, and active cycle
 - **Self-hosted** — Run locally with Docker, bring your own Convex deployment
-- **Cloud option** — Or just connect to [domcp.ai](https://domcp.ai) for a managed experience (planned)
+- **Cloud option** — Or just connect to [dodev.ai](https://dodev.ai) for a managed experience (planned)
 
 ## Quick Start
 
@@ -48,7 +48,7 @@ Agent: *checks DoMCP* "3 pending tasks: implement refresh tokens,
 
 ### Option 1: Cloud (Planned)
 
-1. Sign up at [domcp.ai](https://domcp.ai)
+1. Sign up at [dodev.ai](https://dodev.ai)
 2. Get your API key from the dashboard
 3. Add to your MCP client config:
 
@@ -56,12 +56,12 @@ Agent: *checks DoMCP* "3 pending tasks: implement refresh tokens,
 ```json
 {
   "mcpServers": {
-    "domcp": {
+    "dodev": {
       "command": "npx",
-      "args": ["-y", "@domcp/mcp-server"],
+      "args": ["-y", "@dodev/mcp-server"],
       "env": {
-        "DOMCP_API_KEY": "your-api-key",
-        "DOMCP_MODE": "cloud"
+        "DODEV_API_KEY": "your-api-key",
+        "DODEV_MODE": "cloud"
       }
     }
   }
@@ -72,12 +72,12 @@ Agent: *checks DoMCP* "3 pending tasks: implement refresh tokens,
 ```json
 {
   "mcpServers": {
-    "domcp": {
+    "dodev": {
       "command": "npx",
-      "args": ["-y", "@domcp/mcp-server"],
+      "args": ["-y", "@dodev/mcp-server"],
       "env": {
-        "DOMCP_API_KEY": "your-api-key",
-        "DOMCP_MODE": "cloud"
+        "DODEV_API_KEY": "your-api-key",
+        "DODEV_MODE": "cloud"
       }
     }
   }
@@ -93,8 +93,8 @@ Agent: *checks DoMCP* "3 pending tasks: implement refresh tokens,
 
 2. **Run with Docker:**
    ```bash
-   git clone https://github.com/dodotdev/domcp-ai.git
-   cd domcp
+   git clone https://github.com/dodotdev/dodev-ai.git
+   cd dodev-ai
    cp .env.example .env
    # Edit .env with your Convex URL
    docker compose up -d
@@ -102,15 +102,15 @@ Agent: *checks DoMCP* "3 pending tasks: implement refresh tokens,
 
 3. **Generate an API key:**
    ```bash
-   npx @domcp/mcp-server generate-key
+   npx @dodev/mcp-server generate-key
    ```
 
-4. **Configure your MCP client** (same as above, but with `DOMCP_MODE=self-hosted`)
+4. **Configure your MCP client** (same as above, but with `DODEV_MODE=self-hosted`)
 
 ### Option 3: Direct npm (Planned)
 
 ```bash
-npm install -g @domcp/mcp-server
+npm install -g @dodev/mcp-server
 ```
 
 Then configure your MCP client to use the installed binary.
@@ -187,7 +187,7 @@ Then configure your MCP client to use the installed binary.
 | Tool | Description |
 |------|-------------|
 | `get_context` | Session bootstrapper: active project, pending todos, recent memories, config, persona, active cycle |
-| `get_setup_instructions` | Get tailored CLAUDE.md instructions for configuring AI agents to use DoMCP proactively |
+| `get_setup_instructions` | Get tailored CLAUDE.md instructions for configuring AI agents to use dodev.ai proactively |
 
 ### Linking (3)
 
@@ -201,23 +201,23 @@ See [docs/MCP_TOOLS.md](docs/MCP_TOOLS.md) for full parameter specifications.
 
 ## CLAUDE.md Integration
 
-DoMCP works best when AI agents know to use it proactively. The `get_setup_instructions` tool generates a tailored CLAUDE.md section for any project:
+dodev.ai works best when AI agents know to use it proactively. The `get_setup_instructions` tool generates a tailored CLAUDE.md section for any project:
 
 ```
-You: "Set up DoMCP for this project"
+You: "Set up dodev.ai for this project"
 Agent: *calls get_setup_instructions* → gets markdown with session start behavior,
        memory management, todo/issue tracking, and project-specific context
-Agent: *adds the section to CLAUDE.md* → every future session uses DoMCP automatically
+Agent: *adds the section to CLAUDE.md* → every future session uses dodev.ai automatically
 ```
 
 This also happens automatically when you call `link_project` — the response includes setup instructions and a hint to add them to CLAUDE.md.
 
 ## Architecture
 
-DoMCP is a monorepo with three main packages:
+dodev.ai is a monorepo with three main packages:
 
 ```
-domcp-ai/
+dodev-ai/
 ├── apps/web/              # Next.js 15 — landing, docs, dashboard
 ├── packages/mcp-server/   # MCP server (npm + Docker)
 ├── packages/convex/       # Convex schema and functions (8 tables, 46 exported functions)
@@ -280,8 +280,8 @@ MIT — see [LICENSE](LICENSE) for details.
 
 ## Links
 
-- **Website:** [domcp.ai](https://domcp.ai)
-- **Documentation:** [domcp.ai/docs](https://domcp.ai/docs)
-- **GitHub:** [github.com/dodotdev/domcp-ai](https://github.com/dodotdev/domcp-ai)
-- **npm:** [@domcp/mcp-server](https://www.npmjs.com/package/@domcp/mcp-server)
-- **Discord:** [Join our community](https://discord.gg/domcp)
+- **Website:** [dodev.ai](https://dodev.ai)
+- **Documentation:** [dodev.ai/docs](https://dodev.ai/docs)
+- **GitHub:** [github.com/dodotdev/dodev-ai](https://github.com/dodotdev/dodev-ai)
+- **npm:** [@dodev/mcp-server](https://www.npmjs.com/package/@dodev/mcp-server)
+- **Discord:** [Join our community](https://discord.gg/dodev)

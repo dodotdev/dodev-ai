@@ -1,6 +1,6 @@
 "use client"
 
-import { api } from "@domcp/convex/api"
+import { api } from "@dodev/convex/api"
 import { useQuery } from "convex/react"
 import { CheckCircle2, Loader2, RefreshCw, XCircle } from "lucide-react"
 import { useParams } from "next/navigation"

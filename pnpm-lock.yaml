@@ -29,10 +29,10 @@ importers:
       '@dnd-kit/utilities':
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.4)
-      '@domcp/convex':
+      '@dodev/convex':
         specifier: workspace:*
         version: link:../../packages/convex
-      '@domcp/shared':
+      '@dodev/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@workos-inc/authkit-nextjs':
@@ -115,7 +115,7 @@ importers:
 
   packages/mcp-server:
     dependencies:
-      '@domcp/shared':
+      '@dodev/shared':
         specifier: workspace:*
         version: link:../shared
       '@modelcontextprotocol/sdk':

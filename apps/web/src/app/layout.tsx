@@ -15,23 +15,23 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "DoMCP.ai - AI-Native Task & Memory Management",
-    template: "%s | DoMCP.ai",
+    default: "dodev.ai - AI-Native Task & Memory Management",
+    template: "%s | dodev.ai",
   },
   description:
     "Open-source todo and memory management for AI agents. Give Claude, Cursor, and any MCP client persistent cross-session awareness.",
-  metadataBase: new URL("https://domcp.ai"),
+  metadataBase: new URL("https://dodev.ai"),
   openGraph: {
-    title: "DoMCP.ai - AI-Native Task & Memory Management",
+    title: "dodev.ai - AI-Native Task & Memory Management",
     description:
       "Open-source todo and memory management for AI agents. Give Claude, Cursor, and any MCP client persistent cross-session awareness.",
-    url: "https://domcp.ai",
-    siteName: "DoMCP.ai",
+    url: "https://dodev.ai",
+    siteName: "dodev.ai",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "DoMCP.ai - AI-Native Task & Memory Management",
+    title: "dodev.ai - AI-Native Task & Memory Management",
     description:
       "Open-source todo and memory management for AI agents. Give Claude, Cursor, and any MCP client persistent cross-session awareness.",
   },

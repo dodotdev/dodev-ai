@@ -1,4 +1,4 @@
-import { api } from "@domcp/convex/api"
+import { api } from "@dodev/convex/api"
 import { getConvexClient } from "./convex"
 
 export async function getSelfHostedUser() {

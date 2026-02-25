@@ -1,7 +1,7 @@
 import type { EstimateScale, PlanTier, StatusCategory } from "./types.js"
 
-/** API key prefix for DoMCP keys */
-export const API_KEY_PREFIX = "domcp_sk_"
+/** API key prefix for dodev.ai keys */
+export const API_KEY_PREFIX = "dodev_sk_"
 
 /** API key length (excluding prefix) */
 export const API_KEY_LENGTH = 32

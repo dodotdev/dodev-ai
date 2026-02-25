@@ -1,21 +1,21 @@
 services:
-  domcp:
-    image: ghcr.io/dodotdev/domcp-ai:latest
+  dodev:
+    image: ghcr.io/dodotdev/dodev-ai:latest
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: domcp
+    container_name: dodev
     restart: unless-stopped
     environment:
       - CONVEX_URL=${CONVEX_URL}
-      - DOMCP_API_KEY=${DOMCP_API_KEY}
-      - DOMCP_MODE=${DOMCP_MODE:-self-hosted}
+      - DODEV_API_KEY=${DODEV_API_KEY}
+      - DODEV_MODE=${DODEV_MODE:-self-hosted}
       - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     ports:
       - "3100:3100" # SSE endpoint (optional, for HTTP-based MCP clients)
     volumes:
-      - domcp-data:/app/data
+      - dodev-data:/app/data
 
 volumes:
-  domcp-data:
+  dodev-data:

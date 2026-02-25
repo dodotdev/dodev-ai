@@ -48,7 +48,7 @@ export interface ProjectMemorySettings {
 }
 
 /** API key prefix */
-export const API_KEY_PREFIX = "domcp_sk_"
+export const API_KEY_PREFIX = "dodev_sk_"
 
 /** A custom workflow status within a project */
 export interface WorkflowStatus {

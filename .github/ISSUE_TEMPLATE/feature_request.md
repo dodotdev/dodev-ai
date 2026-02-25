@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest a feature for DoMCP
+about: Suggest a feature for dodev.ai
 title: "[Feature] "
 labels: enhancement
 ---

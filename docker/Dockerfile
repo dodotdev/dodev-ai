@@ -16,7 +16,7 @@ COPY packages/mcp-server/ ./packages/mcp-server/
 COPY packages/shared/ ./packages/shared/
 
 # Build
-RUN pnpm --filter @domcp/shared build && pnpm --filter @domcp/mcp-server build
+RUN pnpm --filter @dodev/shared build && pnpm --filter @dodev/mcp-server build
 
 # Production image
 FROM node:20-alpine AS production

@@ -80,7 +80,7 @@ export function Hero() {
               </Button>
               <Button variant="outline" size="lg" asChild>
                 <a
-                  href="https://github.com/dodotdev/domcp-ai"
+                  href="https://github.com/dodotdev/dodev-ai"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -108,7 +108,7 @@ export function Hero() {
                 <div className="size-3 rounded-full bg-red-500/70" />
                 <div className="size-3 rounded-full bg-yellow-500/70" />
                 <div className="size-3 rounded-full bg-green-500/70" />
-                <span className="ml-3 text-xs text-zinc-500">Terminal — DoMCP</span>
+                <span className="ml-3 text-xs text-zinc-500">Terminal — dodev.ai</span>
               </div>
 
               {/* Terminal content */}

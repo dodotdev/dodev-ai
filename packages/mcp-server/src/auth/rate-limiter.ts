@@ -1,5 +1,5 @@
-import type { PlanTier } from "@domcp/shared"
-import { RATE_LIMITS } from "@domcp/shared"
+import type { PlanTier } from "@dodev/shared"
+import { RATE_LIMITS } from "@dodev/shared"
 
 interface SlidingWindow {
   timestamps: number[]

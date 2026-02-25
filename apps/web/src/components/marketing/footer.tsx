@@ -8,10 +8,10 @@ const links = {
     { href: "/#how-it-works", label: "How It Works" },
   ],
   Resources: [
-    { href: "https://github.com/dodotdev/domcp-ai", label: "Documentation" },
-    { href: "https://github.com/dodotdev/domcp-ai", label: "GitHub" },
+    { href: "https://github.com/dodotdev/dodev-ai", label: "Documentation" },
+    { href: "https://github.com/dodotdev/dodev-ai", label: "GitHub" },
     { href: "https://x.com/dodotdev", label: "X / Twitter" },
-    { href: "https://www.npmjs.com/package/@domcp/mcp-server", label: "npm" },
+    { href: "https://www.npmjs.com/package/@dodev/mcp-server", label: "npm" },
   ],
   Legal: [
     { href: "/privacy", label: "Privacy" },
@@ -30,7 +30,7 @@ export function Footer() {
                 <ListTodo className="size-4 text-white" strokeWidth={2.5} />
               </div>
               <span className="text-lg font-semibold tracking-tight text-white dark:text-foreground">
-                DoMCP.ai
+                dodev.ai
               </span>
             </div>
             <p className="mt-3 text-sm text-emerald-300/70 dark:text-muted-foreground">
@@ -70,12 +70,12 @@ export function Footer() {
 
         <div className="mt-12 flex items-center justify-between border-t border-emerald-800/30 pt-8 dark:border-border">
           <p className="text-xs text-emerald-400/50 dark:text-muted-foreground">
-            &copy; {new Date().getFullYear()} DoMCP.ai. MIT License.
+            &copy; {new Date().getFullYear()} dodev.ai. MIT License.
           </p>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               <a
-                href="https://github.com/dodotdev/domcp-ai"
+                href="https://github.com/dodotdev/dodev-ai"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-emerald-400/50 transition-colors hover:text-emerald-300 dark:text-muted-foreground dark:hover:text-foreground"

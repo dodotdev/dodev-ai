@@ -1,6 +1,6 @@
-# Contributing to DoMCP
+# Contributing to dodev.ai
 
-Thanks for your interest in contributing to DoMCP! This document covers how to get started.
+Thanks for your interest in contributing to dodev.ai! This document covers how to get started.
 
 ## Development Setup
 
@@ -14,8 +14,8 @@ Thanks for your interest in contributing to DoMCP! This document covers how to g
 
 ```bash
 # Clone the repo
-git clone https://github.com/dodotdev/domcp-ai.git
-cd domcp
+git clone https://github.com/dodotdev/dodev-ai.git
+cd dodev-ai
 
 # Install dependencies
 pnpm install
@@ -33,7 +33,7 @@ pnpm dev
 ### Monorepo Structure (Phase 1)
 
 ```
-domcp/
+dodev-ai/
 ├── packages/
 │   ├── mcp-server/        # MCP server (npm-publishable + Dockerfile)
 │   ├── convex/            # Convex schema + functions
@@ -97,7 +97,7 @@ pnpm check:fix
 pnpm test
 
 # Run tests for a specific package
-pnpm --filter @domcp/mcp-server test
+pnpm --filter @dodev/mcp-server test
 
 # Run Convex function tests
 cd packages/convex

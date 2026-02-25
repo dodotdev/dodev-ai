@@ -1,6 +1,6 @@
 "use client"
 
-import { api } from "@domcp/convex/api"
+import { api } from "@dodev/convex/api"
 import { useQuery } from "convex/react"
 import { ArrowRight, Loader2, Plus } from "lucide-react"
 import Link from "next/link"
@@ -109,7 +109,7 @@ export default function DashboardPage() {
           <div className="mt-6 rounded-2xl border border-border bg-white p-4 dark:bg-card">
             <h3 className="text-sm font-medium">Connect Your AI Agent</h3>
             <p className="mt-2 text-xs text-muted-foreground">
-              Add DoMCP to your Claude Code config to start syncing todos and memories.
+              Add dodev.ai to your Claude Code config to start syncing todos and memories.
             </p>
             <Button variant="ghost" size="sm" className="mt-3 text-xs" asChild>
               <Link href="/dashboard/settings">

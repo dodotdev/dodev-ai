@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a bug in DoMCP
+about: Report a bug in dodev.ai
 title: "[Bug] "
 labels: bug
 ---
@@ -24,7 +24,7 @@ What actually happens.
 
 ## Environment
 
-- DoMCP version:
+- dodev.ai version:
 - Mode: self-hosted / cloud
 - MCP client: Claude Code / Cursor / Other
 - OS:

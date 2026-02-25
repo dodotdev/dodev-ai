@@ -12,7 +12,7 @@ let cached: WorkspaceInfo | null = null
 export function detectWorkspace(): WorkspaceInfo {
   if (cached) return cached
 
-  const workspacePath = process.env.DOMCP_WORKSPACE || process.env.PWD || undefined
+  const workspacePath = process.env.DODEV_WORKSPACE || process.env.PWD || undefined
 
   let repoUrl: string | undefined
   if (workspacePath) {

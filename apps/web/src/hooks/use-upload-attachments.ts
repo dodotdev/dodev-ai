@@ -1,6 +1,6 @@
 "use client"
 
-import { api } from "@domcp/convex/api"
+import { api } from "@dodev/convex/api"
 import { useMutation } from "convex/react"
 
 export function useUploadAttachments(apiKeyHash: string | null) {

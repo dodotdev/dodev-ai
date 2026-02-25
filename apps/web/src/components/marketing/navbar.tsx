@@ -38,7 +38,7 @@ export function Navbar({ user }: NavbarProps) {
   }, [])
 
   useEffect(() => {
-    fetch("https://api.github.com/repos/dodotdev/domcp-ai")
+    fetch("https://api.github.com/repos/dodotdev/dodev-ai")
       .then((r) => r.json())
       .then((data) => {
         if (data.stargazers_count != null) {
@@ -60,7 +60,7 @@ export function Navbar({ user }: NavbarProps) {
 
   const githubLink = (
     <a
-      href="https://github.com/dodotdev/domcp-ai"
+      href="https://github.com/dodotdev/dodev-ai"
       target="_blank"
       rel="noopener noreferrer"
       className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -89,7 +89,7 @@ export function Navbar({ user }: NavbarProps) {
           <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600">
             <ListTodo className="size-4 text-white" strokeWidth={2.5} />
           </div>
-          <span className="text-lg font-semibold tracking-tight">DoMCP.ai</span>
+          <span className="text-lg font-semibold tracking-tight">dodev.ai</span>
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
@@ -191,7 +191,7 @@ export function Navbar({ user }: NavbarProps) {
               </Link>
             ))}
             <a
-              href="https://github.com/dodotdev/domcp-ai"
+              href="https://github.com/dodotdev/dodev-ai"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"

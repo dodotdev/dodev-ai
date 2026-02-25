@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 const testimonials = [
   {
     quote:
-      "DoMCP changed how I work with Claude Code. It remembers our architectural decisions across sessions — I never have to re-explain the same patterns twice.",
+      "dodev.ai changed how I work with Claude Code. It remembers our architectural decisions across sessions — I never have to re-explain the same patterns twice.",
     name: "Sarah Chen",
     role: "Senior Backend Engineer",
     initials: "SC",
@@ -21,7 +21,7 @@ const testimonials = [
   },
   {
     quote:
-      "Self-hosted, MIT licensed, and it took me 60 seconds to set up. DoMCP is exactly what the AI coding tools ecosystem was missing.",
+      "Self-hosted, MIT licensed, and it took me 60 seconds to set up. dodev.ai is exactly what the AI coding tools ecosystem was missing.",
     name: "Alex Kim",
     role: "DevOps Engineer",
     initials: "AK",
@@ -43,7 +43,7 @@ export function Testimonials() {
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Developers love{" "}
             <span className="bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
-              DoMCP
+              dodev.ai
             </span>
           </h2>
         </motion.div>

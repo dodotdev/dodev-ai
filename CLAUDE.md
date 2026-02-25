@@ -4,19 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**DoMCP** is an open-source, AI-native task and memory management system built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). It gives AI agents (Claude Code, Cursor, Windsurf, etc.) persistent, cross-session awareness of todos, issues, memories, and project context — with Linear-like project management features.
+**dodev.ai** is an open-source, AI-native task and memory management system built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). It gives AI agents (Claude Code, Cursor, Windsurf, etc.) persistent, cross-session awareness of todos, issues, memories, and project context — with Linear-like project management features.
 
-- **Website**: domcp.ai
-- **npm package**: `@domcp/mcp-server`
-- **Docker image**: `ghcr.io/dodotdev/domcp-ai:latest`
+- **Website**: dodev.ai
+- **npm package**: `@dodev/mcp-server`
+- **Docker image**: `ghcr.io/dodotdev/dodev-ai:latest`
 - **License**: MIT
 - **Version**: 0.0.6
 
 Shared do.dev conventions are loaded via `.claude/CLAUDE.md` (symlinked to `do-coders`).
 
-## DoMCP Usage (MANDATORY)
+## dodev.ai Usage (MANDATORY)
 
-This project has a connected DoMCP MCP server. You MUST use it proactively:
+This project has a connected dodev.ai MCP server. You MUST use it proactively:
 
 ### Session Start
 - **Always** call `get_context` at the beginning of every session to load the active project, pending todos, recent memories, and project config.
@@ -35,7 +35,7 @@ This project has a connected DoMCP MCP server. You MUST use it proactively:
 - Update existing memories rather than creating duplicates.
 
 ### Project Context
-- The active DoMCP project is **"DoMCP"** (stub: DOMCP, ID: `jd71k24g625k3dqk4xq71szmqd81qbdv`).
+- The active dodev.ai project is **"dodev.ai"** (stub: DODEV, ID: `jd71k24g625k3dqk4xq71szmqd81qbdv`).
 - Always scope todos, issues, and memories to this project using the `projectId` parameter.
 
 ## Architecture
@@ -127,7 +127,7 @@ Convex config is in `packages/convex/.env.local` (CONVEX_DEPLOYMENT).
 
 **Self-hosted (free)**: User provides their own Convex deployment. MCP server runs via Docker or npx. No feature limits except vector search (needs embedding API key).
 
-**Cloud hosted ($10-20/mo)**: Planned. Will connect to `mcp.domcp.ai` via Streamable HTTP. Managed Convex, rate limiting, and usage quotas per plan tier. Not yet implemented.
+**Cloud hosted ($10-20/mo)**: Planned. Will connect to `mcp.dodev.ai` via Streamable HTTP. Managed Convex, rate limiting, and usage quotas per plan tier. Not yet implemented.
 
 ## Authentication
 

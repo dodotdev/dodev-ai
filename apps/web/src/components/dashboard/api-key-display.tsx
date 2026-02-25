@@ -65,7 +65,7 @@ export function ApiKeyDisplay({ apiKey, onRegenerate }: ApiKeyDisplayProps) {
           Usage in Claude Code config:
         </p>
         <pre className="font-mono text-xs text-muted-foreground">
-          {`"env": { "DOMCP_API_KEY": "${visible ? apiKey : "domcp_sk_..."}" }`}
+          {`"env": { "DODEV_API_KEY": "${visible ? apiKey : "dodev_sk_..."}" }`}
         </pre>
       </div>
     </div>

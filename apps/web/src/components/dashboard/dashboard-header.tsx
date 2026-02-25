@@ -18,7 +18,7 @@ export function DashboardHeader() {
             <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600">
               <ListTodo className="size-4 text-white" strokeWidth={2.5} />
             </div>
-            <span className="text-lg font-semibold tracking-tight">DoMCP.ai</span>
+            <span className="text-lg font-semibold tracking-tight">dodev.ai</span>
           </Link>
 
           {/* Spacer */}
@@ -38,7 +38,7 @@ export function DashboardHeader() {
               </svg>
             </a>
             <a
-              href="https://github.com/dodotdev/domcp-ai"
+              href="https://github.com/dodotdev/dodev-ai"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"

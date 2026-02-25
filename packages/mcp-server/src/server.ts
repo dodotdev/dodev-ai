@@ -82,7 +82,7 @@ function writeLog(
 export function createServer(): Server {
   const server = new Server(
     {
-      name: "domcp",
+      name: "dodev",
       version,
     },
     {

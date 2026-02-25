@@ -16,16 +16,16 @@ async function main() {
       break
 
     default:
-      console.log(`DoMCP CLI
+      console.log(`dodev.ai CLI
 
 Usage:
-  domcp generate-key    Generate a new API key
-  domcp serve           Start the MCP server
+  dodev generate-key    Generate a new API key
+  dodev serve           Start the MCP server
 
 Environment variables:
   CONVEX_URL              Your Convex deployment URL (required)
-  DOMCP_API_KEY           Your API key (required for serve)
-  DOMCP_MODE              "self-hosted" (default) or "cloud"
+  DODEV_API_KEY           Your API key (required for serve)
+  DODEV_MODE              "self-hosted" (default) or "cloud"
 `)
       break
   }
@@ -43,19 +43,19 @@ async function handleGenerateKey() {
   const apiKey = generateApiKey()
   const apiKeyHash = hashApiKey(apiKey)
 
-  console.log("\nGenerating new DoMCP API key...\n")
+  console.log("\nGenerating new dodev.ai API key...\n")
 
   try {
     const client = getConvexClient()
     await client.mutation(api.users.createFromApiKey, {
       workosUserId: "self-hosted",
-      email: "self-hosted@domcp.local",
+      email: "self-hosted@dodev.local",
       apiKey,
       apiKeyHash,
     })
 
     console.log("API key generated and stored in Convex.\n")
-    console.log(`  DOMCP_API_KEY=${apiKey}\n`)
+    console.log(`  DODEV_API_KEY=${apiKey}\n`)
     console.log("Add this to your .env file or MCP client configuration.")
     console.log("Keep this key secret — it cannot be retrieved again.\n")
   } catch (error) {

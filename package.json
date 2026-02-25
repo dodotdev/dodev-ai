@@ -1,5 +1,5 @@
 {
-  "name": "domcp",
+  "name": "dodev",
   "version": "0.0.7",
   "private": true,
   "description": "AI-native task and memory management via the Model Context Protocol",
@@ -7,19 +7,19 @@
     "type": "git",
     "url": "https://github.com/dodotdev/domcp-ai.git"
   },
-  "homepage": "https://domcp.ai",
+  "homepage": "https://dodev.ai",
   "license": "MIT",
   "scripts": {
-    "dev:all": "lsof -ti:5031 | xargs kill -9 2>/dev/null || true; pkill -f 'convex dev' 2>/dev/null || true; turbo run dev --ui=tui --concurrency=20 --filter=@domcp/web --filter=@domcp/convex",
-    "dev:web": "lsof -ti:5031 | xargs kill -9 2>/dev/null || true; turbo run dev --ui=tui --concurrency=20 --filter=@domcp/web",
-    "dev:convex": "pkill -f 'convex dev' 2>/dev/null || true; pnpm --filter @domcp/convex dev",
-    "dev:mcp": "pnpm --filter @domcp/mcp-server dev",
+    "dev:all": "lsof -ti:5031 | xargs kill -9 2>/dev/null || true; pkill -f 'convex dev' 2>/dev/null || true; turbo run dev --ui=tui --concurrency=20 --filter=@dodev/web --filter=@dodev/convex",
+    "dev:web": "lsof -ti:5031 | xargs kill -9 2>/dev/null || true; turbo run dev --ui=tui --concurrency=20 --filter=@dodev/web",
+    "dev:convex": "pkill -f 'convex dev' 2>/dev/null || true; pnpm --filter @dodev/convex dev",
+    "dev:mcp": "pnpm --filter @dodev/mcp-server dev",
     "build": "turbo build",
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
-    "generate-key": "pnpm --filter @domcp/mcp-server generate-key"
+    "generate-key": "pnpm --filter @dodev/mcp-server generate-key"
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.5",

@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto"
-import { API_KEY_LENGTH, API_KEY_PREFIX } from "@domcp/shared"
+import { API_KEY_LENGTH, API_KEY_PREFIX } from "@dodev/shared"
 
 /** Cached hash for the current session's API key */
 let cachedHash: string | null = null
@@ -26,9 +26,9 @@ export function hashApiKey(apiKey: string): string {
 
 /** Get the API key from environment and return its hash */
 export function getApiKeyHash(): string {
-  const apiKey = process.env.DOMCP_API_KEY
+  const apiKey = process.env.DODEV_API_KEY
   if (!apiKey) {
-    throw new Error("DOMCP_API_KEY environment variable is required")
+    throw new Error("DODEV_API_KEY environment variable is required")
   }
   return hashApiKey(apiKey)
 }

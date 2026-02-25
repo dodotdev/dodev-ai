@@ -69,7 +69,7 @@ export function Waitlist() {
               asChild
             >
               <a
-                href="https://github.com/dodotdev/domcp-ai"
+                href="https://github.com/dodotdev/dodev-ai"
                 target="_blank"
                 rel="noopener noreferrer"
               >
