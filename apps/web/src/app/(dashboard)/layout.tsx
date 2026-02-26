@@ -1,6 +1,7 @@
 import { api } from "@dodev/convex/api"
 import { redirect } from "next/navigation"
 import { DashboardProviders } from "@/components/providers/dashboard-providers"
+import { sendWelcomeEmail } from "@/lib/email"
 import { getUser } from "@/lib/auth"
 import { getConvexClient } from "@/lib/convex"
 import { isSelfHosted } from "@/lib/mode"
@@ -51,6 +52,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!convexUser || (convexUser.role !== "approved" && convexUser.role !== "admin")) {
     redirect("/waitlisted")
+  }
+
+  // Send welcome email on first dashboard visit (fire-and-forget)
+  if (!convexUser.welcomeEmailSentAt) {
+    // Mark as sent first to prevent duplicate sends on concurrent requests
+    convex
+      .mutation(api.users.markWelcomeEmailSent, { workosUserId: user.id })
+      .then(() =>
+        sendWelcomeEmail(convexUser!.email, convexUser!.name)
+      )
+      .catch((err) => console.error("Failed to send welcome email:", err))
   }
 
   return (

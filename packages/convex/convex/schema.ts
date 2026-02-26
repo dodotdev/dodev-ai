@@ -16,6 +16,7 @@ export default defineSchema({
     // Access control
     role: v.optional(v.union(v.literal("waitlisted"), v.literal("approved"), v.literal("admin"))),
     waitlistEmailSentAt: v.optional(v.number()),
+    welcomeEmailSentAt: v.optional(v.number()),
 
     // Billing
     plan: v.union(v.literal("free"), v.literal("pro"), v.literal("team")),

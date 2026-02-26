@@ -169,6 +169,24 @@ export const createSelfHostedUser = mutation({
   },
 })
 
+export const markWelcomeEmailSent = mutation({
+  args: {
+    workosUserId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_workos_id", (q) => q.eq("workosUserId", args.workosUserId))
+      .unique()
+
+    if (!user) return
+
+    await ctx.db.patch(user._id, {
+      welcomeEmailSentAt: Date.now(),
+    })
+  },
+})
+
 export const markWaitlistEmailSent = mutation({
   args: {
     workosUserId: v.string(),

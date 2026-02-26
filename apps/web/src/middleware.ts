@@ -24,6 +24,8 @@ async function getCloudMiddleware() {
         "/favicon.ico",
         "/robots.txt",
         "/sitemap.xml",
+        "/docs",
+        "/docs/(.*)",
         "/privacy",
         "/terms",
       ],
