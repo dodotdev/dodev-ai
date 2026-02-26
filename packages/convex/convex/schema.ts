@@ -382,6 +382,13 @@ export default defineSchema({
     .index("by_session_id", ["sessionId"])
     .index("by_last_activity", ["lastActivityAt"]),
 
+  oauthClients: defineTable({
+    clientId: v.string(),
+    clientData: v.string(), // JSON-serialized OAuthClientInformationFull
+    createdAt: v.number(),
+  })
+    .index("by_client_id", ["clientId"]),
+
   mcpLogs: defineTable({
     userId: v.id("users"),
     tool: v.string(),

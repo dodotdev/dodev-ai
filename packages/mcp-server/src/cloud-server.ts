@@ -94,8 +94,9 @@ export async function startCloudServer(): Promise<void> {
       }
 
       if (existingSessionId && !transports.has(existingSessionId)) {
-        // Unknown session ID — reject
-        res.status(404).json({ error: "Session not found" })
+        // Unknown session ID — client should reconnect without session header
+        console.error(`[mcp] Session not found: ${existingSessionId} (active sessions: ${transports.size}). Client should reconnect.`)
+        res.status(404).json({ error: "Session not found. Please reconnect." })
         return
       }
 
@@ -145,9 +146,10 @@ export async function startCloudServer(): Promise<void> {
       if (transport.sessionId && !transports.has(transport.sessionId)) {
         transports.set(transport.sessionId, transport)
         sessionApiKeys.set(transport.sessionId, apiKeyHash)
+        console.error(`[mcp] New session created: ${transport.sessionId} for user ${workosUserId} (active sessions: ${transports.size})`)
 
         // Register agent session in Convex
-        const clientInfo = provider.clientsStore.getClient(authInfo.clientId)
+        const clientInfo = await provider.clientsStore.getClient(authInfo.clientId)
         const convex = getConvexClient()
         convex
           .mutation(api.agentSessions.connect, {

@@ -129,11 +129,11 @@ export const listRecent = query({
   },
 })
 
-/** Expire stale sessions (no activity for 5 minutes). Called by cron. */
+/** Expire stale sessions (no activity for 30 minutes). Called by cron. */
 export const expireStaleSessions = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const cutoff = Date.now() - 5 * 60 * 1000
+    const cutoff = Date.now() - 30 * 60 * 1000
     const now = Date.now()
 
     // Find connected sessions with old lastActivityAt

@@ -7,7 +7,7 @@ import type {
   OAuthTokens,
   OAuthTokenRevocationRequest,
 } from "@modelcontextprotocol/sdk/shared/auth.js"
-import { InMemoryClientStore } from "./client-store.js"
+import { ConvexClientStore } from "./client-store.js"
 import { consumeAuthCode, getCodeChallenge, storeAuthCode } from "./auth-code-store.js"
 import { storePendingAuth, consumePendingAuth } from "./pending-auth-store.js"
 import { signAccessToken, signRefreshToken, verifyAccessToken, generateAuthorizationCode } from "./jwt.js"
@@ -45,9 +45,9 @@ function getJwtSecret(): string {
  * 6. Access tokens are JWTs containing workosUserId, verified on each request
  */
 export class WorkOSOAuthProvider implements OAuthServerProvider {
-  private _clientsStore = new InMemoryClientStore()
+  private _clientsStore = new ConvexClientStore()
 
-  get clientsStore(): InMemoryClientStore {
+  get clientsStore(): ConvexClientStore {
     return this._clientsStore
   }
 
@@ -134,7 +134,7 @@ export class WorkOSOAuthProvider implements OAuthServerProvider {
     return {
       access_token: accessToken,
       token_type: "Bearer",
-      expires_in: 15 * 60,
+      expires_in: 7 * 24 * 60 * 60,
       refresh_token: refreshToken,
     }
   }
@@ -147,7 +147,16 @@ export class WorkOSOAuthProvider implements OAuthServerProvider {
     refreshToken: string
   ): Promise<OAuthTokens> {
     const { verifyRefreshToken } = await import("./jwt.js")
-    const payload = verifyRefreshToken(refreshToken)
+
+    let payload
+    try {
+      payload = verifyRefreshToken(refreshToken)
+    } catch (err) {
+      console.error("[auth] Refresh token verification failed:", err instanceof Error ? err.message : err)
+      throw err
+    }
+
+    console.error(`[auth] Token refresh for user ${payload.sub}, client ${client.client_id}`)
 
     const baseUrl = getBaseUrl()
 
@@ -167,7 +176,7 @@ export class WorkOSOAuthProvider implements OAuthServerProvider {
     return {
       access_token: newAccessToken,
       token_type: "Bearer",
-      expires_in: 15 * 60,
+      expires_in: 7 * 24 * 60 * 60,
       refresh_token: newRefreshToken,
     }
   }
@@ -176,7 +185,14 @@ export class WorkOSOAuthProvider implements OAuthServerProvider {
    * Verify an access token and return AuthInfo for the MCP request.
    */
   async verifyAccessToken(token: string): Promise<AuthInfo> {
-    const payload = verifyAccessToken(token)
+    let payload
+    try {
+      payload = verifyAccessToken(token)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error(`[auth] Access token verification failed: ${msg}`)
+      throw err
+    }
 
     return {
       token,
