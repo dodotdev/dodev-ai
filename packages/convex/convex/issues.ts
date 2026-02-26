@@ -206,10 +206,12 @@ export const list = query({
     projectId: v.optional(v.id("projects")),
     globalOnly: v.optional(v.boolean()),
     status: v.optional(v.string()),
+    statusId: v.optional(v.string()),
     priority: v.optional(v.string()),
     type: v.optional(v.string()),
     severity: v.optional(v.string()),
     search: v.optional(v.string()),
+    summary: v.optional(v.boolean()),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -233,12 +235,34 @@ export const list = query({
       if (args.globalOnly) {
         filtered = filtered.filter((i) => !i.projectId)
       }
+
+      if (args.summary) {
+        return filtered.map((i) => ({
+          _id: i._id,
+          number: i.number,
+          title: i.title,
+          status: i.status,
+          statusId: i.statusId,
+          priority: i.priority,
+          type: i.type,
+          severity: i.severity,
+          assigneeId: i.assigneeId,
+        }))
+      }
       return filtered
     }
 
     // Index-based query
     let issueQuery
-    if (args.projectId && args.status) {
+    if (args.projectId && args.statusId) {
+      // Filter by specific workflow status (e.g. "Backlog", "In Progress", "In Review")
+      issueQuery = ctx.db.query("issues").withIndex("by_user_project_statusId", (q) =>
+        q
+          .eq("userId", user._id)
+          .eq("projectId", args.projectId!)
+          .eq("statusId", args.statusId!)
+      )
+    } else if (args.projectId && args.status) {
       issueQuery = ctx.db.query("issues").withIndex("by_user_project_status", (q) =>
         q
           .eq("userId", user._id)
@@ -274,9 +298,25 @@ export const list = query({
       results = results.filter((i) => i.status === args.status)
     }
 
-    return results
+    const filtered = results
       .filter((i) => !args.type || i.type === args.type)
       .filter((i) => !args.severity || i.severity === args.severity)
+
+    if (args.summary) {
+      return filtered.map((i) => ({
+        _id: i._id,
+        number: i.number,
+        title: i.title,
+        status: i.status,
+        statusId: i.statusId,
+        priority: i.priority,
+        type: i.type,
+        severity: i.severity,
+        assigneeId: i.assigneeId,
+      }))
+    }
+
+    return filtered
   },
 })
 

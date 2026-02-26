@@ -1,14 +1,30 @@
+import { basename } from "node:path"
 import type { Tool } from "@modelcontextprotocol/sdk/types.js"
 import { getApiKeyHash } from "../auth/api-key.js"
 import { api, getConvexClient } from "../convex-client.js"
 import { detectWorkspace } from "../workspace.js"
 import { generateSetupInstructions } from "./setup-instructions.js"
+import { buildContextWorkflowHint } from "./workflow-hints.js"
+
+/** Derive a project name from workspace path or repo URL */
+function deriveProjectName(workspacePath?: string, repoUrl?: string): string {
+  if (repoUrl) {
+    // "https://github.com/org/my-repo.git" -> "my-repo"
+    const match = repoUrl.match(/\/([^/]+?)(?:\.git)?$/)
+    if (match) return match[1]
+  }
+  if (workspacePath) {
+    // "/Users/tim/code/my-project" -> "my-project"
+    return basename(workspacePath)
+  }
+  return "My Project"
+}
 
 export const contextTools: Tool[] = [
   {
     name: "get_context",
     description:
-      "CALL THIS FIRST at the start of every session. Returns everything you need to get oriented: active project (auto-detected from workspace if linked), pending tasks, recent memories (project-scoped + global), project list, project config (workflow statuses, labels, members, estimate scale), AI persona instructions, active cycle, and memory settings. This is your primary way to load context from previous sessions — it includes the most relevant stored memories so you can pick up where you or another agent left off.",
+      "CALL THIS FIRST at the start of every session. Returns everything you need to get oriented: active project (auto-detected from workspace if linked), pending tasks, recent memories (project-scoped + global), project list, project config (workflow statuses, labels, members, estimate scale), AI persona instructions, active cycle, and memory settings. This is your primary way to load context from previous sessions — it includes the most relevant stored memories so you can pick up where you or another agent left off. If this is your first session and no project exists, one will be auto-created from the current workspace.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -57,14 +73,76 @@ export async function handleContextTool(
       // Auto-detect workspace info if no explicit projectId
       const workspace = !args.projectId ? detectWorkspace() : undefined
 
-      return await client.query(api.projects.getContext, {
+      const context = await client.query(api.projects.getContext, {
         apiKeyHash,
         projectId: args.projectId as string | undefined,
         taskLimit: args.taskLimit as number | undefined,
         memoryLimit: args.memoryLimit as number | undefined,
         workspacePath: workspace?.workspacePath,
         repoUrl: workspace?.repoUrl,
-      })
+      }) as Record<string, unknown>
+
+      // Add workflow hints if project has statuses
+      const activeProject = context.activeProject as {
+        statuses?: { id: string; name: string; category: string }[]
+      } | null
+      if (activeProject?.statuses?.length) {
+        context.agentWorkflow = buildContextWorkflowHint(activeProject.statuses)
+      }
+
+      // Auto-create a project if the user has none
+      if (!context.activeProject && Array.isArray(context.projects) && context.projects.length === 0) {
+        const projectName = deriveProjectName(workspace?.workspacePath, workspace?.repoUrl)
+
+        const newProject = await client.mutation(api.projects.create, {
+          apiKeyHash,
+          name: projectName,
+          description: `Auto-created from workspace: ${workspace?.workspacePath ?? "unknown"}`,
+        }) as { _id: string } | null
+
+        if (newProject) {
+          // Link workspace path and repo to the new project
+          if (workspace?.workspacePath || workspace?.repoUrl) {
+            await client.mutation(api.projects.linkProject, {
+              apiKeyHash,
+              projectId: newProject._id,
+              path: workspace?.workspacePath,
+              repo: workspace?.repoUrl,
+            }).catch(() => {
+              // Non-critical — linking failed but project was created
+            })
+          }
+
+          // Set as default project
+          await client.mutation(api.users.setDefaultProject, {
+            apiKeyHash,
+            projectId: newProject._id,
+          }).catch(() => {
+            // Non-critical
+          })
+
+          // Re-query context with the new project
+          const newContext = await client.query(api.projects.getContext, {
+            apiKeyHash,
+            projectId: newProject._id,
+            taskLimit: args.taskLimit as number | undefined,
+            memoryLimit: args.memoryLimit as number | undefined,
+            workspacePath: workspace?.workspacePath,
+            repoUrl: workspace?.repoUrl,
+          }) as Record<string, unknown>
+
+          const newActiveProject = newContext.activeProject as {
+            statuses?: { id: string; name: string; category: string }[]
+          } | null
+          if (newActiveProject?.statuses?.length) {
+            newContext.agentWorkflow = buildContextWorkflowHint(newActiveProject.statuses)
+          }
+
+          return newContext
+        }
+      }
+
+      return context
     }
 
     case "get_setup_instructions": {

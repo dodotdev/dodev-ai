@@ -12,7 +12,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core"
-import { ChevronRight, Circle, GripVertical, Paperclip } from "lucide-react"
+import { Check, ChevronRight, Circle, Copy, GripVertical, Paperclip } from "lucide-react"
 import { useCallback, useMemo, useState } from "react"
 import { cn, formatRelativeTime } from "@/lib/utils"
 
@@ -552,6 +552,39 @@ function ItemRowOverlay({ item, statusColor }: { item: ListItem; statusColor: st
 
 // -- Shared item row content (used by both real row and overlay) --
 
+function CopyContextButton({ item }: { item: ListItem }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      const toolName = item.type ? "get_issue" : "get_task"
+      const displayId = item.issueId ?? `#${item.number}`
+      const text = `Review and work on ${displayId}: "${item.title}"\nUse ${toolName} with id: "${item._id}" to get full details.`
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      })
+    },
+    [item]
+  )
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+      title="Copy context for agent"
+    >
+      {copied ? (
+        <Check className="size-3.5 text-green-500" />
+      ) : (
+        <Copy className="size-3.5" />
+      )}
+    </button>
+  )
+}
+
 function ItemRowContent({ item, onTitleClick }: { item: ListItem; onTitleClick?: () => void }) {
   const isCompleted = item.status === "completed"
 
@@ -636,6 +669,27 @@ function ItemRowContent({ item, onTitleClick }: { item: ListItem; onTitleClick?:
         </span>
       )}
 
+      {/* Assignee avatar */}
+      <div className="hidden w-6 shrink-0 items-center justify-center sm:flex">
+        {item.resolvedAssignee && (
+          item.resolvedAssignee.avatarUrl ? (
+            <img
+              src={item.resolvedAssignee.avatarUrl}
+              alt={item.resolvedAssignee.name}
+              title={item.resolvedAssignee.name}
+              className="size-5 rounded-full object-cover"
+            />
+          ) : (
+            <div
+              className="flex size-5 items-center justify-center rounded-full bg-zinc-200 text-[9px] font-semibold text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"
+              title={item.resolvedAssignee.name}
+            >
+              {initials}
+            </div>
+          )
+        )}
+      </div>
+
       {/* Estimate */}
       {item.estimate && (
         <span className="hidden shrink-0 rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline">
@@ -651,29 +705,15 @@ function ItemRowContent({ item, onTitleClick }: { item: ListItem; onTitleClick?:
         </span>
       )}
 
-      {/* Assignee avatar */}
-      {item.resolvedAssignee && (
-        item.resolvedAssignee.avatarUrl ? (
-          <img
-            src={item.resolvedAssignee.avatarUrl}
-            alt={item.resolvedAssignee.name}
-            title={item.resolvedAssignee.name}
-            className="hidden size-5 shrink-0 rounded-full object-cover sm:block"
-          />
-        ) : (
-          <div
-            className="hidden size-5 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-[9px] font-semibold text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 sm:flex"
-            title={item.resolvedAssignee.name}
-          >
-            {initials}
-          </div>
-        )
-      )}
-
       {/* Date */}
-      <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+      <span className="w-12 shrink-0 text-right text-[11px] tabular-nums text-muted-foreground">
         {formatRelativeTime(item.updatedAt)}
       </span>
+
+      {/* Copy context */}
+      <div className="w-5 shrink-0">
+        <CopyContextButton item={item} />
+      </div>
     </>
   )
 }

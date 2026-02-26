@@ -57,17 +57,20 @@ export default function TasksPage() {
     })
   }
 
-  const mapped: ListItem[] = (tasks ?? []).map((t) => ({
-    _id: t._id as string,
-    title: t.title,
-    description: t.description,
-    status: t.status,
-    priority: t.priority,
-    tags: t.tags,
-    dueDate: t.dueDate,
-    createdAt: t.createdAt,
-    updatedAt: t.updatedAt,
-  }))
+  const mapped: ListItem[] = (tasks ?? []).map((t) => {
+    const doc = t as Record<string, unknown>
+    return {
+      _id: t._id as string,
+      title: t.title,
+      description: doc.description as string | undefined,
+      status: t.status,
+      priority: t.priority,
+      tags: (doc.tags as string[]) ?? [],
+      dueDate: doc.dueDate as number | undefined,
+      createdAt: (doc.createdAt ?? doc._creationTime) as number,
+      updatedAt: (doc.updatedAt ?? doc._creationTime) as number,
+    }
+  })
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">

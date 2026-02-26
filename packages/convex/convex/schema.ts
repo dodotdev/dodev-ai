@@ -170,6 +170,7 @@ export default defineSchema({
     .index("by_user_due_date", ["userId", "dueDate"])
     .index("by_user_severity", ["userId", "severity"])
     .index("by_user_project_cycle", ["userId", "projectId", "cycleId"])
+    .index("by_user_project_statusId", ["userId", "projectId", "statusId"])
     .searchIndex("search_title_description", {
       searchField: "title",
       filterFields: ["userId", "projectId", "status"],
@@ -228,6 +229,7 @@ export default defineSchema({
     .index("by_user_severity", ["userId", "severity"])
     .index("by_user_due_date", ["userId", "dueDate"])
     .index("by_user_project_cycle", ["userId", "projectId", "cycleId"])
+    .index("by_user_project_statusId", ["userId", "projectId", "statusId"])
     .searchIndex("search_title_description", {
       searchField: "title",
       filterFields: ["userId", "projectId", "status"],

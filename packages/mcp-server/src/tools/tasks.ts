@@ -1,6 +1,7 @@
 import type { Tool } from "@modelcontextprotocol/sdk/types.js"
 import { getApiKeyHash } from "../auth/api-key.js"
 import { api, getConvexClient } from "../convex-client.js"
+import { buildListWorkflowHint, buildWorkflowHint } from "./workflow-hints.js"
 
 export const taskTools: Tool[] = [
   {
@@ -135,7 +136,7 @@ export const taskTools: Tool[] = [
   {
     name: "list_tasks",
     description:
-      "List tasks with optional filters. Returns tasks sorted by creation date (newest first).",
+      "List tasks with optional filters. Returns tasks sorted by creation date (newest first). Use summary: true to get compact results (id, number, title, status, priority) for scanning — then call get_task for full details on the item you need.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -143,7 +144,12 @@ export const taskTools: Tool[] = [
         status: {
           type: "string",
           enum: ["pending", "in_progress", "completed", "cancelled"],
-          description: "Filter by status",
+          description: "Filter by base status category",
+        },
+        statusId: {
+          type: "string",
+          description:
+            'Filter by specific workflow status ID (e.g. Backlog, Task, In Progress, In Review). Use get_context to see available statusIds. Takes priority over status filter when projectId is also provided.',
         },
         priority: {
           type: "string",
@@ -158,6 +164,11 @@ export const taskTools: Tool[] = [
         search: {
           type: "string",
           description: "Full-text search in title and description",
+        },
+        summary: {
+          type: "boolean",
+          description:
+            "If true, returns compact results (id, number, title, status, statusId, priority, assigneeId) instead of full documents. Recommended for scanning lists. Default: false",
         },
         limit: {
           type: "number",
@@ -241,21 +252,68 @@ export async function handleTaskTool(
         status: "completed",
       })
 
-    case "list_tasks":
-      return await client.query(api.tasks.list, {
+    case "list_tasks": {
+      const tasks = await client.query(api.tasks.list, {
         apiKeyHash,
         projectId: args.projectId as string | undefined,
         status: args.status as string | undefined,
+        statusId: args.statusId as string | undefined,
         priority: args.priority as string | undefined,
         search: args.search as string | undefined,
+        summary: args.summary as boolean | undefined,
         limit: args.limit as number | undefined,
       })
 
-    case "get_task":
-      return await client.query(api.tasks.get, {
+      if (args.projectId) {
+        try {
+          const project = await client.query(api.projects.get, {
+            apiKeyHash,
+            id: args.projectId as string,
+          }) as { statuses?: { id: string; name: string; category: string }[] } | null
+
+          if (project?.statuses?.length) {
+            const hint = buildListWorkflowHint("task", project.statuses)
+            if (hint) return { items: tasks, _workflowHint: hint }
+          }
+        } catch {
+          // Non-critical
+        }
+      }
+
+      return tasks
+    }
+
+    case "get_task": {
+      const task = await client.query(api.tasks.get, {
         apiKeyHash,
         id: args.id as string,
-      })
+      }) as Record<string, unknown> | null
+
+      if (task?.projectId) {
+        try {
+          const project = await client.query(api.projects.get, {
+            apiKeyHash,
+            id: task.projectId as string,
+          }) as { statuses?: { id: string; name: string; category: string }[] } | null
+
+          if (project?.statuses?.length) {
+            const hint = buildWorkflowHint(
+              "task",
+              task.status as string,
+              task.statusId as string | undefined,
+              project.statuses
+            )
+            if (hint) {
+              return { ...task, _workflowHint: hint }
+            }
+          }
+        } catch {
+          // Non-critical — return task without hint
+        }
+      }
+
+      return task
+    }
 
     case "delete_task":
       return await client.mutation(api.tasks.remove, {

@@ -1,6 +1,6 @@
 {
   "name": "dodev",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "private": true,
   "description": "AI-native task and memory management via the Model Context Protocol",
   "repository": {

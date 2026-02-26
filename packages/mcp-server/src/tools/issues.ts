@@ -1,6 +1,7 @@
 import type { Tool } from "@modelcontextprotocol/sdk/types.js"
 import { getApiKeyHash } from "../auth/api-key.js"
 import { api, getConvexClient } from "../convex-client.js"
+import { buildListWorkflowHint, buildWorkflowHint } from "./workflow-hints.js"
 
 export const issueTools: Tool[] = [
   {
@@ -145,7 +146,7 @@ export const issueTools: Tool[] = [
   {
     name: "list_issues",
     description:
-      "List issues with optional filters. Returns issues sorted by creation date (newest first).",
+      "List issues with optional filters. Returns issues sorted by creation date (newest first). Use summary: true to get compact results (id, number, title, status, priority, type) for scanning — then call get_issue for full details on the item you need.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -153,7 +154,12 @@ export const issueTools: Tool[] = [
         status: {
           type: "string",
           enum: ["pending", "in_progress", "completed", "cancelled"],
-          description: "Filter by status",
+          description: "Filter by base status category",
+        },
+        statusId: {
+          type: "string",
+          description:
+            'Filter by specific workflow status ID (e.g. Backlog, Task, In Progress, In Review). Use get_context to see available statusIds. Takes priority over status filter when projectId is also provided.',
         },
         type: {
           type: "string",
@@ -173,6 +179,11 @@ export const issueTools: Tool[] = [
         search: {
           type: "string",
           description: "Full-text search in title and description",
+        },
+        summary: {
+          type: "boolean",
+          description:
+            "If true, returns compact results (id, number, title, status, statusId, priority, type, severity, assigneeId) instead of full documents. Recommended for scanning lists. Default: false",
         },
         limit: {
           type: "number",
@@ -258,23 +269,70 @@ export async function handleIssueTool(
         status: "completed",
       })
 
-    case "list_issues":
-      return await client.query(api.issues.list, {
+    case "list_issues": {
+      const issues = await client.query(api.issues.list, {
         apiKeyHash,
         projectId: args.projectId as string | undefined,
         status: args.status as string | undefined,
+        statusId: args.statusId as string | undefined,
         type: args.type as string | undefined,
         severity: args.severity as string | undefined,
         priority: args.priority as string | undefined,
         search: args.search as string | undefined,
+        summary: args.summary as boolean | undefined,
         limit: args.limit as number | undefined,
       })
 
-    case "get_issue":
-      return await client.query(api.issues.get, {
+      if (args.projectId) {
+        try {
+          const project = await client.query(api.projects.get, {
+            apiKeyHash,
+            id: args.projectId as string,
+          }) as { statuses?: { id: string; name: string; category: string }[] } | null
+
+          if (project?.statuses?.length) {
+            const hint = buildListWorkflowHint("issue", project.statuses)
+            if (hint) return { items: issues, _workflowHint: hint }
+          }
+        } catch {
+          // Non-critical
+        }
+      }
+
+      return issues
+    }
+
+    case "get_issue": {
+      const issue = await client.query(api.issues.get, {
         apiKeyHash,
         id: args.id as string,
-      })
+      }) as Record<string, unknown> | null
+
+      if (issue?.projectId) {
+        try {
+          const project = await client.query(api.projects.get, {
+            apiKeyHash,
+            id: issue.projectId as string,
+          }) as { statuses?: { id: string; name: string; category: string }[] } | null
+
+          if (project?.statuses?.length) {
+            const hint = buildWorkflowHint(
+              "issue",
+              issue.status as string,
+              issue.statusId as string | undefined,
+              project.statuses
+            )
+            if (hint) {
+              return { ...issue, _workflowHint: hint }
+            }
+          }
+        } catch {
+          // Non-critical — return issue without hint
+        }
+      }
+
+      return issue
+    }
 
     case "delete_issue":
       return await client.mutation(api.issues.remove, {

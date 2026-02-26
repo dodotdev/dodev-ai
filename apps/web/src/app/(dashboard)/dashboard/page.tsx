@@ -245,7 +245,7 @@ export default function DashboardPage() {
 
                       {/* Time */}
                       <span className="shrink-0 text-[11px] text-muted-foreground">
-                        {formatRelativeTime(task.updatedAt)}
+                        {formatRelativeTime(((task as Record<string, unknown>).updatedAt ?? (task as Record<string, unknown>)._creationTime) as number)}
                       </span>
                     </div>
                   )

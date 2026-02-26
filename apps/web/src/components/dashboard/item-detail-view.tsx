@@ -6,6 +6,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  Clipboard,
   PanelRight,
   Trash2,
   User,
@@ -96,6 +97,7 @@ export function ItemDetailView({
     return true
   })
   const [commentFocused, setCommentFocused] = useState(false)
+  const [contextCopied, setContextCopied] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const [sidebarHeight, setSidebarHeight] = useState(0)
@@ -237,6 +239,27 @@ export function ItemDetailView({
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => {
+              const toolName = item.type ? "get_issue" : "get_task"
+              const displayId = itemDisplayId ?? `#${item.number}`
+              const text = `Review and work on ${displayId}: "${item.title}"\nUse ${toolName} with id: "${item._id}" to get full details.`
+              navigator.clipboard.writeText(text).then(() => {
+                setContextCopied(true)
+                setTimeout(() => setContextCopied(false), 2000)
+              })
+            }}
+            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            title="Copy context for agent"
+          >
+            {contextCopied ? (
+              <Check className="size-4 text-green-500" />
+            ) : (
+              <Clipboard className="size-4" />
+            )}
+          </button>
+          <div className="mx-0.5 h-4 w-px bg-border" />
           {totalItems != null && totalItems > 0 && (
             <>
               <span className="text-xs tabular-nums text-muted-foreground">
@@ -882,7 +905,7 @@ function CommentRow({
   return (
     <div className="group flex gap-3">
       {isAgent ? (
-        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
           <Bot className="size-3.5" />
         </div>
       ) : userAvatarUrl ? (

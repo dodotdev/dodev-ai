@@ -205,8 +205,10 @@ export const list = query({
     projectId: v.optional(v.id("projects")),
     globalOnly: v.optional(v.boolean()),
     status: v.optional(v.string()),
+    statusId: v.optional(v.string()),
     priority: v.optional(v.string()),
     search: v.optional(v.string()),
+    summary: v.optional(v.boolean()),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -214,7 +216,7 @@ export const list = query({
     const limit = Math.min(args.limit ?? 20, 100)
 
     if (args.search) {
-      return await ctx.db
+      const results = await ctx.db
         .query("tasks")
         .withSearchIndex("search_title_description", (q) => {
           let search = q.search("title", args.search!)
@@ -223,11 +225,32 @@ export const list = query({
           return search
         })
         .take(limit)
+
+      if (args.summary) {
+        return results.map((t) => ({
+          _id: t._id,
+          number: t.number,
+          title: t.title,
+          status: t.status,
+          statusId: t.statusId,
+          priority: t.priority,
+          assigneeId: t.assigneeId,
+        }))
+      }
+      return results
     }
 
     // Index-based query
     let taskQuery
-    if (args.projectId && args.status) {
+    if (args.projectId && args.statusId) {
+      // Filter by specific workflow status (e.g. "Backlog", "In Progress", "In Review")
+      taskQuery = ctx.db.query("tasks").withIndex("by_user_project_statusId", (q) =>
+        q
+          .eq("userId", user._id)
+          .eq("projectId", args.projectId!)
+          .eq("statusId", args.statusId!)
+      )
+    } else if (args.projectId && args.status) {
       taskQuery = ctx.db.query("tasks").withIndex("by_user_project_status", (q) =>
         q
           .eq("userId", user._id)
@@ -241,7 +264,6 @@ export const list = query({
           q.eq("userId", user._id).eq("projectId", args.projectId!)
         )
     } else if (args.globalOnly && args.status) {
-      // Global-only with status: fetch unscoped, then filter
       taskQuery = ctx.db
         .query("tasks")
         .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", undefined))
@@ -266,6 +288,18 @@ export const list = query({
     // Post-filter status for globalOnly + status combo (no compound index)
     if (args.globalOnly && args.status) {
       results = results.filter((t) => t.status === args.status)
+    }
+
+    if (args.summary) {
+      return results.map((t) => ({
+        _id: t._id,
+        number: t.number,
+        title: t.title,
+        status: t.status,
+        statusId: t.statusId,
+        priority: t.priority,
+        assigneeId: t.assigneeId,
+      }))
     }
 
     return results

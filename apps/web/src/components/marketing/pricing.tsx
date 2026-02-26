@@ -30,6 +30,7 @@ const plans: Plan[] = [
     description: "Get started with generous free limits",
     features: [
       "1 project",
+      "1 agent connection",
       "100 tasks & issues",
       "30 memories",
       "31 MCP tools",
@@ -48,6 +49,7 @@ const plans: Plan[] = [
     description: "More projects and capacity for solo builders",
     features: [
       "3 projects",
+      "Up to 3 agents",
       "500 tasks & issues",
       "200 memories",
       "31 MCP tools",
@@ -66,6 +68,7 @@ const plans: Plan[] = [
     description: "Unlimited everything for serious builders",
     features: [
       "Unlimited projects",
+      "Up to 10 agents",
       "Unlimited tasks & issues",
       "Unlimited memories",
       "Semantic memory search",

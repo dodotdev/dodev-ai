@@ -61,19 +61,22 @@ export default function IssuesPage() {
     })
   }
 
-  const mapped: ListItem[] = (issues ?? []).map((i) => ({
-    _id: i._id as string,
-    title: i.title,
-    description: i.description,
-    status: i.status,
-    priority: i.priority,
-    type: i.type,
-    severity: i.severity,
-    tags: i.tags,
-    dueDate: i.dueDate,
-    createdAt: i.createdAt,
-    updatedAt: i.updatedAt,
-  }))
+  const mapped: ListItem[] = (issues ?? []).map((i) => {
+    const doc = i as Record<string, unknown>
+    return {
+      _id: i._id as string,
+      title: i.title,
+      description: doc.description as string | undefined,
+      status: i.status,
+      priority: i.priority,
+      type: i.type,
+      severity: i.severity,
+      tags: (doc.tags as string[]) ?? [],
+      dueDate: doc.dueDate as number | undefined,
+      createdAt: (doc.createdAt ?? doc._creationTime) as number,
+      updatedAt: (doc.updatedAt ?? doc._creationTime) as number,
+    }
+  })
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">

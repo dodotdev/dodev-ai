@@ -1,5 +1,6 @@
 import { v } from "convex/values"
 import { mutation, query } from "./_generated/server"
+import { authenticateApiKey } from "./lib/auth"
 
 export const createFromApiKey = mutation({
   args: {
@@ -221,6 +222,24 @@ export const regenerateApiKey = mutation({
       updatedAt: Date.now(),
     })
 
+    return await ctx.db.get(user._id)
+  },
+})
+
+export const setDefaultProject = mutation({
+  args: {
+    apiKeyHash: v.string(),
+    projectId: v.id("projects"),
+  },
+  handler: async (ctx, args) => {
+    const user = await authenticateApiKey(ctx, args.apiKeyHash)
+    await ctx.db.patch(user._id, {
+      settings: {
+        ...user.settings,
+        defaultProjectId: args.projectId,
+      },
+      updatedAt: Date.now(),
+    })
     return await ctx.db.get(user._id)
   },
 })
