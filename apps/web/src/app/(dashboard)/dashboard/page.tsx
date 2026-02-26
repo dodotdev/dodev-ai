@@ -14,50 +14,12 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
+import { ConnectedAgents } from "@/components/dashboard/overview/connected-agents"
 import { LiveAgentFeed } from "@/components/dashboard/overview/live-agent-feed"
 import { MetricRibbon } from "@/components/dashboard/overview/metric-ribbon"
 import { useAuth } from "@/components/providers/auth-provider"
 import { Badge } from "@/components/ui/badge"
 import { cn, formatRelativeTime } from "@/lib/utils"
-
-// ---------------------------------------------------------------------------
-// Agent Pulse helpers
-// ---------------------------------------------------------------------------
-
-type AgentState = "active" | "idle" | "inactive" | "disconnected"
-
-function getAgentState(logs: Array<{ createdAt: number }> | undefined): {
-  state: AgentState
-  label: string
-} {
-  if (!logs || logs.length === 0) {
-    return { state: "disconnected", label: "No agent connected" }
-  }
-  const latest = logs[0].createdAt
-  const diff = Date.now() - latest
-  if (diff < 10 * 60_000) {
-    const mins = Math.max(1, Math.round(diff / 60_000))
-    return { state: "active", label: `Agent active ${mins}m ago` }
-  }
-  if (diff < 60 * 60_000) {
-    return { state: "idle", label: "Agent idle" }
-  }
-  return { state: "inactive", label: "No recent activity" }
-}
-
-const pulseStyles: Record<AgentState, string> = {
-  active: "bg-emerald-500",
-  idle: "bg-amber-500",
-  inactive: "bg-zinc-400 dark:bg-zinc-500",
-  disconnected: "bg-zinc-300 dark:bg-zinc-600",
-}
-
-const pulseRingStyles: Record<AgentState, string> = {
-  active: "ring-emerald-500/30 animate-pulse",
-  idle: "ring-amber-500/20",
-  inactive: "",
-  disconnected: "",
-}
 
 // ---------------------------------------------------------------------------
 // Priority helpers
@@ -112,6 +74,7 @@ export default function DashboardPage() {
   const usage = useQuery(api.usage.getCurrentUsage, apiKeyHash ? { apiKeyHash } : "skip")
   const recentTasks = useQuery(api.tasks.list, apiKeyHash ? { apiKeyHash, limit: 10 } : "skip")
   const mcpLogs = useQuery(api.mcpLogs.list, apiKeyHash ? { apiKeyHash, limit: 25 } : "skip")
+  const activeSessions = useQuery(api.agentSessions.listActive, apiKeyHash ? { apiKeyHash } : "skip")
 
   if (authLoading || !apiKeyHash) {
     return (
@@ -122,7 +85,7 @@ export default function DashboardPage() {
   }
 
   // Derived data
-  const agentInfo = getAgentState(mcpLogs)
+  const agentCount = (activeSessions as unknown[] | undefined)?.length ?? 0
   const pendingCount = context?.taskSummary?.pending ?? 0
   const inProgressCount = context?.taskSummary?.inProgress ?? 0
   const openIssueCount = usage?.issueCount ?? 0
@@ -168,19 +131,22 @@ export default function DashboardPage() {
           <span
             className={cn(
               "relative size-2.5 rounded-full ring-4",
-              pulseStyles[agentInfo.state],
-              pulseRingStyles[agentInfo.state]
+              agentCount > 0
+                ? "bg-emerald-500 ring-emerald-500/30 animate-pulse"
+                : "bg-zinc-300 ring-transparent dark:bg-zinc-600"
             )}
           />
-          {agentInfo.state === "disconnected" ? (
+          {agentCount > 0 ? (
+            <span className="text-xs text-muted-foreground">
+              {agentCount} agent{agentCount !== 1 ? "s" : ""} connected
+            </span>
+          ) : (
             <Link
               href="/dashboard/settings"
               className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
             >
-              {agentInfo.label}
+              No agent connected
             </Link>
-          ) : (
-            <span className="text-xs text-muted-foreground">{agentInfo.label}</span>
           )}
         </div>
       </div>
@@ -293,6 +259,9 @@ export default function DashboardPage() {
         {/* RIGHT RAIL (4/12)                                              */}
         {/* ============================================================= */}
         <div className="space-y-6 lg:col-span-4">
+          {/* Connected Agents */}
+          <ConnectedAgents />
+
           {/* Active Project Card */}
           {activeProject ? (
             <ActiveProjectCard

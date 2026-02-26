@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as agentSessions from "../agentSessions.js";
 import type * as attachments from "../attachments.js";
 import type * as attachmentsInternal from "../attachmentsInternal.js";
 import type * as comments from "../comments.js";
@@ -34,6 +35,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  agentSessions: typeof agentSessions;
   attachments: typeof attachments;
   attachmentsInternal: typeof attachmentsInternal;
   comments: typeof comments;

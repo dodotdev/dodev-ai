@@ -6,6 +6,7 @@ import express from "express"
 import { createServer } from "./server.js"
 import { WorkOSOAuthProvider, handleAuthCallback, resolveApiKeyHash } from "./auth/workos-oauth-provider.js"
 import { runWithAuthContext } from "./auth/auth-context.js"
+import { api, getConvexClient } from "./convex-client.js"
 
 function getBaseUrl(): string {
   const url = process.env.DODEV_BASE_URL
@@ -55,6 +56,8 @@ export async function startCloudServer(): Promise<void> {
 
   // Track active transports by session ID
   const transports = new Map<string, StreamableHTTPServerTransport>()
+  // Track apiKeyHash per session for disconnect cleanup
+  const sessionApiKeys = new Map<string, string>()
 
   app.all("/mcp", bearerAuth, async (req, res) => {
     const authInfo = req.auth
@@ -73,48 +76,90 @@ export async function startCloudServer(): Promise<void> {
       // Resolve apiKeyHash for this user so existing tool handlers work unchanged
       const apiKeyHash = await resolveApiKeyHash(workosUserId)
 
-      // Run the MCP request within auth context (AsyncLocalStorage)
-      await runWithAuthContext({ apiKeyHash, workosUserId }, async () => {
-        // Check for existing session
-        const sessionId = req.headers["mcp-session-id"] as string | undefined
+      // Check for existing session
+      const existingSessionId = req.headers["mcp-session-id"] as string | undefined
 
-        if (sessionId && transports.has(sessionId)) {
-          // Existing session — reuse transport
-          const transport = transports.get(sessionId)!
+      if (existingSessionId && transports.has(existingSessionId)) {
+        // Existing session — reuse transport within auth context
+        await runWithAuthContext({
+          apiKeyHash,
+          workosUserId,
+          transportSessionId: existingSessionId,
+          oauthClientId: authInfo.clientId,
+        }, async () => {
+          const transport = transports.get(existingSessionId)!
           await transport.handleRequest(req, res)
-          return
-        }
-
-        if (sessionId && !transports.has(sessionId)) {
-          // Unknown session ID — reject
-          res.status(404).json({ error: "Session not found" })
-          return
-        }
-
-        // New session — create transport and server
-        const transport = new StreamableHTTPServerTransport({
-          sessionIdGenerator: () => randomUUID(),
         })
+        return
+      }
 
-        const server = createServer()
-        await server.connect(transport)
+      if (existingSessionId && !transports.has(existingSessionId)) {
+        // Unknown session ID — reject
+        res.status(404).json({ error: "Session not found" })
+        return
+      }
 
-        // Clean up on explicit close
-        transport.onclose = () => {
-          if (transport.sessionId) {
-            transports.delete(transport.sessionId)
-          }
-          server.close().catch(() => {})
-        }
-
-        // handleRequest generates the session ID on first call
-        await transport.handleRequest(req, res)
-
-        // Store transport AFTER handleRequest so sessionId is available
-        if (transport.sessionId && !transports.has(transport.sessionId)) {
-          transports.set(transport.sessionId, transport)
-        }
+      // New session — create transport and server
+      const transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: () => randomUUID(),
       })
+
+      const server = createServer()
+      await server.connect(transport)
+
+      // Clean up on explicit close
+      transport.onclose = () => {
+        const sid = transport.sessionId
+        if (sid) {
+          transports.delete(sid)
+
+          // Mark agent session as disconnected in Convex
+          const storedApiKeyHash = sessionApiKeys.get(sid)
+          if (storedApiKeyHash) {
+            sessionApiKeys.delete(sid)
+            const convex = getConvexClient()
+            convex
+              .mutation(api.agentSessions.disconnect, {
+                apiKeyHash: storedApiKeyHash,
+                sessionId: sid,
+              })
+              .catch((err: unknown) =>
+                console.error("Failed to disconnect agent session:", err)
+              )
+          }
+        }
+        server.close().catch(() => {})
+      }
+
+      // handleRequest generates the session ID on first call
+      // Run within auth context so tool handlers can access session info
+      await runWithAuthContext({
+        apiKeyHash,
+        workosUserId,
+        oauthClientId: authInfo.clientId,
+      }, async () => {
+        await transport.handleRequest(req, res)
+      })
+
+      // Store transport AFTER handleRequest so sessionId is available
+      if (transport.sessionId && !transports.has(transport.sessionId)) {
+        transports.set(transport.sessionId, transport)
+        sessionApiKeys.set(transport.sessionId, apiKeyHash)
+
+        // Register agent session in Convex
+        const clientInfo = provider.clientsStore.getClient(authInfo.clientId)
+        const convex = getConvexClient()
+        convex
+          .mutation(api.agentSessions.connect, {
+            apiKeyHash,
+            sessionId: transport.sessionId,
+            clientId: authInfo.clientId,
+            clientName: clientInfo?.client_name,
+          })
+          .catch((err: unknown) =>
+            console.error("Failed to create agent session:", err)
+          )
+      }
     } catch (error) {
       console.error("MCP request error:", error)
       if (!res.headersSent) {

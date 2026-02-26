@@ -62,6 +62,8 @@ export default defineSchema({
       v.literal("archived")
     ),
     itemCounter: v.optional(v.number()),
+    taskCounter: v.optional(v.number()),
+    issueCounter: v.optional(v.number()),
     metadata: v.optional(v.any()),
 
     // Project config
@@ -337,6 +339,27 @@ export default defineSchema({
     attachmentCount: v.optional(v.number()),
     apiCalls: v.number(),
   }).index("by_user_period", ["userId", "period"]),
+
+  agentSessions: defineTable({
+    userId: v.id("users"),
+    sessionId: v.string(),
+    clientId: v.string(),
+    clientName: v.optional(v.string()),
+    status: v.union(
+      v.literal("connected"),
+      v.literal("disconnected"),
+      v.literal("expired")
+    ),
+    connectedAt: v.number(),
+    lastActivityAt: v.number(),
+    disconnectedAt: v.optional(v.number()),
+    toolCallCount: v.number(),
+    lastTool: v.optional(v.string()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_status", ["userId", "status"])
+    .index("by_session_id", ["sessionId"])
+    .index("by_last_activity", ["lastActivityAt"]),
 
   mcpLogs: defineTable({
     userId: v.id("users"),

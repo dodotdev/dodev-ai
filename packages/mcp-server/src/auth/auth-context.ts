@@ -5,6 +5,10 @@ interface AuthContext {
   apiKeyHash: string
   /** WorkOS user ID from the JWT */
   workosUserId: string
+  /** Streamable HTTP transport session ID */
+  transportSessionId?: string
+  /** OAuth client ID */
+  oauthClientId?: string
 }
 
 const authStore = new AsyncLocalStorage<AuthContext>()

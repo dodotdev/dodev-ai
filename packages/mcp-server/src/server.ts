@@ -2,6 +2,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js"
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js"
 import { createRequire } from "module"
 import { getApiKeyHash } from "./auth/api-key.js"
+import { getAuthContext } from "./auth/auth-context.js"
 import { api, getConvexClient } from "./convex-client.js"
 import { attachmentTools, handleAttachmentTool } from "./tools/attachments.js"
 import { commentTools, handleCommentTool } from "./tools/comments.js"
@@ -76,6 +77,27 @@ function writeLog(
       })
   } catch {
     // API key or client not available — skip logging
+  }
+}
+
+/** Fire-and-forget session heartbeat (cloud mode only) */
+function heartbeatSession(toolName: string) {
+  try {
+    const authCtx = getAuthContext()
+    if (!authCtx?.transportSessionId) return
+
+    const client = getConvexClient()
+    client
+      .mutation(api.agentSessions.heartbeat, {
+        apiKeyHash: authCtx.apiKeyHash,
+        sessionId: authCtx.transportSessionId,
+        toolName,
+      })
+      .catch(() => {
+        // Silently ignore heartbeat failures
+      })
+  } catch {
+    // Not in cloud mode or client not available — skip
   }
 }
 
@@ -169,6 +191,7 @@ export function createServer(): Server {
       const duration = Date.now() - start
       if (isDev) console.error(`[MCP] ${name} → OK (${duration}ms)`)
       writeLog(name, toolArgs, "ok", duration)
+      heartbeatSession(name)
 
       return {
         content: [
