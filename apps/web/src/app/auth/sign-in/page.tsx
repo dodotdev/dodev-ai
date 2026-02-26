@@ -12,7 +12,8 @@ import {
   Sparkles,
 } from "lucide-react"
 import Link from "next/link"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { Suspense, useCallback, useEffect, useRef, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -20,6 +21,16 @@ type Step = "email" | "code" | "success"
 const RESEND_COOLDOWN = 30
 
 export default function SignInPage() {
+  return (
+    <Suspense>
+      <SignInContent />
+    </Suspense>
+  )
+}
+
+function SignInContent() {
+  const searchParams = useSearchParams()
+  const returnTo = searchParams.get("returnTo") || "/dashboard"
   const [step, setStep] = useState<Step>("email")
   const [email, setEmail] = useState("")
   const [code, setCode] = useState("")
@@ -82,7 +93,7 @@ export default function SignInPage() {
 
         setStep("success")
         setTimeout(() => {
-          window.location.href = "/dashboard"
+          window.location.href = returnTo
         }, 1000)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong")
@@ -101,7 +112,7 @@ export default function SignInPage() {
   }
 
   const handleGoogleSignIn = () => {
-    window.location.href = "/api/auth/oauth/google?returnTo=/dashboard"
+    window.location.href = `/api/auth/oauth/google?returnTo=${encodeURIComponent(returnTo)}`
   }
 
   return (
