@@ -11,25 +11,10 @@ export function Waitlist() {
   return (
     <section
       id="waitlist"
-      className="relative overflow-hidden bg-zinc-950 py-24 text-zinc-50 sm:py-32"
+      className="relative overflow-hidden border-t border-emerald-200/60 bg-emerald-50/60 py-24 sm:py-32 dark:border-border dark:bg-muted/30"
     >
-      {/* Grain overlay */}
-      <div className="pointer-events-none absolute inset-0 opacity-20">
-        <svg className="h-full w-full" aria-hidden="true">
-          <filter id={grainId}>
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.8"
-              numOctaves="4"
-              stitchTiles="stitch"
-            />
-          </filter>
-          <rect width="100%" height="100%" filter={`url(#${grainId})`} />
-        </svg>
-      </div>
-
       {/* Emerald gradient blob */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/10 blur-[120px]" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/5 blur-[120px]" />
 
       <div className="relative mx-auto max-w-3xl px-6 text-center">
         <motion.div
@@ -46,7 +31,7 @@ export function Waitlist() {
             </span>
           </h2>
 
-          <p className="mx-auto mt-6 max-w-xl text-lg text-zinc-400">
+          <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
             Give your AI persistent memory. Join the developers who are building with continuity,
             not repetition.
           </p>
@@ -65,7 +50,7 @@ export function Waitlist() {
             <Button
               variant="outline"
               size="lg"
-              className="border-zinc-600 bg-zinc-900 text-zinc-100 hover:bg-zinc-800 hover:text-white"
+              className=""
               asChild
             >
               <a
@@ -79,7 +64,7 @@ export function Waitlist() {
             </Button>
           </div>
 
-          <p className="mt-6 text-sm text-zinc-500">
+          <p className="mt-6 text-sm text-muted-foreground/70">
             Free forever for self-hosted. No credit card required.
           </p>
         </motion.div>
