@@ -144,7 +144,7 @@ function TaskListVisual() {
                 {task.labels.map((label) => (
                   <span
                     key={label}
-                    className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-400"
+                    className="hidden rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-400 sm:inline"
                   >
                     {label}
                   </span>
@@ -483,7 +483,7 @@ export function Features() {
       id="features"
       className="py-24 sm:py-32"
     >
-      <div className="mx-auto max-w-6xl px-6">
+      <div className="mx-auto max-w-6xl overflow-hidden px-6">
         {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -524,7 +524,7 @@ export function Features() {
                   whileInView="visible"
                   viewport={{ once: true }}
                   transition={{ duration: 0.5 }}
-                  className="lg:[direction:ltr]"
+                  className="min-w-0 lg:[direction:ltr]"
                 >
                   <Badge
                     variant="outline"
@@ -567,7 +567,7 @@ export function Features() {
                   whileInView="visible"
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: 0.15 }}
-                  className="lg:[direction:ltr]"
+                  className="min-w-0 lg:[direction:ltr]"
                 >
                   {feature.visual}
                 </motion.div>

@@ -32,7 +32,7 @@ export default async function MarketingLayout({ children }: { children: React.Re
   return (
     <>
       <Navbar user={user} />
-      <main>{children}</main>
+      <main className="overflow-x-hidden">{children}</main>
       <Footer />
     </>
   )

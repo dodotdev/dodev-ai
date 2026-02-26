@@ -1,6 +1,6 @@
 "use client"
 
-import { ListTodo, LogOut, Menu, Settings, Star, X } from "lucide-react"
+import { ArrowRight, ListTodo, LogOut, Menu, Settings, Star } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -14,6 +14,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 
 const navLinks = [
@@ -167,84 +175,123 @@ export function Navbar({ user }: NavbarProps) {
           )}
         </div>
 
-        <button
-          type="button"
-          className="md:hidden"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Toggle menu"
-        >
-          {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-        </button>
-      </nav>
-
-      {mobileOpen && (
-        <div className="border-t border-border bg-white/95 backdrop-blur-xl dark:bg-background/95 md:hidden">
-          <div className="flex flex-col gap-4 px-6 py-6">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                onClick={() => setMobileOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <a
-              href="https://github.com/dodotdev/dodev-ai"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setMobileOpen(false)}
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetTrigger asChild>
+            <button
+              type="button"
+              className="md:hidden"
+              aria-label="Open menu"
             >
-              GitHub
-              {starCount && (
-                <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-semibold">
-                  <Star className="mr-0.5 size-2.5 fill-current" />
-                  {starCount}
-                </Badge>
-              )}
-            </a>
-            <div className="flex items-center gap-2 pt-4">
-              <a
-                href="https://x.com/dodotdev"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <svg className="size-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-                <span className="sr-only">Follow @dodotdev on X</span>
-              </a>
-              <ThemeToggle />
-              {user ? (
-                <>
-                  <span className="flex-1 truncate text-sm text-muted-foreground">
-                    {user.name || user.email}
-                  </span>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href="/auth/sign-out">Sign out</Link>
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button variant="ghost" size="sm" className="flex-1" asChild>
-                    <Link href="/auth/sign-in">Sign In</Link>
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="flex-1 bg-gradient-to-r from-emerald-400 to-emerald-600 text-white"
-                    asChild
+              <Menu className="size-5" />
+            </button>
+          </SheetTrigger>
+
+          <SheetContent side="right" className="w-[280px] p-0" showCloseButton={false}>
+            <SheetHeader className="border-b border-border px-6 py-5">
+              <div className="flex items-center justify-between">
+                <SheetTitle asChild>
+                  <Link href="/" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+                    <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600">
+                      <ListTodo className="size-3.5 text-white" strokeWidth={2.5} />
+                    </div>
+                    <span className="text-base font-semibold tracking-tight">dodev.ai</span>
+                  </Link>
+                </SheetTitle>
+                <ThemeToggle />
+              </div>
+            </SheetHeader>
+
+            <nav className="flex flex-col px-6 py-4">
+              {navLinks.map((link) => (
+                <SheetClose key={link.href} asChild>
+                  <Link
+                    href={link.href}
+                    className="flex items-center py-3 text-sm font-medium text-foreground transition-colors hover:text-emerald-500"
                   >
-                    <Link href="/auth/sign-in">Join Waitlist</Link>
-                  </Button>
-                </>
+                    {link.label}
+                  </Link>
+                </SheetClose>
+              ))}
+
+              <div className="my-2 border-t border-border" />
+
+              <SheetClose asChild>
+                <a
+                  href="https://github.com/dodotdev/dodev-ai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 py-3 text-sm font-medium text-foreground transition-colors hover:text-emerald-500"
+                >
+                  GitHub
+                  {starCount && (
+                    <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-semibold">
+                      <Star className="mr-0.5 size-2.5 fill-current" />
+                      {starCount}
+                    </Badge>
+                  )}
+                </a>
+              </SheetClose>
+
+              <SheetClose asChild>
+                <a
+                  href="https://x.com/dodotdev"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 py-3 text-sm font-medium text-foreground transition-colors hover:text-emerald-500"
+                >
+                  <svg className="size-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                  Follow on X
+                </a>
+              </SheetClose>
+            </nav>
+
+            <div className="mt-auto border-t border-border px-6 py-5">
+              {user ? (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-8 items-center justify-center rounded-full bg-emerald-500/10 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                      {initials}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      {user.name && <p className="truncate text-sm font-medium">{user.name}</p>}
+                      <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="flex-1" asChild>
+                      <Link href="/dashboard" onClick={() => setMobileOpen(false)}>Dashboard</Link>
+                    </Button>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href="/auth/sign-out" onClick={() => setMobileOpen(false)}>Sign out</Link>
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <SheetClose asChild>
+                    <Button
+                      className="w-full bg-gradient-to-r from-emerald-400 to-emerald-600 text-white hover:from-emerald-500 hover:to-emerald-700"
+                      asChild
+                    >
+                      <Link href="/auth/sign-in">
+                        Get Started
+                        <ArrowRight className="ml-1 size-4" />
+                      </Link>
+                    </Button>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Button variant="outline" className="w-full" asChild>
+                      <Link href="/auth/sign-in">Sign In</Link>
+                    </Button>
+                  </SheetClose>
+                </div>
               )}
             </div>
-          </div>
-        </div>
-      )}
+          </SheetContent>
+        </Sheet>
+      </nav>
     </header>
   )
 }

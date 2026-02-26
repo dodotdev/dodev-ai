@@ -332,7 +332,7 @@ export function Hero() {
               initial={{ opacity: 0, scale: 0.9, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 8.5 }}
-              className="absolute -bottom-4 -right-3 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2.5 shadow-xl"
+              className="absolute -bottom-4 right-0 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2.5 shadow-xl sm:-right-3"
             >
               <p className="text-xs font-medium text-zinc-300">
                 31 tools &middot; 7 categories &middot;{" "}
