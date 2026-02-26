@@ -31,7 +31,7 @@ const navLinks = [
 ]
 
 interface NavbarProps {
-  user?: { email: string; name?: string } | null
+  user?: { email: string; name?: string; isApproved?: boolean } | null
 }
 
 export function Navbar({ user }: NavbarProps) {
@@ -144,12 +144,21 @@ export function Navbar({ user }: NavbarProps) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard">
-                    <Settings className="mr-2 size-4" />
-                    Dashboard
-                  </Link>
-                </DropdownMenuItem>
+                {user.isApproved ? (
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard">
+                      <Settings className="mr-2 size-4" />
+                      Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem asChild>
+                    <Link href="/waitlisted">
+                      <Settings className="mr-2 size-4" />
+                      Waitlist Status
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/auth/sign-out">
@@ -261,7 +270,9 @@ export function Navbar({ user }: NavbarProps) {
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" className="flex-1" asChild>
-                      <Link href="/dashboard" onClick={() => setMobileOpen(false)}>Dashboard</Link>
+                      <Link href={user.isApproved ? "/dashboard" : "/waitlisted"} onClick={() => setMobileOpen(false)}>
+                        {user.isApproved ? "Dashboard" : "Waitlist Status"}
+                      </Link>
                     </Button>
                     <Button variant="ghost" size="sm" asChild>
                       <Link href="/auth/sign-out" onClick={() => setMobileOpen(false)}>Sign out</Link>

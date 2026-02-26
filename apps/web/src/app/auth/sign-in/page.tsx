@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input"
 
 type Step = "email" | "code" | "success"
 const RESEND_COOLDOWN = 30
+const CODE_LENGTH = 6
 
 export default function SignInPage() {
   return (
@@ -33,11 +34,11 @@ function SignInContent() {
   const returnTo = searchParams.get("returnTo") || "/dashboard"
   const [step, setStep] = useState<Step>("email")
   const [email, setEmail] = useState("")
-  const [code, setCode] = useState("")
+  const [codeDigits, setCodeDigits] = useState<string[]>(Array(CODE_LENGTH).fill(""))
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
-  const codeInputRef = useRef<HTMLInputElement>(null)
+  const digitRefs = useRef<(HTMLInputElement | null)[]>([])
 
   useEffect(() => {
     if (resendCooldown <= 0) return
@@ -46,7 +47,7 @@ function SignInContent() {
   }, [resendCooldown])
 
   useEffect(() => {
-    if (step === "code") codeInputRef.current?.focus()
+    if (step === "code") digitRefs.current[0]?.focus()
   }, [step])
 
   const handleSendMagicLink = async (e?: React.FormEvent) => {
@@ -97,7 +98,7 @@ function SignInContent() {
         }, 1000)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong")
-        setCode("")
+        setCodeDigits(Array(CODE_LENGTH).fill(""))
       } finally {
         setIsLoading(false)
       }
@@ -105,11 +106,59 @@ function SignInContent() {
     [email]
   )
 
-  const handleCodeChange = (value: string) => {
-    const digits = value.replace(/\D/g, "").slice(0, 6)
-    setCode(digits)
-    if (digits.length === 6) verifyCode(digits)
-  }
+  const handleDigitChange = useCallback(
+    (index: number, inputValue: string) => {
+      const digit = inputValue.replace(/\D/g, "").slice(-1)
+      const newDigits = [...codeDigits]
+      newDigits[index] = digit
+      setCodeDigits(newDigits)
+
+      if (digit && index < CODE_LENGTH - 1) {
+        digitRefs.current[index + 1]?.focus()
+      }
+
+      const fullCode = newDigits.join("")
+      if (fullCode.length === CODE_LENGTH) {
+        verifyCode(fullCode)
+      }
+    },
+    [codeDigits, verifyCode]
+  )
+
+  const handleDigitKeyDown = useCallback(
+    (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Backspace" && !codeDigits[index] && index > 0) {
+        digitRefs.current[index - 1]?.focus()
+      } else if (e.key === "ArrowLeft" && index > 0) {
+        digitRefs.current[index - 1]?.focus()
+      } else if (e.key === "ArrowRight" && index < CODE_LENGTH - 1) {
+        digitRefs.current[index + 1]?.focus()
+      }
+    },
+    [codeDigits]
+  )
+
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent) => {
+      e.preventDefault()
+      const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, CODE_LENGTH)
+      if (!pasted) return
+
+      const newDigits = Array(CODE_LENGTH).fill("")
+      for (let i = 0; i < pasted.length; i++) {
+        newDigits[i] = pasted[i]
+      }
+      setCodeDigits(newDigits)
+
+      const focusIndex = Math.min(pasted.length - 1, CODE_LENGTH - 1)
+      digitRefs.current[focusIndex]?.focus()
+
+      if (pasted.length === CODE_LENGTH) {
+        verifyCode(pasted)
+      }
+    },
+    [verifyCode]
+  )
 
   const handleGoogleSignIn = () => {
     window.location.href = `/api/auth/oauth/google?returnTo=${encodeURIComponent(returnTo)}`
@@ -209,25 +258,32 @@ function SignInContent() {
 
             {/* Code Step */}
             {step === "code" && (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div className="text-center">
                   <p className="text-sm font-medium">Check your email</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    We sent a 6-digit code to <strong className="text-foreground">{email}</strong>
+                    Enter the code sent to <strong className="text-foreground">{email}</strong>
                   </p>
                 </div>
 
-                <Input
-                  ref={codeInputRef}
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="000000"
-                  value={code}
-                  onChange={(e) => handleCodeChange(e.target.value)}
-                  maxLength={6}
-                  className="text-center font-mono text-lg tracking-[0.5em]"
-                  autoComplete="one-time-code"
-                />
+                <div className="flex justify-center gap-2 sm:gap-3">
+                  {codeDigits.map((digit, index) => (
+                    <input
+                      key={index}
+                      ref={(el) => { digitRefs.current[index] = el }}
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      value={digit}
+                      onChange={(e) => handleDigitChange(index, e.target.value)}
+                      onKeyDown={(e) => handleDigitKeyDown(index, e)}
+                      onPaste={handlePaste}
+                      maxLength={1}
+                      disabled={isLoading}
+                      className="size-12 sm:size-14 text-center text-2xl font-semibold border-2 border-border rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-background"
+                    />
+                  ))}
+                </div>
 
                 {isLoading && (
                   <div className="flex justify-center">
@@ -241,7 +297,7 @@ function SignInContent() {
                     className="text-muted-foreground hover:text-foreground"
                     onClick={() => {
                       setStep("email")
-                      setCode("")
+                      setCodeDigits(Array(CODE_LENGTH).fill(""))
                       setError("")
                     }}
                   >

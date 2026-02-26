@@ -1,9 +1,11 @@
+import { api } from "@dodev/convex/api"
 import { cookies } from "next/headers"
 import { Footer } from "@/components/marketing/footer"
 import { Navbar } from "@/components/marketing/navbar"
+import { getConvexClient } from "@/lib/convex"
 import { isCloud } from "@/lib/mode"
 
-async function getMarketingUser(): Promise<{ email: string; name?: string } | null> {
+async function getMarketingUser(): Promise<{ email: string; name?: string; isApproved?: boolean } | null> {
   // Self-hosted mode: no user on marketing pages (dashboard handles its own auth)
   if (!isCloud()) return null
 
@@ -17,9 +19,22 @@ async function getMarketingUser(): Promise<{ email: string; name?: string } | nu
     const { user } = await withAuth()
     if (!user) return null
 
+    // Check Convex for user approval status
+    let isApproved = false
+    try {
+      const convex = getConvexClient()
+      const convexUser = await convex.query(api.users.getByWorkosId, {
+        workosUserId: user.id,
+      })
+      isApproved = convexUser?.role === "approved" || convexUser?.role === "admin"
+    } catch {
+      // If Convex check fails, default to not approved
+    }
+
     return {
       email: user.email,
       name: [user.firstName, user.lastName].filter(Boolean).join(" ") || undefined,
+      isApproved,
     }
   } catch {
     return null

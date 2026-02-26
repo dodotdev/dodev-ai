@@ -49,7 +49,18 @@ export default async function middleware(request: NextRequest, event: NextFetchE
     return selfHostedMiddleware(request)
   }
   const handler = await getCloudMiddleware()
-  return handler!(request, event)
+  const response = await handler!(request, event)
+
+  // Intercept authkit redirects to WorkOS hosted sign-in page
+  // and redirect to our custom sign-in page instead
+  if (response && response instanceof Response && response.status >= 300 && response.status < 400) {
+    const location = response.headers.get("location")
+    if (location && location.includes("authkit.app")) {
+      return NextResponse.redirect(new URL("/auth/sign-in", request.url))
+    }
+  }
+
+  return response
 }
 
 export const config = {
