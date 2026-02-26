@@ -28,6 +28,7 @@ import type * as sessions from "../sessions.js";
 import type * as tasks from "../tasks.js";
 import type * as usage from "../usage.js";
 import type * as users from "../users.js";
+import type * as versions from "../versions.js";
 
 import type {
   ApiFromModules,
@@ -56,6 +57,7 @@ declare const fullApi: ApiFromModules<{
   tasks: typeof tasks;
   usage: typeof usage;
   users: typeof users;
+  versions: typeof versions;
 }>;
 
 /**

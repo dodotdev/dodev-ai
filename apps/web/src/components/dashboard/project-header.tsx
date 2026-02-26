@@ -5,8 +5,8 @@ import { useMutation, useQuery } from "convex/react"
 import { Archive, Loader2, Settings, Trash2 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { CycleEditor } from "@/components/dashboard/settings/cycle-editor"
 import { EstimateEditor } from "@/components/dashboard/settings/estimate-editor"
+import { VersionEditor } from "@/components/dashboard/settings/version-editor"
 import { LabelEditor } from "@/components/dashboard/settings/label-editor"
 import { MemberEditor } from "@/components/dashboard/settings/member-editor"
 import { PersonaEditor } from "@/components/dashboard/settings/persona-editor"
@@ -31,7 +31,7 @@ const TABS = [
   { key: "labels", label: "Labels" },
   { key: "members", label: "Members" },
   { key: "estimates", label: "Estimates" },
-  { key: "cycles", label: "Cycles" },
+  { key: "versions", label: "Versions" },
   { key: "persona", label: "AI Persona" },
 ] as const
 
@@ -101,11 +101,6 @@ function ProjectSettingsModal({
   const project = useQuery(
     api.projects.get,
     apiKeyHash ? { apiKeyHash, id: projectId as never } : "skip"
-  )
-
-  const cycles = useQuery(
-    api.cycles.list,
-    apiKeyHash ? { apiKeyHash, projectId: projectId as never } : "skip"
   )
 
   const updateProject = useMutation(api.projects.update)
@@ -313,18 +308,8 @@ function ProjectSettingsModal({
               />
             )}
 
-            {activeTab === "cycles" && (
-              <CycleEditor
-                projectId={projectId}
-                cycles={(cycles ?? []).map((c) => ({
-                  _id: c._id as string,
-                  name: c.name,
-                  status: c.status,
-                  startDate: c.startDate,
-                  endDate: c.endDate,
-                  description: c.description,
-                }))}
-              />
+            {activeTab === "versions" && (
+              <VersionEditor projectId={projectId} />
             )}
 
             {activeTab === "persona" && (

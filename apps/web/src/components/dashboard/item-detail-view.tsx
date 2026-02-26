@@ -19,6 +19,13 @@ import type { ListItem } from "@/components/dashboard/linear-list-view"
 import { useAuth } from "@/components/providers/auth-provider"
 import { cn, formatRelativeTime } from "@/lib/utils"
 
+interface Version {
+  _id: string
+  name: string
+  status: "draft" | "released"
+  description?: string
+}
+
 interface ProjectConfig {
   statuses?: Array<{
     id: string
@@ -45,6 +52,7 @@ interface ItemDetailViewProps {
   item: ListItem
   projectSlug?: string
   projectConfig?: ProjectConfig
+  versions?: Version[]
   comments: Comment[]
   onBack: () => void
   onAddComment: (body: string) => Promise<void>
@@ -75,6 +83,7 @@ export function ItemDetailView({
   item,
   projectSlug,
   projectConfig,
+  versions,
   comments,
   onBack,
   onAddComment,
@@ -702,6 +711,61 @@ export function ItemDetailView({
                   />
                 </>
               )}
+
+              {/* Version */}
+              {versions && versions.length > 0 && (
+                <>
+                  <div className="my-3 border-t border-border/30" />
+                  <PropertySelect
+                    label="Version"
+                    value={item.versionId ?? ""}
+                    options={[
+                      { value: "", label: "None" },
+                      ...versions.map((v) => ({
+                        value: v._id,
+                        label: `${v.name}${v.status === "draft" ? " (draft)" : ""}`,
+                      })),
+                    ]}
+                    fallbackDisplay={
+                      item.versionId ? (
+                        <span className="rounded border border-border/60 bg-zinc-50 px-1.5 py-0.5 text-xs font-medium dark:bg-zinc-800">
+                          {versions.find((v) => v._id === item.versionId)?.name ?? "Unknown"}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">None</span>
+                      )
+                    }
+                    onChange={(val) => onUpdateItem({ versionId: val || null })}
+                  />
+                </>
+              )}
+
+              {/* Changelog */}
+              <div className="my-3 border-t border-border/30" />
+              <div>
+                <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
+                  Changelog
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onUpdateItem({ changelog: !item.changelog })}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                >
+                  <span
+                    className={cn(
+                      "flex size-4 items-center justify-center rounded border transition-colors",
+                      item.changelog
+                        ? "border-emerald-500 bg-emerald-500 text-white"
+                        : "border-zinc-300 dark:border-zinc-600"
+                    )}
+                  >
+                    {item.changelog && <Check className="size-3" />}
+                  </span>
+                  <span className={cn("text-sm", item.changelog ? "text-foreground" : "text-muted-foreground")}>
+                    Include in changelog
+                  </span>
+                </button>
+              </div>
 
               {/* Timestamps */}
               <div className="my-3 border-t border-border/30" />

@@ -158,6 +158,8 @@ export default defineSchema({
     assigneeId: v.optional(v.string()),
     estimate: v.optional(v.string()),
     cycleId: v.optional(v.id("cycles")),
+    changelog: v.optional(v.boolean()),
+    versionId: v.optional(v.id("versions")),
 
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -171,6 +173,7 @@ export default defineSchema({
     .index("by_user_severity", ["userId", "severity"])
     .index("by_user_project_cycle", ["userId", "projectId", "cycleId"])
     .index("by_user_project_statusId", ["userId", "projectId", "statusId"])
+    .index("by_user_project_version", ["userId", "projectId", "versionId"])
     .searchIndex("search_title_description", {
       searchField: "title",
       filterFields: ["userId", "projectId", "status"],
@@ -216,6 +219,8 @@ export default defineSchema({
     assigneeId: v.optional(v.string()),
     estimate: v.optional(v.string()),
     cycleId: v.optional(v.id("cycles")),
+    changelog: v.optional(v.boolean()),
+    versionId: v.optional(v.id("versions")),
 
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -230,6 +235,7 @@ export default defineSchema({
     .index("by_user_due_date", ["userId", "dueDate"])
     .index("by_user_project_cycle", ["userId", "projectId", "cycleId"])
     .index("by_user_project_statusId", ["userId", "projectId", "statusId"])
+    .index("by_user_project_version", ["userId", "projectId", "versionId"])
     .searchIndex("search_title_description", {
       searchField: "title",
       filterFields: ["userId", "projectId", "status"],
@@ -282,6 +288,19 @@ export default defineSchema({
     status: v.union(v.literal("upcoming"), v.literal("active"), v.literal("completed")),
     startDate: v.number(),
     endDate: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user_project", ["userId", "projectId"])
+    .index("by_user_project_status", ["userId", "projectId", "status"]),
+
+  versions: defineTable({
+    userId: v.id("users"),
+    projectId: v.id("projects"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    status: v.union(v.literal("draft"), v.literal("released")),
+    releasedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

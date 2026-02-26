@@ -54,6 +54,8 @@ export interface ListItem {
   assigneeId?: string
   estimate?: string
   cycleId?: string
+  changelog?: boolean
+  versionId?: string
   createdAt: number
   updatedAt: number
   issueId?: string

@@ -31,6 +31,11 @@ export default function ProjectIssuesPage() {
     selectedItemId && apiKeyHash ? { apiKeyHash, issueId: selectedItemId as never } : "skip"
   )
 
+  const versions = useQuery(
+    api.versions.list,
+    apiKeyHash ? { apiKeyHash, projectId: id as never } : "skip"
+  )
+
   const updateIssue = useMutation(api.issues.update)
   const createIssue = useMutation(api.issues.create)
   const deleteIssue = useMutation(api.issues.remove)
@@ -161,6 +166,8 @@ export default function ProjectIssuesPage() {
       assigneeId: raw.assigneeId as string | undefined,
       estimate: raw.estimate as string | undefined,
       cycleId: raw.cycleId as string | undefined,
+      changelog: raw.changelog as boolean | undefined,
+      versionId: raw.versionId as string | undefined,
       createdAt: (raw.createdAt ?? raw._creationTime) as number,
       updatedAt: (raw.updatedAt ?? raw._creationTime) as number,
       issueId: projectSlug && issueNumber ? `${projectSlug}-${issueNumber}` : undefined,
@@ -214,6 +221,12 @@ export default function ProjectIssuesPage() {
                 members: projectMembers,
                 estimateScale: project?.estimateScale,
               }}
+              versions={(versions ?? []).map((v) => ({
+                _id: v._id as string,
+                name: v.name,
+                status: v.status,
+                description: v.description,
+              }))}
               comments={comments ?? []}
               onBack={() => setSelectedItemId(null)}
               onAddComment={handleAddComment}

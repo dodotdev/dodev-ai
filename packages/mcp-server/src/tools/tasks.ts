@@ -55,6 +55,14 @@ export const taskTools: Tool[] = [
           type: "string",
           description: "Cycle ID to associate this task with a sprint/iteration",
         },
+        changelog: {
+          type: "boolean",
+          description: "If true, this task will appear in version changelogs",
+        },
+        versionId: {
+          type: "string",
+          description: "Version ID to associate this task with a release version",
+        },
       },
       required: ["title"],
     },
@@ -117,6 +125,14 @@ export const taskTools: Tool[] = [
         cycleId: {
           type: ["string", "null"],
           description: "Cycle ID, or null to remove from cycle",
+        },
+        changelog: {
+          type: ["boolean", "null"],
+          description: "If true, include in version changelog. Null to clear.",
+        },
+        versionId: {
+          type: ["string", "null"],
+          description: "Version ID, or null to remove from version",
         },
       },
       required: ["id"],
@@ -224,6 +240,8 @@ export async function handleTaskTool(
         assigneeId: args.assigneeId as string | undefined,
         estimate: args.estimate as string | undefined,
         cycleId: args.cycleId as string | undefined,
+        changelog: args.changelog as boolean | undefined,
+        versionId: args.versionId as string | undefined,
       })
 
     case "update_task":
@@ -243,6 +261,8 @@ export async function handleTaskTool(
         assigneeId: args.assigneeId as string | null | undefined,
         estimate: args.estimate as string | null | undefined,
         cycleId: args.cycleId as string | null | undefined,
+        changelog: args.changelog as boolean | null | undefined,
+        versionId: args.versionId as string | null | undefined,
       })
 
     case "complete_task":

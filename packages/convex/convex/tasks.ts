@@ -22,6 +22,8 @@ export const create = mutation({
     assigneeId: v.optional(v.string()),
     estimate: v.optional(v.string()),
     cycleId: v.optional(v.id("cycles")),
+    changelog: v.optional(v.boolean()),
+    versionId: v.optional(v.id("versions")),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
@@ -65,6 +67,8 @@ export const create = mutation({
       assigneeId: args.assigneeId,
       estimate: args.estimate,
       cycleId: args.cycleId,
+      changelog: args.changelog,
+      versionId: args.versionId,
       createdAt: now,
       updatedAt: now,
     })
@@ -108,6 +112,8 @@ export const update = mutation({
     assigneeId: v.optional(v.union(v.string(), v.null())),
     estimate: v.optional(v.union(v.string(), v.null())),
     cycleId: v.optional(v.union(v.id("cycles"), v.null())),
+    changelog: v.optional(v.union(v.boolean(), v.null())),
+    versionId: v.optional(v.union(v.id("versions"), v.null())),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
@@ -157,6 +163,8 @@ export const update = mutation({
     if (args.assigneeId !== undefined) updates.assigneeId = args.assigneeId ?? undefined
     if (args.estimate !== undefined) updates.estimate = args.estimate ?? undefined
     if (args.cycleId !== undefined) updates.cycleId = args.cycleId ?? undefined
+    if (args.changelog !== undefined) updates.changelog = args.changelog ?? undefined
+    if (args.versionId !== undefined) updates.versionId = args.versionId ?? undefined
 
     await ctx.db.patch(args.id, updates)
     return await ctx.db.get(args.id)

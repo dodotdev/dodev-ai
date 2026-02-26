@@ -14,6 +14,7 @@ import { handleLinkingTool, linkingTools } from "./tools/linking.js"
 import { handleMemoryTool, memoryTools } from "./tools/memories.js"
 import { handleProjectTool, projectTools } from "./tools/projects.js"
 import { handleTaskTool, taskTools } from "./tools/tasks.js"
+import { handleVersionTool, versionTools } from "./tools/versions.js"
 
 const require = createRequire(import.meta.url)
 const { version } = require("../package.json") as { version: string }
@@ -29,6 +30,7 @@ const allTools = [
   ...linkingTools,
   ...attachmentTools,
   ...commentTools,
+  ...versionTools,
 ]
 
 const taskToolNames = new Set(taskTools.map((t) => t.name))
@@ -41,6 +43,7 @@ const cycleToolNames = new Set(cycleTools.map((t) => t.name))
 const linkingToolNames = new Set(linkingTools.map((t) => t.name))
 const attachmentToolNames = new Set(attachmentTools.map((t) => t.name))
 const commentToolNames = new Set(commentTools.map((t) => t.name))
+const versionToolNames = new Set(versionTools.map((t) => t.name))
 
 /** Strip sensitive fields and return loggable args */
 function sanitizeArgs(toolArgs: Record<string, unknown>): Record<string, unknown> {
@@ -172,6 +175,8 @@ export function createServer(): Server {
         result = await handleAttachmentTool(name, toolArgs)
       } else if (commentToolNames.has(name)) {
         result = await handleCommentTool(name, toolArgs)
+      } else if (versionToolNames.has(name)) {
+        result = await handleVersionTool(name, toolArgs)
       } else {
         if (isDev) console.error(`[MCP] ${name} → NOT_FOUND`)
         writeLog(name, toolArgs, "error", Date.now() - start, "NOT_FOUND")
