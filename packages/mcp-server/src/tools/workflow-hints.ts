@@ -40,10 +40,7 @@ export function buildWorkflowHint(
         `When your work is done, move it to "In Review" (statusId: "${inReview.id}") — not directly to Done.`
       )
     }
-  } else if (
-    resolvedCategory === "in_progress" &&
-    currentStatusId !== inReview?.id
-  ) {
+  } else if (resolvedCategory === "in_progress" && currentStatusId !== inReview?.id) {
     // Item is In Progress — agent should move to In Review when done
     if (inReview) {
       lines.push(
@@ -85,7 +82,9 @@ export function buildListWorkflowHint(
 
   const parts: string[] = []
   if (inProgress) {
-    parts.push(`Move to "In Progress" (${updateTool} statusId: "${inProgress.id}") when starting work.`)
+    parts.push(
+      `Move to "In Progress" (${updateTool} statusId: "${inProgress.id}") when starting work.`
+    )
   }
   if (inReview) {
     parts.push(`Move to "In Review" (statusId: "${inReview.id}") when done — not directly to Done.`)
@@ -100,15 +99,11 @@ export function buildListWorkflowHint(
  * This gives agents an overview of the expected workflow without
  * item-specific status IDs.
  */
-export function buildContextWorkflowHint(
-  statuses: WorkflowStatus[]
-): string {
+export function buildContextWorkflowHint(statuses: WorkflowStatus[]): string {
   const inProgress = statuses.find((s) => s.name === "In Progress")
   const inReview = statuses.find((s) => s.name === "In Review")
 
-  const lines: string[] = [
-    "Workflow guidelines for tasks and issues:",
-  ]
+  const lines: string[] = ["Workflow guidelines for tasks and issues:"]
 
   if (inProgress) {
     lines.push(

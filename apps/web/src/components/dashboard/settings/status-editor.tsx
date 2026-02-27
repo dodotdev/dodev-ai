@@ -1,13 +1,13 @@
 "use client"
 
 import {
-  DndContext,
   closestCenter,
+  DndContext,
+  type DragEndEvent,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
-  type DragEndEvent,
 } from "@dnd-kit/core"
 import {
   SortableContext,
@@ -88,10 +88,7 @@ function SortableStatusRow({
       </button>
 
       {/* Color dot preview */}
-      <span
-        className="size-3 shrink-0 rounded-full"
-        style={{ backgroundColor: status.color }}
-      />
+      <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: status.color }} />
 
       {/* Name */}
       <Input

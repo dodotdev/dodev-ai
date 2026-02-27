@@ -73,14 +73,14 @@ export async function handleContextTool(
       // Auto-detect workspace info if no explicit projectId
       const workspace = !args.projectId ? detectWorkspace() : undefined
 
-      const context = await client.query(api.projects.getContext, {
+      const context = (await client.query(api.projects.getContext, {
         apiKeyHash,
         projectId: args.projectId as string | undefined,
         taskLimit: args.taskLimit as number | undefined,
         memoryLimit: args.memoryLimit as number | undefined,
         workspacePath: workspace?.workspacePath,
         repoUrl: workspace?.repoUrl,
-      }) as Record<string, unknown>
+      })) as Record<string, unknown>
 
       // Add workflow hints if project has statuses
       const activeProject = context.activeProject as {
@@ -91,45 +91,53 @@ export async function handleContextTool(
       }
 
       // Auto-create a project if the user has none
-      if (!context.activeProject && Array.isArray(context.projects) && context.projects.length === 0) {
+      if (
+        !context.activeProject &&
+        Array.isArray(context.projects) &&
+        context.projects.length === 0
+      ) {
         const projectName = deriveProjectName(workspace?.workspacePath, workspace?.repoUrl)
 
-        const newProject = await client.mutation(api.projects.create, {
+        const newProject = (await client.mutation(api.projects.create, {
           apiKeyHash,
           name: projectName,
           description: `Auto-created from workspace: ${workspace?.workspacePath ?? "unknown"}`,
-        }) as { _id: string } | null
+        })) as { _id: string } | null
 
         if (newProject) {
           // Link workspace path and repo to the new project
           if (workspace?.workspacePath || workspace?.repoUrl) {
-            await client.mutation(api.projects.linkProject, {
-              apiKeyHash,
-              projectId: newProject._id,
-              path: workspace?.workspacePath,
-              repo: workspace?.repoUrl,
-            }).catch(() => {
-              // Non-critical — linking failed but project was created
-            })
+            await client
+              .mutation(api.projects.linkProject, {
+                apiKeyHash,
+                projectId: newProject._id,
+                path: workspace?.workspacePath,
+                repo: workspace?.repoUrl,
+              })
+              .catch(() => {
+                // Non-critical — linking failed but project was created
+              })
           }
 
           // Set as default project
-          await client.mutation(api.users.setDefaultProject, {
-            apiKeyHash,
-            projectId: newProject._id,
-          }).catch(() => {
-            // Non-critical
-          })
+          await client
+            .mutation(api.users.setDefaultProject, {
+              apiKeyHash,
+              projectId: newProject._id,
+            })
+            .catch(() => {
+              // Non-critical
+            })
 
           // Re-query context with the new project
-          const newContext = await client.query(api.projects.getContext, {
+          const newContext = (await client.query(api.projects.getContext, {
             apiKeyHash,
             projectId: newProject._id,
             taskLimit: args.taskLimit as number | undefined,
             memoryLimit: args.memoryLimit as number | undefined,
             workspacePath: workspace?.workspacePath,
             repoUrl: workspace?.repoUrl,
-          }) as Record<string, unknown>
+          })) as Record<string, unknown>
 
           const newActiveProject = newContext.activeProject as {
             statuses?: { id: string; name: string; category: string }[]

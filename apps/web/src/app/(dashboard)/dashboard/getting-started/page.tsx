@@ -178,9 +178,7 @@ function Step({
         <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
           <span className="text-sm font-bold tabular-nums">{number}</span>
         </div>
-        {!isLast && (
-          <div className="mt-3 w-px flex-1 bg-border" />
-        )}
+        {!isLast && <div className="mt-3 w-px flex-1 bg-border" />}
       </div>
 
       {/* Card */}
@@ -207,31 +205,30 @@ function ConnectClientStep() {
   const mcpJson = buildMcpJson()
   const claudeCommand = `claude mcp add dodev --transport http ${MCP_URL}`
 
-  const tabContent: Record<ClientTab, { description: string; code: string; copyText: string; language: string }> = {
+  const tabContent: Record<
+    ClientTab,
+    { description: string; code: string; copyText: string; language: string }
+  > = {
     "claude-code": {
-      description:
-        "Run the following command in your terminal:",
+      description: "Run the following command in your terminal:",
       code: claudeCommand,
       copyText: claudeCommand,
       language: "bash",
     },
     cursor: {
-      description:
-        "Create or edit .cursor/mcp.json in your project root with the following:",
+      description: "Create or edit .cursor/mcp.json in your project root with the following:",
       code: mcpJson,
       copyText: mcpJson,
       language: "json",
     },
     vscode: {
-      description:
-        "Add the following to .vscode/mcp.json in your project root:",
+      description: "Add the following to .vscode/mcp.json in your project root:",
       code: mcpJson,
       copyText: mcpJson,
       language: "json",
     },
     windsurf: {
-      description:
-        "Create or edit your Windsurf MCP configuration file with the following:",
+      description: "Create or edit your Windsurf MCP configuration file with the following:",
       code: mcpJson,
       copyText: mcpJson,
       language: "json",
@@ -243,7 +240,8 @@ function ConnectClientStep() {
   return (
     <div>
       <p className="text-sm text-muted-foreground">
-        dodev.ai uses the MCP HTTP transport. Choose your AI tool below and add the server configuration.
+        dodev.ai uses the MCP HTTP transport. Choose your AI tool below and add the server
+        configuration.
       </p>
 
       {/* Tabs */}
@@ -267,21 +265,17 @@ function ConnectClientStep() {
 
       {/* Content */}
       <div className="mt-4">
-        <p className="mb-3 text-sm text-muted-foreground">
-          {current.description}
-        </p>
-        <CodeBlock
-          code={current.code}
-          copyText={current.copyText}
-          language={current.language}
-        />
+        <p className="mb-3 text-sm text-muted-foreground">{current.description}</p>
+        <CodeBlock code={current.code} copyText={current.copyText} language={current.language} />
       </div>
 
       {activeTab !== "claude-code" && (
         <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-900/20">
           <p className="text-xs text-amber-800 dark:text-amber-300">
             <span className="font-semibold">Tip:</span> You can also place{" "}
-            <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-[11px] dark:bg-amber-900/50">.mcp.json</code>{" "}
+            <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-[11px] dark:bg-amber-900/50">
+              .mcp.json
+            </code>{" "}
             in your home directory for global access across all projects.
           </p>
         </div>
@@ -310,8 +304,11 @@ function AuthenticateStep() {
             <div>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 In Claude Code, type{" "}
-                <code className="rounded bg-zinc-200 px-1.5 py-0.5 font-mono text-xs font-semibold text-foreground dark:bg-zinc-700">/mcp</code>{" "}
-                and select <strong className="text-foreground">dodev</strong> to initiate the connection
+                <code className="rounded bg-zinc-200 px-1.5 py-0.5 font-mono text-xs font-semibold text-foreground dark:bg-zinc-700">
+                  /mcp
+                </code>{" "}
+                and select <strong className="text-foreground">dodev</strong> to initiate the
+                connection
               </p>
               <p className="mt-1 text-xs text-muted-foreground/70">
                 Other MCP clients may connect automatically or have their own connection flow.
@@ -326,7 +323,8 @@ function AuthenticateStep() {
               2
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              A browser window will open &mdash; sign in with the same account you registered with (Google, GitHub, or email)
+              A browser window will open &mdash; sign in with the same account you registered with
+              (Google, GitHub, or email)
             </p>
           </div>
         </div>
@@ -337,7 +335,8 @@ function AuthenticateStep() {
               3
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              After signing in, the browser redirects back and your MCP client is connected. You&apos;ll stay authenticated for up to a week.
+              After signing in, the browser redirects back and your MCP client is connected.
+              You&apos;ll stay authenticated for up to a week.
             </p>
           </div>
         </div>
@@ -345,8 +344,8 @@ function AuthenticateStep() {
 
       <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-900/20">
         <p className="text-xs text-blue-800 dark:text-blue-300">
-          <span className="font-semibold">No API keys needed.</span>{" "}
-          dodev.ai uses OAuth 2.1 for authentication. No tokens to copy or manage &mdash; just sign in and go.
+          <span className="font-semibold">No API keys needed.</span> dodev.ai uses OAuth 2.1 for
+          authentication. No tokens to copy or manage &mdash; just sign in and go.
         </p>
       </div>
     </div>
@@ -361,7 +360,8 @@ function CreateProjectStep() {
   return (
     <div>
       <p className="text-sm text-muted-foreground">
-        Once connected, tell your AI agent to create a project. Projects organize your tasks, issues, and memories.
+        Once connected, tell your AI agent to create a project. Projects organize your tasks,
+        issues, and memories.
       </p>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -380,7 +380,11 @@ function CreateProjectStep() {
             </p>
           </div>
           <p className="mt-2 text-[11px] text-muted-foreground">
-            The agent will call <code className="rounded bg-zinc-100 px-1 py-0.5 font-mono dark:bg-zinc-800">create_project</code> via MCP automatically.
+            The agent will call{" "}
+            <code className="rounded bg-zinc-100 px-1 py-0.5 font-mono dark:bg-zinc-800">
+              create_project
+            </code>{" "}
+            via MCP automatically.
           </p>
         </div>
 
@@ -414,7 +418,8 @@ function StartBuildingStep() {
   return (
     <div>
       <p className="text-sm text-muted-foreground">
-        Your agent now has access to all dodev.ai MCP tools. Here are the most useful ones to start with:
+        Your agent now has access to all dodev.ai MCP tools. Here are the most useful ones to start
+        with:
       </p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -478,9 +483,7 @@ export default function GettingStartedPage() {
             <Rocket className="size-5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              Getting Started
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight">Getting Started</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
               Connect your AI agent to dodev.ai in under 5 minutes
             </p>

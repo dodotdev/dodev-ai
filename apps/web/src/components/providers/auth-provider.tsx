@@ -37,7 +37,13 @@ interface AuthProviderProps {
   children: React.ReactNode
 }
 
-export function AuthProvider({ workosUserId, email, name, avatarUrl, children }: AuthProviderProps) {
+export function AuthProvider({
+  workosUserId,
+  email,
+  name,
+  avatarUrl,
+  children,
+}: AuthProviderProps) {
   const ensureUser = useMutation(api.users.createOrUpdateFromWorkOS)
   const user = useQuery(api.users.getByWorkosId, { workosUserId })
   const ensuredRef = useRef(false)

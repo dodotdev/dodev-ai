@@ -1,5 +1,5 @@
-import { internalMutation } from "./_generated/server"
 import type { Id } from "./_generated/dataModel"
+import { internalMutation } from "./_generated/server"
 
 /**
  * Renumber all tasks and issues per project using a single shared counter.
@@ -35,7 +35,11 @@ export const renumberItems = internalMutation({
         .collect()
 
       // Merge and sort by creation date
-      const allItems: { table: "tasks" | "issues"; id: Id<"tasks"> | Id<"issues">; createdAt: number }[] = [
+      const allItems: {
+        table: "tasks" | "issues"
+        id: Id<"tasks"> | Id<"issues">
+        createdAt: number
+      }[] = [
         ...tasks.map((t) => ({ table: "tasks" as const, id: t._id, createdAt: t.createdAt })),
         ...issues.map((i) => ({ table: "issues" as const, id: i._id, createdAt: i.createdAt })),
       ].sort((a, b) => a.createdAt - b.createdAt)

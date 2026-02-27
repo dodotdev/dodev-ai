@@ -179,7 +179,9 @@ export default function ProjectIssuesPage() {
   })
 
   // Derive selected item from live query data
-  const selectedItem = selectedItemId ? mapped.find((i) => i._id === selectedItemId) ?? null : null
+  const selectedItem = selectedItemId
+    ? (mapped.find((i) => i._id === selectedItemId) ?? null)
+    : null
 
   // Navigation
   const currentIndex = selectedItem ? mapped.findIndex((i) => i._id === selectedItem._id) : -1
@@ -193,10 +195,7 @@ export default function ProjectIssuesPage() {
 
   return (
     <div className="space-y-6">
-      <ProjectHeader
-        title="Issues"
-        actions={<IssueForm onSubmit={handleCreate} />}
-      />
+      <ProjectHeader title="Issues" actions={<IssueForm onSubmit={handleCreate} />} />
 
       <SlideView
         showDetail={!!selectedItem}

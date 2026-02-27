@@ -74,7 +74,10 @@ export default function DashboardPage() {
   const usage = useQuery(api.usage.getCurrentUsage, apiKeyHash ? { apiKeyHash } : "skip")
   const recentTasks = useQuery(api.tasks.list, apiKeyHash ? { apiKeyHash, limit: 10 } : "skip")
   const mcpLogs = useQuery(api.mcpLogs.list, apiKeyHash ? { apiKeyHash, limit: 25 } : "skip")
-  const activeSessions = useQuery(api.agentSessions.listActive, apiKeyHash ? { apiKeyHash } : "skip")
+  const activeSessions = useQuery(
+    api.agentSessions.listActive,
+    apiKeyHash ? { apiKeyHash } : "skip"
+  )
 
   if (authLoading || !apiKeyHash) {
     return (
@@ -109,10 +112,7 @@ export default function DashboardPage() {
   const recentMemories = (context?.recentMemories ?? []).slice(0, 3)
 
   // Task summary numbers
-  const completedCount = Math.max(
-    0,
-    (usage?.taskCount ?? 0) - pendingCount - inProgressCount
-  )
+  const completedCount = Math.max(0, (usage?.taskCount ?? 0) - pendingCount - inProgressCount)
 
   return (
     <div className="mx-auto max-w-[1280px] space-y-6">
@@ -223,9 +223,7 @@ export default function DashboardPage() {
                       )}
 
                       {/* Title */}
-                      <span className="min-w-0 truncate text-sm font-medium">
-                        {task.title}
-                      </span>
+                      <span className="min-w-0 truncate text-sm font-medium">{task.title}</span>
 
                       {/* Spacer */}
                       <span className="flex-1" />
@@ -245,7 +243,10 @@ export default function DashboardPage() {
 
                       {/* Time */}
                       <span className="shrink-0 text-[11px] text-muted-foreground">
-                        {formatRelativeTime(((task as Record<string, unknown>).updatedAt ?? (task as Record<string, unknown>)._creationTime) as number)}
+                        {formatRelativeTime(
+                          ((task as Record<string, unknown>).updatedAt ??
+                            (task as Record<string, unknown>)._creationTime) as number
+                        )}
                       </span>
                     </div>
                   )
@@ -348,9 +349,7 @@ function ActiveProjectCard({
       </div>
 
       {project.description && (
-        <p className="mt-2 text-xs text-muted-foreground line-clamp-2">
-          {project.description}
-        </p>
+        <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{project.description}</p>
       )}
 
       {/* Stats row */}
@@ -490,8 +489,8 @@ function SetupCard() {
         <h3 className="text-sm font-semibold">Connect Claude Code</h3>
       </div>
       <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-        Add dodev.ai to your MCP client to start tracking tasks, memories, and issues
-        from your AI agent sessions.
+        Add dodev.ai to your MCP client to start tracking tasks, memories, and issues from your AI
+        agent sessions.
       </p>
 
       <div className="relative mt-3">
@@ -504,11 +503,7 @@ function SetupCard() {
           className="absolute right-2 top-2 rounded-md bg-zinc-800 p-1.5 text-zinc-400 hover:text-zinc-200 transition-colors"
           aria-label="Copy MCP configuration"
         >
-          {copied ? (
-            <CheckCircle2 className="size-3.5" />
-          ) : (
-            <Copy className="size-3.5" />
-          )}
+          {copied ? <CheckCircle2 className="size-3.5" /> : <Copy className="size-3.5" />}
         </button>
       </div>
 

@@ -1,12 +1,16 @@
 import { randomUUID } from "node:crypto"
-import { mcpAuthRouter } from "@modelcontextprotocol/sdk/server/auth/router.js"
 import { requireBearerAuth } from "@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js"
+import { mcpAuthRouter } from "@modelcontextprotocol/sdk/server/auth/router.js"
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js"
 import express from "express"
-import { createServer } from "./server.js"
-import { WorkOSOAuthProvider, handleAuthCallback, resolveApiKeyHash } from "./auth/workos-oauth-provider.js"
 import { runWithAuthContext } from "./auth/auth-context.js"
+import {
+  handleAuthCallback,
+  resolveApiKeyHash,
+  WorkOSOAuthProvider,
+} from "./auth/workos-oauth-provider.js"
 import { api, getConvexClient } from "./convex-client.js"
+import { createServer } from "./server.js"
 
 function getBaseUrl(): string {
   const url = process.env.DODEV_BASE_URL
@@ -81,15 +85,18 @@ export async function startCloudServer(): Promise<void> {
 
       if (existingSessionId && transports.has(existingSessionId)) {
         // Existing session — reuse transport within auth context
-        await runWithAuthContext({
-          apiKeyHash,
-          workosUserId,
-          transportSessionId: existingSessionId,
-          oauthClientId: authInfo.clientId,
-        }, async () => {
-          const transport = transports.get(existingSessionId)!
-          await transport.handleRequest(req, res)
-        })
+        await runWithAuthContext(
+          {
+            apiKeyHash,
+            workosUserId,
+            transportSessionId: existingSessionId,
+            oauthClientId: authInfo.clientId,
+          },
+          async () => {
+            const transport = transports.get(existingSessionId)!
+            await transport.handleRequest(req, res)
+          }
+        )
         return
       }
 
@@ -97,7 +104,9 @@ export async function startCloudServer(): Promise<void> {
         // Session lost (container restart, deploy, etc.)
         // Return 404 per MCP spec so the client re-initializes the session
         // WITHOUT re-authenticating (the bearer token is still valid).
-        console.error(`[mcp] Session not found: ${existingSessionId} (active sessions: ${transports.size}). Returning 404 so client re-initializes for user ${workosUserId}.`)
+        console.error(
+          `[mcp] Session not found: ${existingSessionId} (active sessions: ${transports.size}). Returning 404 so client re-initializes for user ${workosUserId}.`
+        )
         res.status(404).json({
           jsonrpc: "2.0",
           error: { code: -32001, message: "Session not found" },
@@ -130,9 +139,7 @@ export async function startCloudServer(): Promise<void> {
                 apiKeyHash: storedApiKeyHash,
                 sessionId: sid,
               })
-              .catch((err: unknown) =>
-                console.error("Failed to disconnect agent session:", err)
-              )
+              .catch((err: unknown) => console.error("Failed to disconnect agent session:", err))
           }
         }
         server.close().catch(() => {})
@@ -140,19 +147,24 @@ export async function startCloudServer(): Promise<void> {
 
       // handleRequest generates the session ID on first call
       // Run within auth context so tool handlers can access session info
-      await runWithAuthContext({
-        apiKeyHash,
-        workosUserId,
-        oauthClientId: authInfo.clientId,
-      }, async () => {
-        await transport.handleRequest(req, res)
-      })
+      await runWithAuthContext(
+        {
+          apiKeyHash,
+          workosUserId,
+          oauthClientId: authInfo.clientId,
+        },
+        async () => {
+          await transport.handleRequest(req, res)
+        }
+      )
 
       // Store transport AFTER handleRequest so sessionId is available
       if (transport.sessionId && !transports.has(transport.sessionId)) {
         transports.set(transport.sessionId, transport)
         sessionApiKeys.set(transport.sessionId, apiKeyHash)
-        console.error(`[mcp] New session created: ${transport.sessionId} for user ${workosUserId} (active sessions: ${transports.size})`)
+        console.error(
+          `[mcp] New session created: ${transport.sessionId} for user ${workosUserId} (active sessions: ${transports.size})`
+        )
 
         // Register agent session in Convex
         const clientInfo = await provider.clientsStore.getClient(authInfo.clientId)
@@ -164,9 +176,7 @@ export async function startCloudServer(): Promise<void> {
             clientId: authInfo.clientId,
             clientName: clientInfo?.client_name,
           })
-          .catch((err: unknown) =>
-            console.error("Failed to create agent session:", err)
-          )
+          .catch((err: unknown) => console.error("Failed to create agent session:", err))
       }
     } catch (error) {
       console.error("MCP request error:", error)

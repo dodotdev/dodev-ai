@@ -51,21 +51,22 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
  * @param email - recipient address
  * @param name  - optional display name for the greeting
  */
-export async function sendWelcomeEmail(
-  email: string,
-  name?: string,
-): Promise<void> {
+export async function sendWelcomeEmail(email: string, name?: string): Promise<void> {
   const greeting = name ? `Hi ${name},` : "Welcome to dodev.ai!"
   const hasName = Boolean(name)
 
-  const mcpJson = JSON.stringify({
-    mcpServers: {
-      dodev: {
-        type: "http",
-        url: "https://cloud.dodev.ai/mcp",
+  const mcpJson = JSON.stringify(
+    {
+      mcpServers: {
+        dodev: {
+          type: "http",
+          url: "https://cloud.dodev.ai/mcp",
+        },
       },
     },
-  }, null, 2)
+    null,
+    2
+  )
 
   // Escape for HTML display
   const mcpJsonHtml = mcpJson

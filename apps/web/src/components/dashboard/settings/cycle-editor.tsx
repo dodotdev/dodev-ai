@@ -242,7 +242,10 @@ export function CycleEditor({ projectId, cycles }: CycleEditorProps) {
       {/* Existing cycles */}
       <div className="space-y-2">
         {cycles.map((cycle) => (
-          <div key={cycle._id} className="flex items-center gap-3 rounded-md border border-zinc-200 dark:border-zinc-700 px-3 py-3">
+          <div
+            key={cycle._id}
+            className="flex items-center gap-3 rounded-md border border-zinc-200 dark:border-zinc-700 px-3 py-3"
+          >
             <Calendar className="size-4 shrink-0 text-muted-foreground" />
 
             <div className="flex-1">

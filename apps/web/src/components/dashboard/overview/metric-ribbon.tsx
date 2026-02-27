@@ -1,12 +1,6 @@
 "use client"
 
-import {
-  AlertCircle,
-  Brain,
-  CircleDot,
-  Loader2,
-  Terminal,
-} from "lucide-react"
+import { AlertCircle, Brain, CircleDot, Loader2, Terminal } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface MetricRibbonProps {
@@ -76,20 +70,13 @@ export function MetricRibbon({
         {metrics.map((m) => {
           const Icon = m.icon
           return (
-            <div
-              key={m.key}
-              className="flex flex-1 items-center gap-3 px-4 py-3 min-w-[140px]"
-            >
+            <div key={m.key} className="flex flex-1 items-center gap-3 px-4 py-3 min-w-[140px]">
               <div className={cn("rounded-lg p-1.5", m.bg)}>
                 <Icon className={cn("size-4", m.color)} />
               </div>
               <div className="min-w-0">
-                <p className="text-xl font-bold tabular-nums leading-none">
-                  {values[m.key]}
-                </p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground truncate">
-                  {m.label}
-                </p>
+                <p className="text-xl font-bold tabular-nums leading-none">{values[m.key]}</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground truncate">{m.label}</p>
               </div>
             </div>
           )

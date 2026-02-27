@@ -32,8 +32,8 @@ export function OpenSource() {
             </h2>
 
             <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-              dodev.ai is MIT licensed and open to contributions. Star us on GitHub, report issues, or
-              submit a PR.
+              dodev.ai is MIT licensed and open to contributions. Star us on GitHub, report issues,
+              or submit a PR.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">

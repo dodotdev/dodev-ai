@@ -1,5 +1,5 @@
-import type { Metadata } from "next"
 import { BookOpen, Github, MessageSquare } from "lucide-react"
+import type { Metadata } from "next"
 import Link from "next/link"
 
 export const metadata: Metadata = {
@@ -14,12 +14,9 @@ export default function DocsPage() {
         <BookOpen className="size-8 text-emerald-600 dark:text-emerald-400" />
       </div>
 
-      <h1 className="mt-8 text-4xl font-bold tracking-tight sm:text-5xl">
-        Documentation
-      </h1>
+      <h1 className="mt-8 text-4xl font-bold tracking-tight sm:text-5xl">Documentation</h1>
       <p className="mt-4 max-w-md text-lg text-muted-foreground">
-        We&apos;re writing comprehensive guides, API references, and tutorials.
-        Check back soon.
+        We&apos;re writing comprehensive guides, API references, and tutorials. Check back soon.
       </p>
 
       <div className="mt-10 flex flex-wrap items-center justify-center gap-4">

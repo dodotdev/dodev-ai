@@ -3,8 +3,8 @@
 import { motion } from "framer-motion"
 import { Check, Clock, Sparkles } from "lucide-react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 /* -------------------------------------------------------------------------- */
@@ -154,13 +154,9 @@ export function Pricing() {
                 <h3 className="text-lg font-semibold">{plan.name}</h3>
                 <div className="mt-2 flex items-baseline gap-1">
                   <span className="text-4xl font-bold">{plan.price}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {plan.period}
-                  </span>
+                  <span className="text-sm text-muted-foreground">{plan.period}</span>
                 </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {plan.description}
-                </p>
+                <p className="mt-2 text-sm text-muted-foreground">{plan.description}</p>
               </div>
 
               {/* Feature list */}
@@ -217,9 +213,7 @@ export function Pricing() {
                 <h3 className="text-lg font-semibold">{selfHosted.name}</h3>
                 <div className="mt-1 flex items-baseline gap-1">
                   <span className="text-3xl font-bold">{selfHosted.price}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {selfHosted.period}
-                  </span>
+                  <span className="text-sm text-muted-foreground">{selfHosted.period}</span>
                 </div>
                 <p className="mt-2 max-w-md text-sm text-muted-foreground">
                   {selfHosted.description}
@@ -241,7 +235,11 @@ export function Pricing() {
 
               {/* Right: CTA */}
               <div className="shrink-0">
-                <Button variant="outline" className="bg-slate-50 hover:bg-slate-100 dark:bg-zinc-800 dark:hover:bg-zinc-700" asChild>
+                <Button
+                  variant="outline"
+                  className="bg-slate-50 hover:bg-slate-100 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                  asChild
+                >
                   <Link href={selfHosted.href}>
                     <Sparkles className="mr-1 size-4" />
                     {selfHosted.cta}

@@ -367,11 +367,7 @@ export default defineSchema({
     sessionId: v.string(),
     clientId: v.string(),
     clientName: v.optional(v.string()),
-    status: v.union(
-      v.literal("connected"),
-      v.literal("disconnected"),
-      v.literal("expired")
-    ),
+    status: v.union(v.literal("connected"), v.literal("disconnected"), v.literal("expired")),
     connectedAt: v.number(),
     lastActivityAt: v.number(),
     disconnectedAt: v.optional(v.number()),
@@ -387,8 +383,7 @@ export default defineSchema({
     clientId: v.string(),
     clientData: v.string(), // JSON-serialized OAuthClientInformationFull
     createdAt: v.number(),
-  })
-    .index("by_client_id", ["clientId"]),
+  }).index("by_client_id", ["clientId"]),
 
   mcpLogs: defineTable({
     userId: v.id("users"),

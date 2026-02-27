@@ -172,20 +172,25 @@ export function LinearListView({
     return columns.filter((col) => col.id === activeFilter)
   }, [activeFilter, columns, grouped])
 
-  const toggleGroup = useCallback((id: string) => {
-    setCollapsedGroups((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      if (storageKey) {
-        try { localStorage.setItem(`accordion:${storageKey}`, JSON.stringify([...next])) } catch {}
-      }
-      return next
-    })
-  }, [storageKey])
+  const toggleGroup = useCallback(
+    (id: string) => {
+      setCollapsedGroups((prev) => {
+        const next = new Set(prev)
+        if (next.has(id)) {
+          next.delete(id)
+        } else {
+          next.add(id)
+        }
+        if (storageKey) {
+          try {
+            localStorage.setItem(`accordion:${storageKey}`, JSON.stringify([...next]))
+          } catch {}
+        }
+        return next
+      })
+    },
+    [storageKey]
+  )
 
   function cycleStatus(item: ListItem) {
     if (!onStatusChange) return
@@ -373,7 +378,9 @@ function DroppableGroup({
         <span className="text-xs text-muted-foreground">{count}</span>
       </button>
       {!isCollapsed && count > 0 && (
-        <div className="overflow-hidden rounded-lg border border-border dark:border-zinc-800 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.04)] bg-card dark:bg-muted">{children}</div>
+        <div className="overflow-hidden rounded-lg border border-border dark:border-zinc-800 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.04)] bg-card dark:bg-muted">
+          {children}
+        </div>
       )}
     </div>
   )
@@ -509,7 +516,8 @@ function DraggableItemRow({
       className={cn(
         "group flex items-center gap-3 px-4 py-2 transition-colors hover:bg-accent/30 hover:cursor-grab",
         isDragging && "opacity-30",
-        !isFirst && "border-t border-border dark:border-t-zinc-800 dark:shadow-[0_-1px_0_0_rgba(255,255,255,0.04)]"
+        !isFirst &&
+          "border-t border-border dark:border-t-zinc-800 dark:shadow-[0_-1px_0_0_rgba(255,255,255,0.04)]"
       )}
     >
       {/* Drag handle icon */}
@@ -578,11 +586,7 @@ function CopyContextButton({ item }: { item: ListItem }) {
       className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
       title="Copy context for agent"
     >
-      {copied ? (
-        <Check className="size-3.5 text-green-500" />
-      ) : (
-        <Copy className="size-3.5" />
-      )}
+      {copied ? <Check className="size-3.5 text-green-500" /> : <Copy className="size-3.5" />}
     </button>
   )
 }
@@ -673,8 +677,8 @@ function ItemRowContent({ item, onTitleClick }: { item: ListItem; onTitleClick?:
 
       {/* Assignee avatar */}
       <div className="hidden w-6 shrink-0 items-center justify-center sm:flex">
-        {item.resolvedAssignee && (
-          item.resolvedAssignee.avatarUrl ? (
+        {item.resolvedAssignee &&
+          (item.resolvedAssignee.avatarUrl ? (
             <img
               src={item.resolvedAssignee.avatarUrl}
               alt={item.resolvedAssignee.name}
@@ -688,8 +692,7 @@ function ItemRowContent({ item, onTitleClick }: { item: ListItem; onTitleClick?:
             >
               {initials}
             </div>
-          )
-        )}
+          ))}
       </div>
 
       {/* Estimate */}

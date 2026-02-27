@@ -186,11 +186,7 @@ export function Navbar({ user }: NavbarProps) {
 
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
-            <button
-              type="button"
-              className="md:hidden"
-              aria-label="Open menu"
-            >
+            <button type="button" className="md:hidden" aria-label="Open menu">
               <Menu className="size-5" />
             </button>
           </SheetTrigger>
@@ -199,7 +195,11 @@ export function Navbar({ user }: NavbarProps) {
             <SheetHeader className="border-b border-border px-6 py-5">
               <div className="flex items-center justify-between">
                 <SheetTitle asChild>
-                  <Link href="/" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+                  <Link
+                    href="/"
+                    className="flex items-center gap-2"
+                    onClick={() => setMobileOpen(false)}
+                  >
                     <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600">
                       <ListTodo className="size-3.5 text-white" strokeWidth={2.5} />
                     </div>
@@ -248,7 +248,12 @@ export function Navbar({ user }: NavbarProps) {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 py-3 text-sm font-medium text-foreground transition-colors hover:text-emerald-500"
                 >
-                  <svg className="size-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <svg
+                    className="size-4"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                   </svg>
                   Follow on X
@@ -270,12 +275,17 @@ export function Navbar({ user }: NavbarProps) {
                   </div>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" className="flex-1" asChild>
-                      <Link href={user.isApproved ? "/dashboard" : "/waitlisted"} onClick={() => setMobileOpen(false)}>
+                      <Link
+                        href={user.isApproved ? "/dashboard" : "/waitlisted"}
+                        onClick={() => setMobileOpen(false)}
+                      >
                         {user.isApproved ? "Dashboard" : "Waitlist Status"}
                       </Link>
                     </Button>
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href="/auth/sign-out" onClick={() => setMobileOpen(false)}>Sign out</Link>
+                      <Link href="/auth/sign-out" onClick={() => setMobileOpen(false)}>
+                        Sign out
+                      </Link>
                     </Button>
                   </div>
                 </div>

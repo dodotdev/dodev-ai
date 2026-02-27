@@ -46,7 +46,9 @@ export function BeforeAfter() {
             transition={{ duration: 0.5 }}
             className="rounded-xl border border-border bg-card p-8 border-l-4 border-l-red-500/70"
           >
-            <h3 className="text-lg font-semibold text-red-500 dark:text-red-400">Without dodev.ai</h3>
+            <h3 className="text-lg font-semibold text-red-500 dark:text-red-400">
+              Without dodev.ai
+            </h3>
             <ul className="mt-6 space-y-4">
               {painPoints.map((point, i) => (
                 <motion.li

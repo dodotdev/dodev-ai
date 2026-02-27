@@ -139,7 +139,9 @@ export function ComingSoon() {
                   </div>
 
                   <h3 className="text-lg font-semibold text-foreground">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {item.description}
+                  </p>
                 </div>
               </motion.div>
             )

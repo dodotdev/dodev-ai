@@ -6,8 +6,7 @@ import { buildListWorkflowHint, buildWorkflowHint } from "./workflow-hints.js"
 export const taskTools: Tool[] = [
   {
     name: "create_task",
-    description:
-      "Create a new task. Returns the created task with its ID, status, and timestamps.",
+    description: "Create a new task. Returns the created task with its ID, status, and timestamps.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -165,7 +164,7 @@ export const taskTools: Tool[] = [
         statusId: {
           type: "string",
           description:
-            'Filter by specific workflow status ID (e.g. Backlog, Task, In Progress, In Review). Use get_context to see available statusIds. Takes priority over status filter when projectId is also provided.',
+            "Filter by specific workflow status ID (e.g. Backlog, Task, In Progress, In Review). Use get_context to see available statusIds. Takes priority over status filter when projectId is also provided.",
         },
         priority: {
           type: "string",
@@ -286,10 +285,10 @@ export async function handleTaskTool(
 
       if (args.projectId) {
         try {
-          const project = await client.query(api.projects.get, {
+          const project = (await client.query(api.projects.get, {
             apiKeyHash,
             id: args.projectId as string,
-          }) as { statuses?: { id: string; name: string; category: string }[] } | null
+          })) as { statuses?: { id: string; name: string; category: string }[] } | null
 
           if (project?.statuses?.length) {
             const hint = buildListWorkflowHint("task", project.statuses)
@@ -304,17 +303,17 @@ export async function handleTaskTool(
     }
 
     case "get_task": {
-      const task = await client.query(api.tasks.get, {
+      const task = (await client.query(api.tasks.get, {
         apiKeyHash,
         id: args.id as string,
-      }) as Record<string, unknown> | null
+      })) as Record<string, unknown> | null
 
       if (task?.projectId) {
         try {
-          const project = await client.query(api.projects.get, {
+          const project = (await client.query(api.projects.get, {
             apiKeyHash,
             id: task.projectId as string,
-          }) as { statuses?: { id: string; name: string; category: string }[] } | null
+          })) as { statuses?: { id: string; name: string; category: string }[] } | null
 
           if (project?.statuses?.length) {
             const hint = buildWorkflowHint(

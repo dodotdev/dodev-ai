@@ -252,12 +252,11 @@ export const list = query({
     let taskQuery
     if (args.projectId && args.statusId) {
       // Filter by specific workflow status (e.g. "Backlog", "In Progress", "In Review")
-      taskQuery = ctx.db.query("tasks").withIndex("by_user_project_statusId", (q) =>
-        q
-          .eq("userId", user._id)
-          .eq("projectId", args.projectId!)
-          .eq("statusId", args.statusId!)
-      )
+      taskQuery = ctx.db
+        .query("tasks")
+        .withIndex("by_user_project_statusId", (q) =>
+          q.eq("userId", user._id).eq("projectId", args.projectId!).eq("statusId", args.statusId!)
+        )
     } else if (args.projectId && args.status) {
       taskQuery = ctx.db.query("tasks").withIndex("by_user_project_status", (q) =>
         q

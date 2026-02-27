@@ -17,12 +17,7 @@ const publicPaths = new Set([
   "/terms",
 ])
 
-const publicPrefixes = [
-  "/auth/sign-in/",
-  "/api/auth/",
-  "/api/health",
-  "/docs",
-]
+const publicPrefixes = ["/auth/sign-in/", "/api/auth/", "/api/health", "/docs"]
 
 function isPublicPath(pathname: string): boolean {
   if (publicPaths.has(pathname)) return true

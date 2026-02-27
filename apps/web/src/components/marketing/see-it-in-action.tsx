@@ -1,14 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import {
-  Brain,
-  CheckCircle2,
-  CircleAlert,
-  Clock,
-  Loader2,
-  Sparkles,
-} from "lucide-react"
+import { Brain, CheckCircle2, CircleAlert, Clock, Loader2, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 /* -------------------------------------------------------------------------- */
@@ -19,7 +12,11 @@ interface ChatMessage {
   role: "user" | "ai"
   text: string
   /** Small badges rendered beneath the AI response */
-  badges?: { label: string; icon?: "check" | "brain" | "alert" | "loader" | "sparkles"; color: string }[]
+  badges?: {
+    label: string
+    icon?: "check" | "brain" | "alert" | "loader" | "sparkles"
+    color: string
+  }[]
 }
 
 interface Session {
@@ -39,10 +36,8 @@ const sessions: Session[] = [
       },
       {
         role: "ai",
-        text: 'Created task PAYMENTS-7: Implement Stripe webhook handling [High Priority]',
-        badges: [
-          { label: "Task created", icon: "check", color: "emerald" },
-        ],
+        text: "Created task PAYMENTS-7: Implement Stripe webhook handling [High Priority]",
+        badges: [{ label: "Task created", icon: "check", color: "emerald" }],
       },
       {
         role: "user",
@@ -51,9 +46,7 @@ const sessions: Session[] = [
       {
         role: "ai",
         text: "Saved as a decision memory in payments-api.",
-        badges: [
-          { label: "Memory saved", icon: "brain", color: "violet" },
-        ],
+        badges: [{ label: "Memory saved", icon: "brain", color: "violet" }],
       },
     ],
   },
@@ -148,8 +141,8 @@ export function SeeItInAction() {
             </span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Tasks, issues, and memories working together across sessions
-            &mdash; your AI never starts from scratch.
+            Tasks, issues, and memories working together across sessions &mdash; your AI never
+            starts from scratch.
           </p>
         </motion.div>
 

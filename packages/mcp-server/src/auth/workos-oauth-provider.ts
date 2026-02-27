@@ -1,17 +1,25 @@
 import { createHmac, randomBytes } from "node:crypto"
-import type { Response } from "express"
-import type { OAuthServerProvider, AuthorizationParams } from "@modelcontextprotocol/sdk/server/auth/provider.js"
+import type {
+  AuthorizationParams,
+  OAuthServerProvider,
+} from "@modelcontextprotocol/sdk/server/auth/provider.js"
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js"
 import type {
   OAuthClientInformationFull,
-  OAuthTokens,
   OAuthTokenRevocationRequest,
+  OAuthTokens,
 } from "@modelcontextprotocol/sdk/shared/auth.js"
-import { ConvexClientStore } from "./client-store.js"
-import { consumeAuthCode, getCodeChallenge, storeAuthCode } from "./auth-code-store.js"
-import { storePendingAuth, consumePendingAuth } from "./pending-auth-store.js"
-import { signAccessToken, signRefreshToken, verifyAccessToken, generateAuthorizationCode } from "./jwt.js"
+import type { Response } from "express"
 import { api, getConvexClient } from "../convex-client.js"
+import { consumeAuthCode, getCodeChallenge, storeAuthCode } from "./auth-code-store.js"
+import { ConvexClientStore } from "./client-store.js"
+import {
+  generateAuthorizationCode,
+  signAccessToken,
+  signRefreshToken,
+  verifyAccessToken,
+} from "./jwt.js"
+import { consumePendingAuth, storePendingAuth } from "./pending-auth-store.js"
 
 function getBaseUrl(): string {
   const url = process.env.DODEV_BASE_URL
@@ -152,7 +160,10 @@ export class WorkOSOAuthProvider implements OAuthServerProvider {
     try {
       payload = verifyRefreshToken(refreshToken)
     } catch (err) {
-      console.error("[auth] Refresh token verification failed:", err instanceof Error ? err.message : err)
+      console.error(
+        "[auth] Refresh token verification failed:",
+        err instanceof Error ? err.message : err
+      )
       throw err
     }
 

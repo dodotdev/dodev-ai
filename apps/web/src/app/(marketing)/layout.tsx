@@ -5,7 +5,11 @@ import { Navbar } from "@/components/marketing/navbar"
 import { getConvexClient } from "@/lib/convex"
 import { isCloud } from "@/lib/mode"
 
-async function getMarketingUser(): Promise<{ email: string; name?: string; isApproved?: boolean } | null> {
+async function getMarketingUser(): Promise<{
+  email: string
+  name?: string
+  isApproved?: boolean
+} | null> {
   // Self-hosted mode: no user on marketing pages (dashboard handles its own auth)
   if (!isCloud()) return null
 

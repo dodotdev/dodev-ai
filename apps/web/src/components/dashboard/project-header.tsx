@@ -6,11 +6,11 @@ import { Archive, Loader2, Settings, Trash2 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { EstimateEditor } from "@/components/dashboard/settings/estimate-editor"
-import { VersionEditor } from "@/components/dashboard/settings/version-editor"
 import { LabelEditor } from "@/components/dashboard/settings/label-editor"
 import { MemberEditor } from "@/components/dashboard/settings/member-editor"
 import { PersonaEditor } from "@/components/dashboard/settings/persona-editor"
 import { StatusEditor } from "@/components/dashboard/settings/status-editor"
+import { VersionEditor } from "@/components/dashboard/settings/version-editor"
 import { useAuth } from "@/components/providers/auth-provider"
 import { Button } from "@/components/ui/button"
 import {
@@ -37,13 +37,7 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]["key"]
 
-export function ProjectHeader({
-  title,
-  actions,
-}: {
-  title: string
-  actions?: React.ReactNode
-}) {
+export function ProjectHeader({ title, actions }: { title: string; actions?: React.ReactNode }) {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const { apiKeyHash } = useAuth()
@@ -130,7 +124,11 @@ function ProjectSettingsModal({
         apiKeyHash,
         id: projectId as never,
         name: editName.trim(),
-        slug: editSlug.trim().toUpperCase().replace(/[^A-Z0-9]/g, "") || undefined,
+        slug:
+          editSlug
+            .trim()
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, "") || undefined,
         description: editDescription.trim() || undefined,
       })
     } catch (err) {
@@ -194,209 +192,208 @@ function ProjectSettingsModal({
               Settings
             </p>
             <div className="space-y-1">
-            {TABS.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => {
-                  setActiveTab(tab.key)
-                  setConfirmAction(null)
-                }}
-                className={cn(
-                  "flex w-full rounded-md px-2 py-2 text-left text-sm font-medium transition-colors",
-                  activeTab === tab.key
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-card/50 hover:text-foreground"
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
+              {TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => {
+                    setActiveTab(tab.key)
+                    setConfirmAction(null)
+                  }}
+                  className={cn(
+                    "flex w-full rounded-md px-2 py-2 text-left text-sm font-medium transition-colors",
+                    activeTab === tab.key
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-card/50 hover:text-foreground"
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Tab content */}
           <div className="flex min-h-0 flex-1 flex-col">
-          <div className="flex-1 overflow-y-auto p-6 pt-10">
-            {activeTab === "general" && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold">General</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Project name, description, and lifecycle
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="grid grid-cols-[1fr_auto] gap-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="settings-name">Name</Label>
-                      <Input
-                        id="settings-name"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="settings-slug">Slug</Label>
-                      <Input
-                        id="settings-slug"
-                        value={editSlug}
-                        onChange={(e) =>
-                          setEditSlug(
-                            e.target.value
-                              .toUpperCase()
-                              .replace(/[^A-Z0-9]/g, "")
-                              .slice(0, 5)
-                          )
-                        }
-                        placeholder="ABC"
-                        className="w-20 text-center font-mono uppercase"
-                        maxLength={5}
-                      />
-                    </div>
-                  </div>
-                  {slugError && <p className="text-sm text-destructive">{slugError}</p>}
-                  {editSlug && (
-                    <p className="text-xs text-muted-foreground">
-                      Tasks and issues display as{" "}
-                      <span className="font-mono font-medium text-foreground">
-                        {editSlug.toUpperCase()}-1
-                      </span>
-                      ,{" "}
-                      <span className="font-mono font-medium text-foreground">
-                        {editSlug.toUpperCase()}-2
-                      </span>
-                      , ...
+            <div className="flex-1 overflow-y-auto p-6 pt-10">
+              {activeTab === "general" && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold">General</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Project name, description, and lifecycle
                     </p>
-                  )}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="settings-desc">Description</Label>
-                    <Textarea
-                      id="settings-desc"
-                      value={editDescription}
-                      onChange={(e) => setEditDescription(e.target.value)}
-                      rows={2}
-                    />
                   </div>
-                  <div className="flex justify-end">
-                    <Button size="sm" onClick={handleSaveGeneral} disabled={saving}>
-                      {saving ? "Saving..." : "Save"}
-                    </Button>
+
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-[1fr_auto] gap-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="settings-name">Name</Label>
+                        <Input
+                          id="settings-name"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="settings-slug">Slug</Label>
+                        <Input
+                          id="settings-slug"
+                          value={editSlug}
+                          onChange={(e) =>
+                            setEditSlug(
+                              e.target.value
+                                .toUpperCase()
+                                .replace(/[^A-Z0-9]/g, "")
+                                .slice(0, 5)
+                            )
+                          }
+                          placeholder="ABC"
+                          className="w-20 text-center font-mono uppercase"
+                          maxLength={5}
+                        />
+                      </div>
+                    </div>
+                    {slugError && <p className="text-sm text-destructive">{slugError}</p>}
+                    {editSlug && (
+                      <p className="text-xs text-muted-foreground">
+                        Tasks and issues display as{" "}
+                        <span className="font-mono font-medium text-foreground">
+                          {editSlug.toUpperCase()}-1
+                        </span>
+                        ,{" "}
+                        <span className="font-mono font-medium text-foreground">
+                          {editSlug.toUpperCase()}-2
+                        </span>
+                        , ...
+                      </p>
+                    )}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="settings-desc">Description</Label>
+                      <Textarea
+                        id="settings-desc"
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button size="sm" onClick={handleSaveGeneral} disabled={saving}>
+                        {saving ? "Saving..." : "Save"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
+              )}
 
+              {activeTab === "workflow" && (
+                <StatusEditor projectId={projectId} statuses={project.statuses ?? []} />
+              )}
+
+              {activeTab === "labels" && (
+                <LabelEditor projectId={projectId} labels={project.labels ?? []} />
+              )}
+
+              {activeTab === "members" && (
+                <MemberEditor projectId={projectId} members={project.members ?? []} />
+              )}
+
+              {activeTab === "estimates" && (
+                <EstimateEditor
+                  projectId={projectId}
+                  estimateScale={project.estimateScale ?? { type: "points", values: [] }}
+                />
+              )}
+
+              {activeTab === "versions" && <VersionEditor projectId={projectId} />}
+
+              {activeTab === "persona" && (
+                <PersonaEditor projectId={projectId} persona={project.persona} />
+              )}
+            </div>
+
+            {/* Danger zone — pinned to bottom, only on General tab */}
+            {activeTab === "general" && (
+              <div className="shrink-0 border-t border-border px-6 py-4">
+                <fieldset className="rounded-lg border border-destructive/20 px-4 pb-4 pt-1">
+                  <legend className="px-1.5 text-xs font-semibold text-destructive">
+                    Danger Zone
+                  </legend>
+
+                  {confirmAction === "archive" ? (
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        Archive <span className="font-medium text-foreground">{project.name}</span>?
+                        It will be hidden but can be restored later.
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setConfirmAction(null)}
+                          disabled={saving}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={handleArchive}
+                          disabled={saving}
+                        >
+                          {saving ? "Archiving..." : "Confirm Archive"}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : confirmAction === "delete" ? (
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        Permanently delete{" "}
+                        <span className="font-medium text-foreground">{project.name}</span> and all
+                        its tasks, issues, and memories? This cannot be undone.
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setConfirmAction(null)}
+                          disabled={saving}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={handleDelete}
+                          disabled={saving}
+                        >
+                          {saving ? "Deleting..." : "Confirm Delete"}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setConfirmAction("delete")}
+                      >
+                        <Trash2 className="mr-1.5 size-3.5" />
+                        Delete Project
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setConfirmAction("archive")}
+                      >
+                        <Archive className="mr-1.5 size-3.5" />
+                        Archive Project
+                      </Button>
+                    </div>
+                  )}
+                </fieldset>
               </div>
             )}
-
-            {activeTab === "workflow" && (
-              <StatusEditor projectId={projectId} statuses={project.statuses ?? []} />
-            )}
-
-            {activeTab === "labels" && (
-              <LabelEditor projectId={projectId} labels={project.labels ?? []} />
-            )}
-
-            {activeTab === "members" && (
-              <MemberEditor projectId={projectId} members={project.members ?? []} />
-            )}
-
-            {activeTab === "estimates" && (
-              <EstimateEditor
-                projectId={projectId}
-                estimateScale={project.estimateScale ?? { type: "points", values: [] }}
-              />
-            )}
-
-            {activeTab === "versions" && (
-              <VersionEditor projectId={projectId} />
-            )}
-
-            {activeTab === "persona" && (
-              <PersonaEditor projectId={projectId} persona={project.persona} />
-            )}
-          </div>
-
-          {/* Danger zone — pinned to bottom, only on General tab */}
-          {activeTab === "general" && (
-            <div className="shrink-0 border-t border-border px-6 py-4">
-              <fieldset className="rounded-lg border border-destructive/20 px-4 pb-4 pt-1">
-                <legend className="px-1.5 text-xs font-semibold text-destructive">Danger Zone</legend>
-
-                {confirmAction === "archive" ? (
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      Archive <span className="font-medium text-foreground">{project.name}</span>?
-                      It will be hidden but can be restored later.
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setConfirmAction(null)}
-                        disabled={saving}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={handleArchive}
-                        disabled={saving}
-                      >
-                        {saving ? "Archiving..." : "Confirm Archive"}
-                      </Button>
-                    </div>
-                  </div>
-                ) : confirmAction === "delete" ? (
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      Permanently delete{" "}
-                      <span className="font-medium text-foreground">{project.name}</span> and all
-                      its tasks, issues, and memories? This cannot be undone.
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setConfirmAction(null)}
-                        disabled={saving}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={handleDelete}
-                        disabled={saving}
-                      >
-                        {saving ? "Deleting..." : "Confirm Delete"}
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => setConfirmAction("delete")}
-                    >
-                      <Trash2 className="mr-1.5 size-3.5" />
-                      Delete Project
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setConfirmAction("archive")}
-                    >
-                      <Archive className="mr-1.5 size-3.5" />
-                      Archive Project
-                    </Button>
-                  </div>
-                )}
-              </fieldset>
-            </div>
-          )}
           </div>
         </div>
       </DialogContent>

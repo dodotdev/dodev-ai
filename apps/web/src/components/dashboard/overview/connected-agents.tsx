@@ -78,10 +78,7 @@ export function ConnectedAgents() {
             const name = getAgentDisplayName(session.clientName, session.clientId)
 
             return (
-              <div
-                key={session._id}
-                className="flex items-center gap-3 px-4 py-3"
-              >
+              <div key={session._id} className="flex items-center gap-3 px-4 py-3">
                 {/* Icon with pulse */}
                 <div className="relative shrink-0">
                   <div className="rounded-lg bg-emerald-50 p-1.5 dark:bg-emerald-500/10">
@@ -108,10 +105,12 @@ export function ConnectedAgents() {
 
                 {/* Last tool */}
                 {session.lastTool && (
-                  <code className={cn(
-                    "hidden shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:block",
-                    "dark:bg-zinc-800"
-                  )}>
+                  <code
+                    className={cn(
+                      "hidden shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:block",
+                      "dark:bg-zinc-800"
+                    )}
+                  >
                     {session.lastTool}
                   </code>
                 )}

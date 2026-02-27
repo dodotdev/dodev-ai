@@ -47,12 +47,7 @@ export function Waitlist() {
                 <ArrowRight className="ml-1 size-4" />
               </Link>
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className=""
-              asChild
-            >
+            <Button variant="outline" size="lg" className="" asChild>
               <a
                 href="https://github.com/dodotdev/dodev-ai"
                 target="_blank"

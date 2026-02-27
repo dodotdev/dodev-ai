@@ -80,7 +80,9 @@ export function VersionEditor({ projectId }: VersionEditorProps) {
       {creating && (
         <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
           <div className="space-y-1.5">
-            <Label htmlFor="version-name" className="text-xs">Name</Label>
+            <Label htmlFor="version-name" className="text-xs">
+              Name
+            </Label>
             <Input
               id="version-name"
               value={newName}
@@ -102,7 +104,9 @@ export function VersionEditor({ projectId }: VersionEditorProps) {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="version-desc" className="text-xs">Description</Label>
+            <Label htmlFor="version-desc" className="text-xs">
+              Description
+            </Label>
             <Textarea
               id="version-desc"
               value={newDesc}
@@ -224,7 +228,9 @@ function VersionRow({
         onClick={onToggle}
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onToggle() }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") onToggle()
+        }}
       >
         {isDraft ? (
           <FileText className="size-3.5 shrink-0 text-amber-500" />
@@ -252,7 +258,10 @@ function VersionRow({
           {isDraft && onRelease && (
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); onRelease() }}
+              onClick={(e) => {
+                e.stopPropagation()
+                onRelease()
+              }}
               className="rounded p-1 text-muted-foreground transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400"
               title="Release"
             >
@@ -263,7 +272,10 @@ function VersionRow({
             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
               <button
                 type="button"
-                onClick={() => { onDelete(); setConfirmDelete(false) }}
+                onClick={() => {
+                  onDelete()
+                  setConfirmDelete(false)
+                }}
                 className="rounded bg-red-600 px-2 py-0.5 text-[10px] font-medium text-white"
               >
                 Delete
@@ -279,7 +291,10 @@ function VersionRow({
           ) : (
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); setConfirmDelete(true) }}
+              onClick={(e) => {
+                e.stopPropagation()
+                setConfirmDelete(true)
+              }}
               className="rounded p-1 text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
               title="Delete"
             >

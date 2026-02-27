@@ -88,7 +88,10 @@ export function LabelEditor({ projectId, labels }: LabelEditorProps) {
       {/* Existing labels */}
       <div className="space-y-2">
         {labels.map((label) => (
-          <div key={label.id} className="flex items-center gap-3 rounded-md border border-zinc-200 dark:border-zinc-700 px-3 py-2">
+          <div
+            key={label.id}
+            className="flex items-center gap-3 rounded-md border border-zinc-200 dark:border-zinc-700 px-3 py-2"
+          >
             <span
               className="size-3 shrink-0 rounded-full"
               style={{ backgroundColor: label.color }}

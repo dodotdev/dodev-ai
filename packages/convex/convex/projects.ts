@@ -202,7 +202,10 @@ export const update = mutation({
     if (args.metadata !== undefined) updates.metadata = args.metadata
 
     if (args.slug !== undefined) {
-      const newSlug = args.slug.trim().toUpperCase().replace(/[^A-Z0-9]/g, "")
+      const newSlug = args.slug
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "")
       if (!newSlug) throw new ConvexError("INVALID_SLUG")
       // Ensure global uniqueness
       const existing = await ctx.db

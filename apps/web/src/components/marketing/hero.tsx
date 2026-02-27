@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 import { ArrowRight, Github, Terminal } from "lucide-react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 
 interface TerminalLine {
   id: number
@@ -78,7 +78,7 @@ const terminalSequence: TerminalLine[] = [
   {
     id: 10,
     type: "command",
-    text: "> search_memories query=\"retry\"",
+    text: '> search_memories query="retry"',
     delay: 500,
   },
   {
@@ -100,7 +100,7 @@ function TerminalAnimation() {
   const [isTyping, setIsTyping] = useState(false)
 
   useEffect(() => {
-    let timeoutIds: ReturnType<typeof setTimeout>[] = []
+    const timeoutIds: ReturnType<typeof setTimeout>[] = []
     let cumulativeDelay = 800
 
     for (let i = 0; i < terminalSequence.length; i++) {
@@ -158,9 +158,7 @@ function TerminalAnimation() {
                 ) : line.type === "command" ? (
                   <p className="text-zinc-200">
                     <span className="text-emerald-400">{">"}</span>{" "}
-                    <span className="text-zinc-100">
-                      {line.text.slice(2)}
-                    </span>
+                    <span className="text-zinc-100">{line.text.slice(2)}</span>
                   </p>
                 ) : line.type === "success" ? (
                   <p className="text-emerald-400">
@@ -285,9 +283,9 @@ export function Hero() {
             </h1>
 
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground">
-              Tasks, issues, and persistent memory for Claude Code, Cursor,
-              Windsurf, and any MCP-compatible client. Your agents remember
-              decisions, track work, and start every session with full context.
+              Tasks, issues, and persistent memory for Claude Code, Cursor, Windsurf, and any
+              MCP-compatible client. Your agents remember decisions, track work, and start every
+              session with full context.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">

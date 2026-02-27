@@ -12,8 +12,8 @@ import {
   Sparkles,
 } from "lucide-react"
 import Link from "next/link"
-import { Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { useSearchParams } from "next/navigation"
+import { Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -270,7 +270,9 @@ function SignInContent() {
                   {codeDigits.map((digit, index) => (
                     <input
                       key={index}
-                      ref={(el) => { digitRefs.current[index] = el }}
+                      ref={(el) => {
+                        digitRefs.current[index] = el
+                      }}
                       type="text"
                       inputMode="numeric"
                       autoComplete="one-time-code"

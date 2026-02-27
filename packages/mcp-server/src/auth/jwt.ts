@@ -30,9 +30,7 @@ function base64url(data: string | Buffer): string {
 function sign(payload: JwtPayload): string {
   const header = base64url(JSON.stringify({ alg: ALG, typ: "JWT" }))
   const body = base64url(JSON.stringify(payload))
-  const sig = createHmac("sha256", getSecret())
-    .update(`${header}.${body}`)
-    .digest()
+  const sig = createHmac("sha256", getSecret()).update(`${header}.${body}`).digest()
   return `${header}.${body}.${base64url(sig)}`
 }
 
@@ -41,9 +39,7 @@ function verify(token: string): JwtPayload {
   if (parts.length !== 3) throw new Error("Invalid JWT format")
 
   const [header, body, sig] = parts
-  const expected = createHmac("sha256", getSecret())
-    .update(`${header}.${body}`)
-    .digest("base64url")
+  const expected = createHmac("sha256", getSecret()).update(`${header}.${body}`).digest("base64url")
 
   if (sig !== expected) throw new Error("Invalid JWT signature")
 

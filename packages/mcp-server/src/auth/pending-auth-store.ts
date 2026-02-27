@@ -27,7 +27,10 @@ interface PendingAuth {
  */
 const store = new Map<string, PendingAuth>()
 
-export function storePendingAuth(sessionToken: string, entry: Omit<PendingAuth, "expiresAt">): void {
+export function storePendingAuth(
+  sessionToken: string,
+  entry: Omit<PendingAuth, "expiresAt">
+): void {
   store.set(sessionToken, {
     ...entry,
     expiresAt: Date.now() + PENDING_TTL_MS,

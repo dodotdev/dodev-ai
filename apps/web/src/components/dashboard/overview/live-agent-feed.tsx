@@ -85,9 +85,7 @@ export function LiveAgentFeed({ logs }: LiveAgentFeedProps) {
           )}
         </div>
         {entries.length > 0 && (
-          <span className="text-[10px] text-muted-foreground">
-            MCP tool calls
-          </span>
+          <span className="text-[10px] text-muted-foreground">MCP tool calls</span>
         )}
       </div>
 
@@ -119,23 +117,14 @@ export function LiveAgentFeed({ logs }: LiveAgentFeedProps) {
                   </span>
 
                   {/* Category dot */}
-                  <span
-                    className={cn(
-                      "size-2 shrink-0 rounded-full",
-                      categoryDotColors[cat]
-                    )}
-                  />
+                  <span className={cn("size-2 shrink-0 rounded-full", categoryDotColors[cat])} />
 
                   {/* Tool name */}
-                  <code className="shrink-0 font-mono text-xs text-foreground">
-                    {log.tool}
-                  </code>
+                  <code className="shrink-0 font-mono text-xs text-foreground">{log.tool}</code>
 
                   {/* Inline content */}
                   {inline && (
-                    <span className="truncate text-xs text-muted-foreground">
-                      {inline}
-                    </span>
+                    <span className="truncate text-xs text-muted-foreground">{inline}</span>
                   )}
 
                   {/* Spacer */}

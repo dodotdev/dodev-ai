@@ -99,9 +99,7 @@ export const listActive = query({
 
     return await ctx.db
       .query("agentSessions")
-      .withIndex("by_user_status", (q) =>
-        q.eq("userId", user._id).eq("status", "connected")
-      )
+      .withIndex("by_user_status", (q) => q.eq("userId", user._id).eq("status", "connected"))
       .order("desc")
       .collect()
   },

@@ -173,7 +173,9 @@ export default function ProjectTasksPage() {
   })
 
   // Derive selected item from live query data
-  const selectedItem = selectedItemId ? mapped.find((i) => i._id === selectedItemId) ?? null : null
+  const selectedItem = selectedItemId
+    ? (mapped.find((i) => i._id === selectedItemId) ?? null)
+    : null
 
   // Navigation
   const currentIndex = selectedItem ? mapped.findIndex((i) => i._id === selectedItem._id) : -1

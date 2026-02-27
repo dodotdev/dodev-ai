@@ -1,9 +1,9 @@
 import { api } from "@dodev/convex/api"
 import { redirect } from "next/navigation"
 import { DashboardProviders } from "@/components/providers/dashboard-providers"
-import { sendWelcomeEmail } from "@/lib/email"
 import { getUser } from "@/lib/auth"
 import { getConvexClient } from "@/lib/convex"
+import { sendWelcomeEmail } from "@/lib/email"
 import { isSelfHosted } from "@/lib/mode"
 import { getSelfHostedUser } from "@/lib/self-hosted-auth"
 
@@ -59,12 +59,18 @@ export default async function DashboardLayout({ children }: { children: React.Re
     // Mark as sent first (awaited) to prevent duplicate sends on re-renders
     await convex.mutation(api.users.markWelcomeEmailSent, { workosUserId: user.id })
     // Send email in background — already marked so duplicates can't happen
-    sendWelcomeEmail(convexUser.email, convexUser.name)
-      .catch((err) => console.error("Failed to send welcome email:", err))
+    sendWelcomeEmail(convexUser.email, convexUser.name).catch((err) =>
+      console.error("Failed to send welcome email:", err)
+    )
   }
 
   return (
-    <DashboardProviders workosUserId={user.id} email={user.email} name={user.name} avatarUrl={user.avatarUrl}>
+    <DashboardProviders
+      workosUserId={user.id}
+      email={user.email}
+      name={user.name}
+      avatarUrl={user.avatarUrl}
+    >
       {children}
     </DashboardProviders>
   )

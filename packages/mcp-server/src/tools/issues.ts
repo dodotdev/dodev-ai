@@ -175,7 +175,7 @@ export const issueTools: Tool[] = [
         statusId: {
           type: "string",
           description:
-            'Filter by specific workflow status ID (e.g. Backlog, Task, In Progress, In Review). Use get_context to see available statusIds. Takes priority over status filter when projectId is also provided.',
+            "Filter by specific workflow status ID (e.g. Backlog, Task, In Progress, In Review). Use get_context to see available statusIds. Takes priority over status filter when projectId is also provided.",
         },
         type: {
           type: "string",
@@ -305,10 +305,10 @@ export async function handleIssueTool(
 
       if (args.projectId) {
         try {
-          const project = await client.query(api.projects.get, {
+          const project = (await client.query(api.projects.get, {
             apiKeyHash,
             id: args.projectId as string,
-          }) as { statuses?: { id: string; name: string; category: string }[] } | null
+          })) as { statuses?: { id: string; name: string; category: string }[] } | null
 
           if (project?.statuses?.length) {
             const hint = buildListWorkflowHint("issue", project.statuses)
@@ -323,17 +323,17 @@ export async function handleIssueTool(
     }
 
     case "get_issue": {
-      const issue = await client.query(api.issues.get, {
+      const issue = (await client.query(api.issues.get, {
         apiKeyHash,
         id: args.id as string,
-      }) as Record<string, unknown> | null
+      })) as Record<string, unknown> | null
 
       if (issue?.projectId) {
         try {
-          const project = await client.query(api.projects.get, {
+          const project = (await client.query(api.projects.get, {
             apiKeyHash,
             id: issue.projectId as string,
-          }) as { statuses?: { id: string; name: string; category: string }[] } | null
+          })) as { statuses?: { id: string; name: string; category: string }[] } | null
 
           if (project?.statuses?.length) {
             const hint = buildWorkflowHint(

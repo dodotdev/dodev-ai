@@ -339,7 +339,12 @@ export function ItemDetailView({
       {/* Cards row */}
       <div className="flex items-start">
         {/* Main content area — fills viewport, scrolls internally */}
-        <div className="flex min-w-0 flex-1 flex-col rounded-xl border border-border/60 bg-white shadow-sm dark:bg-zinc-900" style={{ height: `max(calc(100vh - 260px), ${sidebarHeight > 0 ? sidebarHeight : 400}px)` }}>
+        <div
+          className="flex min-w-0 flex-1 flex-col rounded-xl border border-border/60 bg-white shadow-sm dark:bg-zinc-900"
+          style={{
+            height: `max(calc(100vh - 260px), ${sidebarHeight > 0 ? sidebarHeight : 400}px)`,
+          }}
+        >
           {/* Scrollable region: title + description + comments */}
           <div className="min-h-0 flex-1 overflow-y-auto scrollbar-autohide px-4 pt-5">
             {/* Editable title */}
@@ -354,14 +359,22 @@ export function ItemDetailView({
                     e.target.style.height = `${e.target.scrollHeight}px`
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveTitle() }
-                    if (e.key === "Escape") { setEditTitle(item.title); setEditingTitle(false) }
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault()
+                      saveTitle()
+                    }
+                    if (e.key === "Escape") {
+                      setEditTitle(item.title)
+                      setEditingTitle(false)
+                    }
                   }}
                   rows={1}
                   className="w-full resize-none bg-transparent px-2.5 pt-2 pb-1 text-2xl font-bold tracking-tight text-foreground outline-none"
                 />
                 <div className="flex items-center justify-between px-2.5 pb-2">
-                  <span className="text-[11px] text-muted-foreground/50">Esc to cancel · Enter to save</span>
+                  <span className="text-[11px] text-muted-foreground/50">
+                    Esc to cancel · Enter to save
+                  </span>
                   <button
                     type="button"
                     onClick={saveTitle}
@@ -394,15 +407,23 @@ export function ItemDetailView({
                     e.target.style.height = `${Math.max(e.target.scrollHeight, 120)}px`
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === "Escape") { setEditDescription(item.description ?? ""); setEditingDescription(false) }
-                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveDescription() }
+                    if (e.key === "Escape") {
+                      setEditDescription(item.description ?? "")
+                      setEditingDescription(false)
+                    }
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault()
+                      saveDescription()
+                    }
                   }}
                   placeholder="Add a description... (Markdown supported)"
                   className="w-full resize-none bg-transparent px-2.5 pt-2 pb-1 text-sm leading-relaxed text-foreground font-mono outline-none"
                   style={{ minHeight: 120 }}
                 />
                 <div className="flex items-center justify-between px-2.5 pb-2">
-                  <span className="text-[11px] text-muted-foreground/50">Markdown · Esc to cancel · Cmd+Enter to save</span>
+                  <span className="text-[11px] text-muted-foreground/50">
+                    Markdown · Esc to cancel · Cmd+Enter to save
+                  </span>
                   <button
                     type="button"
                     onClick={saveDescription}
@@ -442,7 +463,9 @@ export function ItemDetailView({
                     comment={comment}
                     userAvatarUrl={user?.avatarUrl}
                     isOwner={comment.authorType !== "agent"}
-                    onEdit={onUpdateComment ? (body) => onUpdateComment(comment._id, body) : undefined}
+                    onEdit={
+                      onUpdateComment ? (body) => onUpdateComment(comment._id, body) : undefined
+                    }
                     onDelete={onDeleteComment ? () => onDeleteComment(comment._id) : undefined}
                   />
                 ))}
@@ -452,10 +475,12 @@ export function ItemDetailView({
 
           {/* Pinned comment input at bottom */}
           <div className="shrink-0 border-t border-border/40 px-4 pb-4 pt-3">
-            <div className={cn(
-              "comment-input relative rounded-lg bg-zinc-50 transition-all duration-200 dark:bg-zinc-800",
-              commentFocused && "bg-white dark:bg-zinc-800 ring-1 ring-ring/30"
-            )}>
+            <div
+              className={cn(
+                "comment-input relative rounded-lg bg-zinc-50 transition-all duration-200 dark:bg-zinc-800",
+                commentFocused && "bg-white dark:bg-zinc-800 ring-1 ring-ring/30"
+              )}
+            >
               <textarea
                 ref={textareaRef}
                 value={commentText}
@@ -483,7 +508,9 @@ export function ItemDetailView({
                   }
                 }}
                 onKeyDown={handleKeyDown}
-                placeholder={commentFocused ? "Write a comment... (Markdown supported)" : "Leave a comment..."}
+                placeholder={
+                  commentFocused ? "Write a comment... (Markdown supported)" : "Leave a comment..."
+                }
                 rows={1}
                 className={cn(
                   "w-full resize-none bg-transparent px-3 py-2.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none transition-all duration-200",
@@ -491,11 +518,15 @@ export function ItemDetailView({
                 )}
                 style={{ border: "none", outline: "none", boxShadow: "none" }}
               />
-              <div className={cn(
-                "flex items-center justify-between px-3 pb-2 transition-all duration-200",
-                commentFocused ? "opacity-100 h-auto" : "opacity-0 h-0 overflow-hidden pb-0"
-              )}>
-                <span className="text-[11px] text-muted-foreground/50">Markdown · Cmd+Enter to save</span>
+              <div
+                className={cn(
+                  "flex items-center justify-between px-3 pb-2 transition-all duration-200",
+                  commentFocused ? "opacity-100 h-auto" : "opacity-0 h-0 overflow-hidden pb-0"
+                )}
+              >
+                <span className="text-[11px] text-muted-foreground/50">
+                  Markdown · Cmd+Enter to save
+                </span>
                 <button
                   type="button"
                   onClick={handleSubmitComment}
@@ -774,7 +805,12 @@ export function ItemDetailView({
                   >
                     {item.changelog && <Check className="size-3" />}
                   </span>
-                  <span className={cn("text-sm", item.changelog ? "text-foreground" : "text-muted-foreground")}>
+                  <span
+                    className={cn(
+                      "text-sm",
+                      item.changelog ? "text-foreground" : "text-muted-foreground"
+                    )}
+                  >
                     Include in changelog
                   </span>
                 </button>
@@ -1017,7 +1053,9 @@ function CommentRow({
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setConfirmDelete(false)} />
                   <div className="absolute right-0 z-50 mt-1 w-48 rounded-lg border border-border bg-white p-3 shadow-lg dark:bg-zinc-900">
-                    <p className="text-center text-xs font-medium text-foreground">Delete this comment?</p>
+                    <p className="text-center text-xs font-medium text-foreground">
+                      Delete this comment?
+                    </p>
                     <div className="mt-2 flex gap-2">
                       <button
                         type="button"
@@ -1052,14 +1090,22 @@ function CommentRow({
                 e.target.style.height = `${Math.max(e.target.scrollHeight, 60)}px`
               }}
               onKeyDown={(e) => {
-                if (e.key === "Escape") { setEditBody(comment.body); setEditing(false) }
-                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleSaveEdit() }
+                if (e.key === "Escape") {
+                  setEditBody(comment.body)
+                  setEditing(false)
+                }
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault()
+                  handleSaveEdit()
+                }
               }}
               className="w-full resize-none bg-transparent px-2.5 pt-2 pb-1 text-sm font-mono leading-relaxed text-foreground outline-none"
               style={{ minHeight: 60 }}
             />
             <div className="flex items-center justify-between px-2.5 pb-2">
-              <span className="text-[11px] text-muted-foreground/50">Markdown · Esc to cancel · Cmd+Enter to save</span>
+              <span className="text-[11px] text-muted-foreground/50">
+                Markdown · Esc to cancel · Cmd+Enter to save
+              </span>
               <button
                 type="button"
                 onClick={handleSaveEdit}
@@ -1074,13 +1120,19 @@ function CommentRow({
           <div
             className={cn(
               "mt-0.5 prose-comment",
-              isOwner && onEdit && "cursor-text rounded-md px-1.5 py-0.5 -mx-1.5 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+              isOwner &&
+                onEdit &&
+                "cursor-text rounded-md px-1.5 py-0.5 -mx-1.5 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
             )}
-            onClick={isOwner && onEdit ? () => {
-              setEditing(true)
-              setEditBody(comment.body)
-              setTimeout(() => editRef.current?.focus(), 0)
-            } : undefined}
+            onClick={
+              isOwner && onEdit
+                ? () => {
+                    setEditing(true)
+                    setEditBody(comment.body)
+                    setTimeout(() => editRef.current?.focus(), 0)
+                  }
+                : undefined
+            }
             title={isOwner && onEdit ? "Click to edit" : undefined}
           >
             <Markdown remarkPlugins={[remarkGfm]}>{comment.body}</Markdown>

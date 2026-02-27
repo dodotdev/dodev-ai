@@ -16,7 +16,6 @@ export type IssueType = "bug" | "feature" | "improvement" | "task"
 /** Lifecycle status of a project */
 export type ProjectLifecycle = "active" | "paused" | "completed" | "archived"
 
-
 /** Subscription plan tiers */
 export type PlanTier = "free" | "pro" | "team"
 
@@ -44,7 +43,6 @@ export interface ProjectMemorySettings {
   defaultTags?: string[]
   memoryInstructions?: string
 }
-
 
 /** A custom workflow status within a project */
 export interface WorkflowStatus {

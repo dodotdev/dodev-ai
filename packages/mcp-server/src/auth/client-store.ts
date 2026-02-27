@@ -1,4 +1,4 @@
-import { randomUUID, randomBytes } from "node:crypto"
+import { randomBytes, randomUUID } from "node:crypto"
 import type { OAuthRegisteredClientsStore } from "@modelcontextprotocol/sdk/server/auth/clients.js"
 import type { OAuthClientInformationFull } from "@modelcontextprotocol/sdk/shared/auth.js"
 import { api, getConvexClient } from "../convex-client.js"
@@ -36,7 +36,10 @@ export class ConvexClientStore implements OAuthRegisteredClientsStore {
       console.error(`[auth] Client loaded from Convex: ${clientId}`)
       return client
     } catch (err) {
-      console.error(`[auth] Client lookup error for ${clientId}:`, err instanceof Error ? err.message : err)
+      console.error(
+        `[auth] Client lookup error for ${clientId}:`,
+        err instanceof Error ? err.message : err
+      )
       return undefined
     }
   }
@@ -61,10 +64,15 @@ export class ConvexClientStore implements OAuthRegisteredClientsStore {
         clientId,
         clientData: JSON.stringify(full),
       })
-      console.error(`[auth] Client registered and persisted: ${clientId} (name: ${client.client_name ?? "unknown"})`)
+      console.error(
+        `[auth] Client registered and persisted: ${clientId} (name: ${client.client_name ?? "unknown"})`
+      )
     } catch (err) {
       // Log but don't fail — client still works for this session via cache
-      console.error(`[auth] Failed to persist client ${clientId} to Convex:`, err instanceof Error ? err.message : err)
+      console.error(
+        `[auth] Failed to persist client ${clientId} to Convex:`,
+        err instanceof Error ? err.message : err
+      )
     }
 
     // Cache locally

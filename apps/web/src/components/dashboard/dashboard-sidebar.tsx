@@ -85,7 +85,11 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
   const activeProjectId = projects?.find((p) => pathname.startsWith(`/dashboard/projects/${p._id}`))
     ?._id as string | undefined
 
-  if (activeProjectId && !expandedProjects.has(activeProjectId) && !manuallyCollapsed.has(activeProjectId)) {
+  if (
+    activeProjectId &&
+    !expandedProjects.has(activeProjectId) &&
+    !manuallyCollapsed.has(activeProjectId)
+  ) {
     setExpandedProjects((prev) => new Set(prev).add(activeProjectId))
   }
 
@@ -97,7 +101,11 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
         setManuallyCollapsed((mc) => new Set(mc).add(id))
       } else {
         next.add(id)
-        setManuallyCollapsed((mc) => { const n = new Set(mc); n.delete(id); return n })
+        setManuallyCollapsed((mc) => {
+          const n = new Set(mc)
+          n.delete(id)
+          return n
+        })
       }
       return next
     })

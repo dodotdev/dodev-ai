@@ -2,17 +2,17 @@
 
 import { motion } from "framer-motion"
 import {
+  ArrowUpRight,
+  BookOpen,
+  Brain,
   CheckCircle2,
   Circle,
   Clock,
-  ArrowUpRight,
-  Brain,
-  Tag,
-  Lightbulb,
-  BookOpen,
-  Settings2,
-  Loader2,
   Layers,
+  Lightbulb,
+  Loader2,
+  Settings2,
+  Tag,
   Zap,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -80,20 +80,14 @@ const mockTasks: TaskItem[] = [
   },
 ]
 
-const priorityConfig: Record<
-  TaskItem["priority"],
-  { color: string; label: string }
-> = {
+const priorityConfig: Record<TaskItem["priority"], { color: string; label: string }> = {
   urgent: { color: "bg-red-500", label: "Urgent" },
   high: { color: "bg-orange-500", label: "High" },
   medium: { color: "bg-yellow-500", label: "Medium" },
   low: { color: "bg-blue-500", label: "Low" },
 }
 
-const statusConfig: Record<
-  TaskItem["status"],
-  { icon: typeof CheckCircle2; color: string }
-> = {
+const statusConfig: Record<TaskItem["status"], { icon: typeof CheckCircle2; color: string }> = {
   done: { icon: CheckCircle2, color: "text-emerald-400" },
   in_progress: { icon: Loader2, color: "text-amber-400" },
   todo: { icon: Circle, color: "text-zinc-600" },
@@ -106,9 +100,7 @@ function TaskListVisual() {
       <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
         <div className="flex items-center gap-2">
           <Layers className="size-4 text-emerald-400" />
-          <span className="text-sm font-medium text-zinc-200">
-            payments-api
-          </span>
+          <span className="text-sm font-medium text-zinc-200">payments-api</span>
           <span className="text-xs text-zinc-600">Sprint 3</span>
         </div>
         <span className="text-xs text-zinc-600">5 tasks</span>
@@ -136,9 +128,7 @@ function TaskListVisual() {
                 )}
               />
 
-              <span className="min-w-0 flex-1 truncate text-sm text-zinc-300">
-                {task.title}
-              </span>
+              <span className="min-w-0 flex-1 truncate text-sm text-zinc-300">{task.title}</span>
 
               <div className="flex shrink-0 items-center gap-2">
                 {task.labels.map((label) => (
@@ -151,10 +141,7 @@ function TaskListVisual() {
                 ))}
 
                 <span
-                  className={cn(
-                    "size-2 rounded-full",
-                    priorityConfig[task.priority].color
-                  )}
+                  className={cn("size-2 rounded-full", priorityConfig[task.priority].color)}
                   title={priorityConfig[task.priority].label}
                 />
 
@@ -192,8 +179,7 @@ const mockMemories: MemoryItem[] = [
   },
   {
     type: "decision",
-    content:
-      "Exponential backoff with jitter for webhook retries, max 5 attempts",
+    content: "Exponential backoff with jitter for webhook retries, max 5 attempts",
     tags: ["webhooks", "reliability"],
     age: "1d ago",
   },
@@ -205,8 +191,7 @@ const mockMemories: MemoryItem[] = [
   },
   {
     type: "learning",
-    content:
-      "Stripe webhook events can arrive out of order - must handle idempotently",
+    content: "Stripe webhook events can arrive out of order - must handle idempotently",
     tags: ["stripe", "gotcha"],
     age: "2d ago",
   },
@@ -245,9 +230,7 @@ function MemoryListVisual() {
       <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
         <div className="flex items-center gap-2">
           <Brain className="size-4 text-violet-400" />
-          <span className="text-sm font-medium text-zinc-200">
-            Memories
-          </span>
+          <span className="text-sm font-medium text-zinc-200">Memories</span>
           <span className="text-xs text-zinc-600">payments-api</span>
         </div>
         <span className="text-xs text-zinc-600">12 total</span>
@@ -274,18 +257,11 @@ function MemoryListVisual() {
                     memoryTypeConfig[memory.type].bg
                   )}
                 >
-                  <TypeIcon
-                    className={cn(
-                      "size-3.5",
-                      memoryTypeConfig[memory.type].color
-                    )}
-                  />
+                  <TypeIcon className={cn("size-3.5", memoryTypeConfig[memory.type].color)} />
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm leading-snug text-zinc-300">
-                    {memory.content}
-                  </p>
+                  <p className="text-sm leading-snug text-zinc-300">{memory.content}</p>
                   <div className="mt-1.5 flex items-center gap-2">
                     <span
                       className={cn(
@@ -297,16 +273,11 @@ function MemoryListVisual() {
                       {memory.type}
                     </span>
                     {memory.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="text-[10px] text-zinc-600"
-                      >
+                      <span key={tag} className="text-[10px] text-zinc-600">
                         #{tag}
                       </span>
                     ))}
-                    <span className="ml-auto text-[10px] text-zinc-700">
-                      {memory.age}
-                    </span>
+                    <span className="ml-auto text-[10px] text-zinc-700">{memory.age}</span>
                   </div>
                 </div>
               </div>
@@ -375,9 +346,7 @@ function ContextVisual() {
       <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
         <div className="flex items-center gap-2">
           <Zap className="size-4 text-emerald-400" />
-          <span className="text-sm font-medium text-zinc-200">
-            get_context
-          </span>
+          <span className="text-sm font-medium text-zinc-200">get_context</span>
         </div>
         <span className="rounded-full bg-emerald-400/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
           loaded in 120ms
@@ -399,9 +368,7 @@ function ContextVisual() {
               className="flex items-center gap-3 px-4 py-2.5"
             >
               <Icon className={cn("size-4 shrink-0", line.color)} />
-              <span className="w-28 shrink-0 text-xs font-medium text-zinc-500">
-                {line.label}
-              </span>
+              <span className="w-28 shrink-0 text-xs font-medium text-zinc-500">{line.label}</span>
               <span className="text-sm text-zinc-300">{line.value}</span>
             </motion.div>
           )
@@ -479,10 +446,7 @@ const featureBlocks: FeatureBlock[] = [
 
 export function Features() {
   return (
-    <section
-      id="features"
-      className="py-24 sm:py-32"
-    >
+    <section id="features" className="py-24 sm:py-32">
       <div className="mx-auto max-w-6xl overflow-hidden px-6">
         {/* Section header */}
         <motion.div
@@ -499,9 +463,8 @@ export function Features() {
             </span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Everything your AI agents need to manage work across sessions --
-            tasks, issues, memories, projects, cycles, and config -- all through
-            the Model Context Protocol.
+            Everything your AI agents need to manage work across sessions -- tasks, issues,
+            memories, projects, cycles, and config -- all through the Model Context Protocol.
           </p>
         </motion.div>
 
