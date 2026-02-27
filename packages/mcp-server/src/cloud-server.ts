@@ -94,12 +94,19 @@ export async function startCloudServer(): Promise<void> {
       }
 
       if (existingSessionId && !transports.has(existingSessionId)) {
-        // Session lost (container restart, etc.) — create a new session transparently
-        // The client's auth token is still valid, so no need to force re-authentication
-        console.error(`[mcp] Session not found: ${existingSessionId} (active sessions: ${transports.size}). Creating new session for user ${workosUserId}.`)
+        // Session lost (container restart, deploy, etc.)
+        // Return 404 per MCP spec so the client re-initializes the session
+        // WITHOUT re-authenticating (the bearer token is still valid).
+        console.error(`[mcp] Session not found: ${existingSessionId} (active sessions: ${transports.size}). Returning 404 so client re-initializes for user ${workosUserId}.`)
+        res.status(404).json({
+          jsonrpc: "2.0",
+          error: { code: -32001, message: "Session not found" },
+          id: null,
+        })
+        return
       }
 
-      // New session (or session recovery after restart) — create transport and server
+      // New session (no existing session ID) — create transport and server
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
       })
