@@ -178,6 +178,19 @@ export function ItemDetailView({
     }
   }, [])
 
+  // Close on Escape key (unless editing inline or focused on an input)
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return
+      if (editingTitle || editingDescription || commentFocused) return
+      const tag = (e.target as HTMLElement)?.tagName
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return
+      onBack()
+    }
+    document.addEventListener("keydown", handleEsc)
+    return () => document.removeEventListener("keydown", handleEsc)
+  }, [onBack, editingTitle, editingDescription, commentFocused])
+
   const handleSubmitComment = useCallback(async () => {
     const body = commentText.trim()
     if (!body || isSubmitting) return
