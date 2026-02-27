@@ -157,13 +157,13 @@ export function TaskForm({ onSubmit, projectConfig, trigger }: TaskFormProps) {
     >
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button
-            size="sm"
-            className="bg-gradient-to-r from-emerald-400 to-emerald-600 text-white hover:from-emerald-500 hover:to-emerald-700"
+          <button
+            type="button"
+            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            title="New task"
           >
-            <Plus className="mr-1 size-4" />
-            New Task
-          </Button>
+            <Plus className="size-4" />
+          </button>
         )}
       </DialogTrigger>
       <DialogContent

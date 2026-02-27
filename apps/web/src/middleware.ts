@@ -1,39 +1,32 @@
-import type { NextFetchEvent, NextMiddleware, NextRequest } from "next/server"
+import type { NextFetchEvent, NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 
 const isCloud = !!process.env.WORKOS_CLIENT_ID
 
-let cachedCloudMiddleware: NextMiddleware | null = null
+const publicPaths = new Set([
+  "/",
+  "/auth/sign-in",
+  "/auth/sign-out",
+  "/auth/mcp",
+  "/callback",
+  "/waitlisted",
+  "/favicon.ico",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/privacy",
+  "/terms",
+])
 
-async function getCloudMiddleware() {
-  if (cachedCloudMiddleware) return cachedCloudMiddleware
-  const { authkitMiddleware } = await import("@workos-inc/authkit-nextjs")
-  cachedCloudMiddleware = authkitMiddleware({
-    middlewareAuth: {
-      enabled: true,
-      unauthenticatedPaths: [
-        "/",
-        "/auth/sign-in",
-        "/auth/sign-in/(.*)",
-        "/auth/sign-out",
-        "/auth/mcp",
-        "/callback",
-        "/api/auth/(.*)",
-        "/api/health",
-        "/waitlisted",
-        "/favicon.ico",
-        "/robots.txt",
-        "/sitemap.xml",
-        "/docs",
-        "/docs/(.*)",
-        "/privacy",
-        "/terms",
-      ],
-    },
-    redirectUri: process.env.WORKOS_REDIRECT_URI,
-    debug: process.env.NODE_ENV === "development",
-  })
-  return cachedCloudMiddleware
+const publicPrefixes = [
+  "/auth/sign-in/",
+  "/api/auth/",
+  "/api/health",
+  "/docs",
+]
+
+function isPublicPath(pathname: string): boolean {
+  if (publicPaths.has(pathname)) return true
+  return publicPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(prefix))
 }
 
 function selfHostedMiddleware(request: NextRequest) {
@@ -44,23 +37,25 @@ function selfHostedMiddleware(request: NextRequest) {
   return NextResponse.next()
 }
 
-export default async function middleware(request: NextRequest, event: NextFetchEvent) {
+export default async function middleware(request: NextRequest, _event: NextFetchEvent) {
   if (!isCloud) {
     return selfHostedMiddleware(request)
   }
-  const handler = await getCloudMiddleware()
-  const response = await handler!(request, event)
 
-  // Intercept authkit redirects to WorkOS hosted sign-in page
-  // and redirect to our custom sign-in page instead
-  if (response && response instanceof Response && response.status >= 300 && response.status < 400) {
-    const location = response.headers.get("location")
-    if (location && location.includes("authkit.app")) {
-      return NextResponse.redirect(new URL("/auth/sign-in", request.url))
-    }
+  const { authkit, handleAuthkitHeaders } = await import("@workos-inc/authkit-nextjs")
+  const { session, headers } = await authkit(request, {
+    debug: process.env.NODE_ENV === "development",
+  })
+
+  const { pathname } = request.nextUrl
+
+  // Protected route with no session → redirect to our custom sign-in (never to WorkOS hosted page)
+  if (!session.user && !isPublicPath(pathname)) {
+    return handleAuthkitHeaders(request, headers, { redirect: "/auth/sign-in" })
   }
 
-  return response
+  // Continue with authkit headers (session cookies, internal headers for withAuth())
+  return handleAuthkitHeaders(request, headers)
 }
 
 export const config = {

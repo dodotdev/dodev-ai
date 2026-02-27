@@ -54,14 +54,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/waitlisted")
   }
 
-  // Send welcome email on first dashboard visit (fire-and-forget)
+  // Send welcome email on first dashboard visit
   if (!convexUser.welcomeEmailSentAt) {
-    // Mark as sent first to prevent duplicate sends on concurrent requests
-    convex
-      .mutation(api.users.markWelcomeEmailSent, { workosUserId: user.id })
-      .then(() =>
-        sendWelcomeEmail(convexUser!.email, convexUser!.name)
-      )
+    // Mark as sent first (awaited) to prevent duplicate sends on re-renders
+    await convex.mutation(api.users.markWelcomeEmailSent, { workosUserId: user.id })
+    // Send email in background — already marked so duplicates can't happen
+    sendWelcomeEmail(convexUser.email, convexUser.name)
       .catch((err) => console.error("Failed to send welcome email:", err))
   }
 
