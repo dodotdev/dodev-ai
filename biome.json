@@ -39,23 +39,29 @@
       "recommended": true,
       "correctness": {
         "noUnusedImports": "warn",
-        "noUnusedVariables": "warn"
+        "noUnusedVariables": "warn",
+        "useExhaustiveDependencies": "warn"
       },
       "style": {
         "noNonNullAssertion": "off",
-        "useImportType": "error"
+        "useImportType": "error",
+        "useNodejsImportProtocol": "warn"
       },
       "suspicious": {
         "noExplicitAny": "warn",
         "noImplicitAnyLet": "off",
-        "noArrayIndexKey": "off"
+        "noArrayIndexKey": "off",
+        "noAssignInExpressions": "warn"
       },
       "nursery": {
         "useUniqueElementIds": "off"
       },
       "a11y": {
         "useAnchorContent": "warn",
-        "noSvgWithoutTitle": "off"
+        "noSvgWithoutTitle": "off",
+        "noStaticElementInteractions": "warn",
+        "useKeyWithClickEvents": "warn",
+        "useSemanticElements": "warn"
       },
       "performance": {
         "noImgElement": "warn"
