@@ -186,6 +186,25 @@ export async function startCloudServer(): Promise<void> {
     }
   })
 
+  // Periodic heartbeat to keep idle sessions alive in Convex
+  // (the expireStaleSessions cron marks sessions expired after 30 min without activity)
+  const HEARTBEAT_INTERVAL_MS = 10 * 60 * 1000 // 10 minutes
+  setInterval(() => {
+    const convex = getConvexClient()
+    for (const [sid, apiKeyHash] of sessionApiKeys) {
+      convex
+        .mutation(api.agentSessions.heartbeat, {
+          apiKeyHash,
+          sessionId: sid,
+        })
+        .catch(() => {
+          // Session may have been cleaned up — remove from tracking
+          sessionApiKeys.delete(sid)
+          transports.delete(sid)
+        })
+    }
+  }, HEARTBEAT_INTERVAL_MS)
+
   app.listen(port, "0.0.0.0", () => {
     console.error(`dodev.ai cloud server started on port ${port}`)
     console.error(`  Base URL: ${baseUrl}`)

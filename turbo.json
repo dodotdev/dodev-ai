@@ -11,6 +11,7 @@
         "WORKOS_CLIENT_ID",
         "WORKOS_API_KEY",
         "WORKOS_COOKIE_PASSWORD",
+        "WORKOS_COOKIE_MAX_AGE",
         "WORKOS_REDIRECT_URI",
         "DODEV_JWT_SECRET",
         "SEND_DEV_API_KEY",
