@@ -14,22 +14,18 @@ export const connect = mutation({
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
     const now = Date.now()
 
-    // Disconnect any existing sessions with the same clientId
-    // (handles reconnect without explicit disconnect)
+    // Disconnect any existing session with the same sessionId
+    // (handles reconnect/recovery without explicit disconnect)
     const existing = await ctx.db
       .query("agentSessions")
-      .withIndex("by_user_status", (q) =>
-        q.eq("userId", user._id).eq("status", "connected")
-      )
-      .collect()
+      .withIndex("by_session_id", (q) => q.eq("sessionId", args.sessionId))
+      .unique()
 
-    for (const session of existing) {
-      if (session.clientId === args.clientId) {
-        await ctx.db.patch(session._id, {
-          status: "disconnected",
-          disconnectedAt: now,
-        })
-      }
+    if (existing && existing.status === "connected") {
+      await ctx.db.patch(existing._id, {
+        status: "disconnected",
+        disconnectedAt: now,
+      })
     }
 
     return await ctx.db.insert("agentSessions", {
