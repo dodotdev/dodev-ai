@@ -94,13 +94,12 @@ export async function startCloudServer(): Promise<void> {
       }
 
       if (existingSessionId && !transports.has(existingSessionId)) {
-        // Unknown session ID — client should reconnect without session header
-        console.error(`[mcp] Session not found: ${existingSessionId} (active sessions: ${transports.size}). Client should reconnect.`)
-        res.status(404).json({ error: "Session not found. Please reconnect." })
-        return
+        // Session lost (container restart, etc.) — create a new session transparently
+        // The client's auth token is still valid, so no need to force re-authentication
+        console.error(`[mcp] Session not found: ${existingSessionId} (active sessions: ${transports.size}). Creating new session for user ${workosUserId}.`)
       }
 
-      // New session — create transport and server
+      // New session (or session recovery after restart) — create transport and server
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
       })
