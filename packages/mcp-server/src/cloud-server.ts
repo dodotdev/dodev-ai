@@ -55,6 +55,17 @@ export async function startCloudServer(): Promise<void> {
     res.json({ status: "ok", mode: "cloud" })
   })
 
+  // --- Status endpoint (shows session counts for monitoring) ---
+  app.get("/status", (_req, res) => {
+    res.json({
+      status: "ok",
+      mode: "cloud",
+      activeSessions: transports.size,
+      uptimeSeconds: Math.floor(process.uptime()),
+      memoryMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+    })
+  })
+
   // --- MCP endpoint (authenticated) ---
   const bearerAuth = requireBearerAuth({ verifier: provider })
 
@@ -62,6 +73,13 @@ export async function startCloudServer(): Promise<void> {
   const transports = new Map<string, StreamableHTTPServerTransport>()
   // Track apiKeyHash per session for disconnect cleanup
   const sessionApiKeys = new Map<string, string>()
+  // Track last activity time per session for idle cleanup
+  const sessionLastActivity = new Map<string, number>()
+
+  // Max sessions per container — safety valve to prevent unbounded memory growth
+  const MAX_SESSIONS = 200
+  // How long an idle session stays alive before being reaped
+  const SESSION_IDLE_TTL_MS = 30 * 60 * 1000 // 30 minutes
 
   app.all("/mcp", bearerAuth, async (req, res) => {
     const authInfo = req.auth
@@ -85,6 +103,7 @@ export async function startCloudServer(): Promise<void> {
 
       if (existingSessionId && transports.has(existingSessionId)) {
         // Existing session — reuse transport within auth context
+        sessionLastActivity.set(existingSessionId, Date.now())
         await runWithAuthContext(
           {
             apiKeyHash,
@@ -128,6 +147,7 @@ export async function startCloudServer(): Promise<void> {
         const sid = transport.sessionId
         if (sid) {
           transports.delete(sid)
+          sessionLastActivity.delete(sid)
 
           // Mark agent session as disconnected in Convex
           const storedApiKeyHash = sessionApiKeys.get(sid)
@@ -160,8 +180,41 @@ export async function startCloudServer(): Promise<void> {
 
       // Store transport AFTER handleRequest so sessionId is available
       if (transport.sessionId && !transports.has(transport.sessionId)) {
+        // Enforce max session cap — evict oldest idle session if at limit
+        if (transports.size >= MAX_SESSIONS) {
+          let oldestSid: string | null = null
+          let oldestTime = Infinity
+          for (const [sid, lastActive] of sessionLastActivity) {
+            if (lastActive < oldestTime) {
+              oldestTime = lastActive
+              oldestSid = sid
+            }
+          }
+          if (oldestSid) {
+            console.error(`[mcp] Max sessions (${MAX_SESSIONS}) reached — evicting oldest idle session: ${oldestSid}`)
+            const evicted = transports.get(oldestSid)
+            transports.delete(oldestSid)
+            sessionLastActivity.delete(oldestSid)
+            const evictedApiKey = sessionApiKeys.get(oldestSid)
+            sessionApiKeys.delete(oldestSid)
+            if (evicted) {
+              evicted.close?.().catch(() => {})
+            }
+            if (evictedApiKey) {
+              const convex = getConvexClient()
+              convex
+                .mutation(api.agentSessions.disconnect, {
+                  apiKeyHash: evictedApiKey,
+                  sessionId: oldestSid,
+                })
+                .catch(() => {})
+            }
+          }
+        }
+
         transports.set(transport.sessionId, transport)
         sessionApiKeys.set(transport.sessionId, apiKeyHash)
+        sessionLastActivity.set(transport.sessionId, Date.now())
         console.error(
           `[mcp] New session created: ${transport.sessionId} for user ${workosUserId} (active sessions: ${transports.size})`
         )
@@ -186,22 +239,68 @@ export async function startCloudServer(): Promise<void> {
     }
   })
 
-  // Periodic heartbeat to keep idle sessions alive in Convex
+  // Periodic idle session reaper — cleans up sessions that have had no activity.
+  // This prevents unbounded memory growth when clients silently disconnect (e.g., close
+  // VS Code, switch tabs) without sending an explicit close. Previously these zombie
+  // sessions accumulated forever, causing OOM after ~1.5 days.
+  const REAPER_INTERVAL_MS = 5 * 60 * 1000 // Check every 5 minutes
+  setInterval(() => {
+    const now = Date.now()
+    let reaped = 0
+    for (const [sid, lastActive] of sessionLastActivity) {
+      if (now - lastActive > SESSION_IDLE_TTL_MS) {
+        const transport = transports.get(sid)
+        transports.delete(sid)
+        sessionLastActivity.delete(sid)
+        const apiKeyHash = sessionApiKeys.get(sid)
+        sessionApiKeys.delete(sid)
+
+        // Close the transport and MCP server cleanly
+        if (transport) {
+          transport.close?.().catch(() => {})
+        }
+
+        // Mark as disconnected in Convex
+        if (apiKeyHash) {
+          const convex = getConvexClient()
+          convex
+            .mutation(api.agentSessions.disconnect, {
+              apiKeyHash,
+              sessionId: sid,
+            })
+            .catch(() => {})
+        }
+        reaped++
+      }
+    }
+    if (reaped > 0) {
+      console.error(`[mcp] Reaped ${reaped} idle sessions (remaining: ${transports.size})`)
+    }
+  }, REAPER_INTERVAL_MS)
+
+  // Periodic heartbeat to keep active sessions alive in Convex
   // (the expireStaleSessions cron marks sessions expired after 30 min without activity)
+  // Only heartbeat sessions that have had recent activity — no point keeping zombies alive.
   const HEARTBEAT_INTERVAL_MS = 10 * 60 * 1000 // 10 minutes
   setInterval(() => {
+    const now = Date.now()
     const convex = getConvexClient()
     for (const [sid, apiKeyHash] of sessionApiKeys) {
-      convex
-        .mutation(api.agentSessions.heartbeat, {
-          apiKeyHash,
-          sessionId: sid,
-        })
-        .catch(() => {
-          // Session may have been cleaned up — remove from tracking
-          sessionApiKeys.delete(sid)
-          transports.delete(sid)
-        })
+      const lastActive = sessionLastActivity.get(sid)
+      // Only heartbeat sessions active in the last 15 minutes
+      if (lastActive && now - lastActive < 15 * 60 * 1000) {
+        convex
+          .mutation(api.agentSessions.heartbeat, {
+            apiKeyHash,
+            sessionId: sid,
+          })
+          .catch(() => {
+            // Session may have been cleaned up — remove from tracking
+            sessionApiKeys.delete(sid)
+            sessionLastActivity.delete(sid)
+            transports.delete(sid)
+          })
+      }
     }
   }, HEARTBEAT_INTERVAL_MS)
 
