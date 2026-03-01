@@ -19,7 +19,7 @@ const roadmapItems: RoadmapItem[] = [
   {
     title: "Self-Hosted Mode",
     description:
-      "Run on your own infrastructure with npx @dodev/mcp-server or Docker. Your data, your servers. No account required.",
+      "Run on your own infrastructure with Docker. Your data, your servers. No account required.",
     icon: Server,
     accentColor: "text-cyan-400",
     iconBg: "bg-cyan-500/10 border-cyan-500/20",

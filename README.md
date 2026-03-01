@@ -44,76 +44,33 @@ Agent: *checks dodev.ai* "3 pending tasks: implement refresh tokens,
 
 ## Quick Start
 
-> **None of the installation methods below are functional yet.** This section documents the intended setup flow for when the project reaches a usable state.
-
-### Option 1: Cloud (Planned)
+### Cloud
 
 1. Sign up at [dodev.ai](https://dodev.ai)
-2. Get your API key from the dashboard
-3. Add to your MCP client config:
+2. Add the MCP server to your AI tool:
 
-**Claude Code (`~/.claude/claude_code_config.json`):**
-```json
-{
-  "mcpServers": {
-    "dodev": {
-      "command": "npx",
-      "args": ["-y", "@dodev/mcp-server"],
-      "env": {
-        "DODEV_API_KEY": "your-api-key",
-        "DODEV_MODE": "cloud"
-      }
-    }
-  }
-}
-```
-
-**Cursor (`.cursor/mcp.json`):**
-```json
-{
-  "mcpServers": {
-    "dodev": {
-      "command": "npx",
-      "args": ["-y", "@dodev/mcp-server"],
-      "env": {
-        "DODEV_API_KEY": "your-api-key",
-        "DODEV_MODE": "cloud"
-      }
-    }
-  }
-}
-```
-
-### Option 2: Self-Hosted (Planned)
-
-1. **Set up Convex** (if you don't have an account):
-   ```bash
-   npx convex dev  # Creates a free Convex deployment
-   ```
-
-2. **Run with Docker:**
-   ```bash
-   git clone https://github.com/dodotdev/dodev-ai.git
-   cd dodev-ai
-   cp .env.example .env
-   # Edit .env with your Convex URL
-   docker compose up -d
-   ```
-
-3. **Generate an API key:**
-   ```bash
-   npx @dodev/mcp-server generate-key
-   ```
-
-4. **Configure your MCP client** (same as above, but with `DODEV_MODE=self-hosted`)
-
-### Option 3: Direct npm (Planned)
-
+**Claude Code:**
 ```bash
-npm install -g @dodev/mcp-server
+claude mcp add dodev --transport http https://cloud.dodev.ai/mcp
 ```
 
-Then configure your MCP client to use the installed binary.
+**Cursor (`.cursor/mcp.json`), VS Code (`.vscode/mcp.json`), or Windsurf:**
+```json
+{
+  "mcpServers": {
+    "dodev": {
+      "type": "http",
+      "url": "https://cloud.dodev.ai/mcp"
+    }
+  }
+}
+```
+
+3. Connect — a browser window opens to sign in via OAuth. No API keys to manage.
+
+### Self-Hosted (Coming Soon)
+
+Self-hosted mode lets you run dodev.ai on your own infrastructure with Docker. See [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md) for details when available.
 
 ## MCP Tools
 
@@ -283,5 +240,4 @@ MIT — see [LICENSE](LICENSE) for details.
 - **Website:** [dodev.ai](https://dodev.ai)
 - **Documentation:** [dodev.ai/docs](https://dodev.ai/docs)
 - **GitHub:** [github.com/dodotdev/dodev-ai](https://github.com/dodotdev/dodev-ai)
-- **npm:** [@dodev/mcp-server](https://www.npmjs.com/package/@dodev/mcp-server)
 - **Discord:** [Join our community](https://discord.gg/dodev)
