@@ -205,38 +205,6 @@ function ConnectClientStep() {
   const mcpJson = buildMcpJson()
   const claudeCommand = `claude mcp add dodev --transport http ${MCP_URL}`
 
-  const tabContent: Record<
-    ClientTab,
-    { description: string; code: string; copyText: string; language: string }
-  > = {
-    "claude-code": {
-      description: "Run the following command in your terminal:",
-      code: claudeCommand,
-      copyText: claudeCommand,
-      language: "bash",
-    },
-    cursor: {
-      description: "Create or edit .cursor/mcp.json in your project root with the following:",
-      code: mcpJson,
-      copyText: mcpJson,
-      language: "json",
-    },
-    vscode: {
-      description: "Add the following to .vscode/mcp.json in your project root:",
-      code: mcpJson,
-      copyText: mcpJson,
-      language: "json",
-    },
-    windsurf: {
-      description: "Create or edit your Windsurf MCP configuration file with the following:",
-      code: mcpJson,
-      copyText: mcpJson,
-      language: "json",
-    },
-  }
-
-  const current = tabContent[activeTab]
-
   return (
     <div>
       <p className="text-sm text-muted-foreground">
@@ -265,18 +233,125 @@ function ConnectClientStep() {
 
       {/* Content */}
       <div className="mt-4">
-        <p className="mb-3 text-sm text-muted-foreground">{current.description}</p>
-        <CodeBlock code={current.code} copyText={current.copyText} language={current.language} />
+        {activeTab === "claude-code" && (
+          <>
+            <p className="mb-3 text-sm text-muted-foreground">
+              Run the following command in your terminal:
+            </p>
+            <CodeBlock code={claudeCommand} copyText={claudeCommand} language="bash" />
+          </>
+        )}
+
+        {activeTab === "cursor" && (
+          <>
+            <p className="mb-3 text-sm font-medium">Option 1: Cursor UI</p>
+            <div className="space-y-2.5">
+              <div className="flex gap-3 rounded-lg border border-border bg-zinc-50 px-4 py-3 dark:bg-zinc-900/50">
+                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+                  1
+                </span>
+                <p className="text-sm text-muted-foreground">
+                  Open Settings (
+                  <code className="rounded bg-zinc-200 px-1 py-0.5 font-mono text-xs dark:bg-zinc-700">
+                    Cmd + ,
+                  </code>
+                  ) &rarr; <strong className="text-foreground">Tools &amp; MCP</strong> (or Features
+                  &rarr; MCP)
+                </p>
+              </div>
+              <div className="flex gap-3 rounded-lg border border-border bg-zinc-50 px-4 py-3 dark:bg-zinc-900/50">
+                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+                  2
+                </span>
+                <p className="text-sm text-muted-foreground">
+                  Click{" "}
+                  <strong className="text-foreground">&ldquo;Add new MCP server&rdquo;</strong>
+                </p>
+              </div>
+              <div className="flex gap-3 rounded-lg border border-border bg-zinc-50 px-4 py-3 dark:bg-zinc-900/50">
+                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+                  3
+                </span>
+                <div className="text-sm text-muted-foreground">
+                  Fill in:
+                  <ul className="mt-1.5 ml-4 list-disc space-y-1">
+                    <li>
+                      <strong className="text-foreground">Name:</strong> dodev
+                    </li>
+                    <li>
+                      <strong className="text-foreground">Type:</strong> SSE (HTTP/cloud)
+                    </li>
+                    <li>
+                      <strong className="text-foreground">URL:</strong>{" "}
+                      <code className="rounded bg-zinc-200 px-1 py-0.5 font-mono text-xs dark:bg-zinc-700">
+                        {MCP_URL}
+                      </code>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div className="flex gap-3 rounded-lg border border-border bg-zinc-50 px-4 py-3 dark:bg-zinc-900/50">
+                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+                  4
+                </span>
+                <p className="text-sm text-muted-foreground">
+                  Click <strong className="text-foreground">Install</strong>, then{" "}
+                  <strong className="text-foreground">restart Cursor</strong>
+                </p>
+              </div>
+            </div>
+
+            <div className="my-4 flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs font-medium text-muted-foreground">OR</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+
+            <p className="mb-3 text-sm font-medium">Option 2: JSON config</p>
+            <p className="mb-3 text-sm text-muted-foreground">
+              Create or edit{" "}
+              <code className="rounded bg-zinc-200 px-1 py-0.5 font-mono text-xs dark:bg-zinc-700">
+                .cursor/mcp.json
+              </code>{" "}
+              in your project root:
+            </p>
+            <CodeBlock code={mcpJson} copyText={mcpJson} language="json" />
+          </>
+        )}
+
+        {activeTab === "vscode" && (
+          <>
+            <p className="mb-3 text-sm text-muted-foreground">
+              Add the following to{" "}
+              <code className="rounded bg-zinc-200 px-1 py-0.5 font-mono text-xs dark:bg-zinc-700">
+                .vscode/mcp.json
+              </code>{" "}
+              in your project root:
+            </p>
+            <CodeBlock code={mcpJson} copyText={mcpJson} language="json" />
+          </>
+        )}
+
+        {activeTab === "windsurf" && (
+          <>
+            <p className="mb-3 text-sm text-muted-foreground">
+              Create or edit your Windsurf MCP configuration file with the following:
+            </p>
+            <CodeBlock code={mcpJson} copyText={mcpJson} language="json" />
+          </>
+        )}
       </div>
 
       {activeTab !== "claude-code" && (
         <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-900/20">
           <p className="text-xs text-amber-800 dark:text-amber-300">
-            <span className="font-semibold">Tip:</span> You can also place{" "}
+            <span className="font-semibold">Tip:</span> You can also place the config in your home
+            directory (
             <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-[11px] dark:bg-amber-900/50">
-              .mcp.json
-            </code>{" "}
-            in your home directory for global access across all projects.
+              ~/.cursor/mcp.json
+            </code>
+            ) for global access across all projects.
+            {activeTab === "cursor" && " Restart Cursor after any config change."}
           </p>
         </div>
       )}
