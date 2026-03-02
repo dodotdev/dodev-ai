@@ -131,11 +131,14 @@ export async function startCloudServer(): Promise<void> {
   const sessionLastActivity = new Map<string, number>()
   // Track sessions per user for per-user limits (workosUserId → Set of sessionIds)
   const userSessions = new Map<string, Set<string>>()
+  // Track active session per agentId — when the same agent reconnects, evict the old session
+  // This is the key dedup mechanism for clients like Cursor configured globally
+  const agentSessionMap = new Map<string, string>() // agentId → sessionId
 
   // Max sessions per container — safety valve to prevent unbounded memory growth
   const MAX_SESSIONS = 200
   // Max sessions per user — prevents a single misbehaving client from leaking sessions
-  const MAX_SESSIONS_PER_USER = 5
+  const MAX_SESSIONS_PER_USER = 3
   // How long an idle session stays alive before being reaped
   const SESSION_IDLE_TTL_MS = 30 * 60 * 1000 // 30 minutes
 
@@ -150,6 +153,14 @@ export async function startCloudServer(): Promise<void> {
     // Remove from user tracking
     for (const [, sessions] of userSessions) {
       sessions.delete(sid)
+    }
+
+    // Remove from agentId tracking
+    for (const [agentId, sessionId] of agentSessionMap) {
+      if (sessionId === sid) {
+        agentSessionMap.delete(agentId)
+        break
+      }
     }
 
     if (transport) {
@@ -251,10 +262,23 @@ export async function startCloudServer(): Promise<void> {
 
       // Store transport AFTER handleRequest so sessionId is available
       if (transport.sessionId && !transports.has(transport.sessionId)) {
+        const agentId = authInfo.extra?.agentId as string | undefined
+
+        // Primary dedup: if this agentId already has an active session, evict it.
+        // This is the key fix for Cursor configured globally — every reconnect from
+        // the same agent (same OAuth token) replaces the old session instantly instead
+        // of accumulating zombie sessions.
+        if (agentId) {
+          const existingSid = agentSessionMap.get(agentId)
+          if (existingSid && existingSid !== transport.sessionId) {
+            console.error(`[mcp] Agent ${agentId} reconnected — evicting old session ${existingSid}`)
+            evictSession(existingSid)
+          }
+        }
+
         // Enforce per-user session limit — evict oldest sessions for this user
         const userSessionSet = userSessions.get(workosUserId) ?? new Set()
         if (userSessionSet.size >= MAX_SESSIONS_PER_USER) {
-          // Find and evict the oldest sessions for this user until under limit
           const userSids = [...userSessionSet]
           const sorted = userSids.sort((a, b) => {
             return (sessionLastActivity.get(a) ?? 0) - (sessionLastActivity.get(b) ?? 0)
@@ -292,12 +316,16 @@ export async function startCloudServer(): Promise<void> {
         }
         userSessions.get(workosUserId)!.add(transport.sessionId)
 
+        // Track in agentId map
+        if (agentId) {
+          agentSessionMap.set(agentId, transport.sessionId)
+        }
+
         console.error(
           `[mcp] New session created: ${transport.sessionId} for user ${workosUserId} (user sessions: ${userSessions.get(workosUserId)!.size}, total: ${transports.size})`
         )
 
         // Register agent session in Convex
-        const agentId = authInfo.extra?.agentId as string | undefined
         const clientInfo = await provider.clientsStore.getClient(authInfo.clientId)
         const convex = getConvexClient()
         convex
