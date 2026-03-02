@@ -32,7 +32,6 @@ export const connect = mutation({
     // agentId is unique per OAuth authorization and persists across reconnections
     // and token refreshes. When the same agent reconnects (new sessionId, same agentId),
     // we know the old session is stale and can safely disconnect it.
-    // This is the primary deduplication mechanism — no stale threshold needed.
     if (args.agentId) {
       const existingByAgent = await ctx.db
         .query("agentSessions")
@@ -46,6 +45,29 @@ export const connect = mutation({
             disconnectedAt: now,
           })
         }
+      }
+    }
+
+    // Also clean up legacy sessions (no agentId) for this user that are stale.
+    // These are from before the agentId feature was deployed.
+    const LEGACY_STALE_MS = 5 * 60 * 1000 // 5 minutes
+    const connectedForUser = await ctx.db
+      .query("agentSessions")
+      .withIndex("by_user_status", (q) =>
+        q.eq("userId", user._id).eq("status", "connected")
+      )
+      .collect()
+
+    for (const session of connectedForUser) {
+      if (
+        !session.agentId &&
+        session.sessionId !== args.sessionId &&
+        now - session.lastActivityAt > LEGACY_STALE_MS
+      ) {
+        await ctx.db.patch(session._id, {
+          status: "disconnected",
+          disconnectedAt: now,
+        })
       }
     }
 
