@@ -16,16 +16,43 @@ export const connect = mutation({
 
     // Disconnect any existing session with the same sessionId
     // (handles reconnect/recovery without explicit disconnect)
-    const existing = await ctx.db
+    const existingBySession = await ctx.db
       .query("agentSessions")
       .withIndex("by_session_id", (q) => q.eq("sessionId", args.sessionId))
       .unique()
 
-    if (existing && existing.status === "connected") {
-      await ctx.db.patch(existing._id, {
+    if (existingBySession && existingBySession.status === "connected") {
+      await ctx.db.patch(existingBySession._id, {
         status: "disconnected",
         disconnectedAt: now,
       })
+    }
+
+    // Disconnect stale sessions with the same clientId for this user.
+    // When an agent reconnects (e.g., after 404 from container restart),
+    // it creates a new session with a new sessionId but the same clientId.
+    // The old session is stale — disconnect it so the dashboard count is accurate.
+    // Only disconnect sessions idle for 2+ minutes to avoid killing a genuinely
+    // concurrent second instance sharing the same clientId.
+    const existingByClient = await ctx.db
+      .query("agentSessions")
+      .withIndex("by_user_status", (q) =>
+        q.eq("userId", user._id).eq("status", "connected")
+      )
+      .collect()
+
+    const STALE_THRESHOLD_MS = 2 * 60 * 1000 // 2 minutes
+    for (const session of existingByClient) {
+      if (
+        session.clientId === args.clientId &&
+        session.sessionId !== args.sessionId &&
+        now - session.lastActivityAt > STALE_THRESHOLD_MS
+      ) {
+        await ctx.db.patch(session._id, {
+          status: "disconnected",
+          disconnectedAt: now,
+        })
+      }
     }
 
     return await ctx.db.insert("agentSessions", {
