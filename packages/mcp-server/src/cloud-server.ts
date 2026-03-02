@@ -81,7 +81,7 @@ export async function startCloudServer(): Promise<void> {
         }
       }
 
-      res.json({
+      const data = {
         status: "ok",
         mode: "cloud",
         activeSessions: transports.size,
@@ -89,7 +89,34 @@ export async function startCloudServer(): Promise<void> {
         sessionsPerUser,
         uptimeSeconds: Math.floor(process.uptime()),
         memoryMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-      })
+      }
+
+      // Return auto-refreshing HTML page with pretty-printed JSON
+      // Data is server-rendered into a <pre> tag as escaped text — no client-side injection
+      const jsonPretty = JSON.stringify(data, null, 2)
+      const escaped = jsonPretty
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+      res.setHeader("Content-Type", "text/html")
+      res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <title>dodev.ai - Server Status</title>
+  <meta http-equiv="refresh" content="15">
+  <style>
+    body { background: #ffffff; color: #1a1a1a; font-family: ui-monospace, monospace; padding: 2rem; margin: 0; }
+    h1 { font-size: 1.2rem; color: #059669; margin: 0 0 0.25rem; }
+    .subtitle { color: #6b7280; font-size: 0.8rem; margin-bottom: 1.5rem; }
+    pre { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1.5rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <h1>dodev.ai server status</h1>
+  <div class="subtitle">Auto-refreshes every 15 seconds</div>
+  <pre>${escaped}</pre>
+</body>
+</html>`)
     } catch (error) {
       console.error("Status endpoint error:", error)
       res.status(500).json({ error: "Internal server error" })
