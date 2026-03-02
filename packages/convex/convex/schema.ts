@@ -367,6 +367,8 @@ export default defineSchema({
     sessionId: v.string(),
     clientId: v.string(),
     clientName: v.optional(v.string()),
+    /** Unique per OAuth authorization — stable across reconnections and token refreshes */
+    agentId: v.optional(v.string()),
     status: v.union(v.literal("connected"), v.literal("disconnected"), v.literal("expired")),
     connectedAt: v.number(),
     lastActivityAt: v.number(),
@@ -377,6 +379,7 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_user_status", ["userId", "status"])
     .index("by_session_id", ["sessionId"])
+    .index("by_agent_id", ["agentId"])
     .index("by_last_activity", ["lastActivityAt"]),
 
   oauthClients: defineTable({

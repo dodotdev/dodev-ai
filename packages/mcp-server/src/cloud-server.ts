@@ -249,6 +249,7 @@ export async function startCloudServer(): Promise<void> {
         )
 
         // Register agent session in Convex
+        const agentId = authInfo.extra?.agentId as string | undefined
         const clientInfo = await provider.clientsStore.getClient(authInfo.clientId)
         const convex = getConvexClient()
         convex
@@ -257,6 +258,7 @@ export async function startCloudServer(): Promise<void> {
             sessionId: transport.sessionId,
             clientId: authInfo.clientId,
             clientName: clientInfo?.client_name,
+            agentId,
           })
           .catch((err: unknown) => console.error("Failed to create agent session:", err))
       }

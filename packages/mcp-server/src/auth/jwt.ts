@@ -1,4 +1,4 @@
-import { createHmac, randomBytes } from "node:crypto"
+import { createHmac, randomBytes, randomUUID } from "node:crypto"
 
 const ALG = "HS256"
 const ACCESS_TOKEN_TTL = 7 * 24 * 60 * 60 // 7 days
@@ -12,6 +12,8 @@ interface JwtPayload {
   exp: number
   type: "access" | "refresh"
   clientId: string
+  /** Unique per OAuth authorization — identifies a specific agent instance across reconnections */
+  agentId?: string
 }
 
 function getSecret(): string {
@@ -57,6 +59,7 @@ export function signAccessToken(opts: {
   email?: string
   clientId: string
   audience: string
+  agentId: string
 }): string {
   const now = Math.floor(Date.now() / 1000)
   return sign({
@@ -67,6 +70,7 @@ export function signAccessToken(opts: {
     exp: now + ACCESS_TOKEN_TTL,
     type: "access",
     clientId: opts.clientId,
+    agentId: opts.agentId,
   })
 }
 
@@ -74,6 +78,7 @@ export function signRefreshToken(opts: {
   workosUserId: string
   clientId: string
   audience: string
+  agentId: string
 }): string {
   const now = Math.floor(Date.now() / 1000)
   return sign({
@@ -83,7 +88,13 @@ export function signRefreshToken(opts: {
     exp: now + REFRESH_TOKEN_TTL,
     type: "refresh",
     clientId: opts.clientId,
+    agentId: opts.agentId,
   })
+}
+
+/** Generate a new unique agent ID for a fresh OAuth authorization */
+export function generateAgentId(): string {
+  return randomUUID()
 }
 
 export function verifyAccessToken(token: string): JwtPayload {

@@ -14,6 +14,7 @@ import { api, getConvexClient } from "../convex-client.js"
 import { consumeAuthCode, getCodeChallenge, storeAuthCode } from "./auth-code-store.js"
 import { ConvexClientStore } from "./client-store.js"
 import {
+  generateAgentId,
   generateAuthorizationCode,
   signAccessToken,
   signRefreshToken,
@@ -126,17 +127,25 @@ export class WorkOSOAuthProvider implements OAuthServerProvider {
 
     const baseUrl = getBaseUrl()
 
+    // Generate a unique agentId for this OAuth authorization.
+    // This identifies a specific agent instance (e.g., "Claude Code in project-a")
+    // and persists across session reconnections and token refreshes.
+    const agentId = generateAgentId()
+    console.error(`[auth] New agent registered: ${agentId} for user ${entry.workosUserId}, client ${client.client_id}`)
+
     const accessToken = signAccessToken({
       workosUserId: entry.workosUserId,
       email: entry.email,
       clientId: client.client_id,
       audience: baseUrl,
+      agentId,
     })
 
     const refreshToken = signRefreshToken({
       workosUserId: entry.workosUserId,
       clientId: client.client_id,
       audience: baseUrl,
+      agentId,
     })
 
     return {
@@ -167,7 +176,9 @@ export class WorkOSOAuthProvider implements OAuthServerProvider {
       throw err
     }
 
-    console.error(`[auth] Token refresh for user ${payload.sub}, client ${client.client_id}`)
+    // Carry agentId from the old token, or generate a new one for legacy tokens
+    const agentId = payload.agentId ?? generateAgentId()
+    console.error(`[auth] Token refresh for user ${payload.sub}, client ${client.client_id}, agent ${agentId}`)
 
     const baseUrl = getBaseUrl()
 
@@ -176,12 +187,14 @@ export class WorkOSOAuthProvider implements OAuthServerProvider {
       email: payload.email,
       clientId: client.client_id,
       audience: baseUrl,
+      agentId,
     })
 
     const newRefreshToken = signRefreshToken({
       workosUserId: payload.sub,
       clientId: client.client_id,
       audience: baseUrl,
+      agentId,
     })
 
     return {
@@ -213,6 +226,7 @@ export class WorkOSOAuthProvider implements OAuthServerProvider {
       extra: {
         workosUserId: payload.sub,
         email: payload.email,
+        agentId: payload.agentId,
       },
     }
   }

@@ -9,13 +9,13 @@ export const connect = mutation({
     sessionId: v.string(),
     clientId: v.string(),
     clientName: v.optional(v.string()),
+    agentId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
     const now = Date.now()
 
     // Disconnect any existing session with the same sessionId
-    // (handles reconnect/recovery without explicit disconnect)
     const existingBySession = await ctx.db
       .query("agentSessions")
       .withIndex("by_session_id", (q) => q.eq("sessionId", args.sessionId))
@@ -28,30 +28,24 @@ export const connect = mutation({
       })
     }
 
-    // Disconnect stale sessions with the same clientId for this user.
-    // When an agent reconnects (e.g., after 404 from container restart),
-    // it creates a new session with a new sessionId but the same clientId.
-    // The old session is stale — disconnect it so the dashboard count is accurate.
-    // Only disconnect sessions idle for 2+ minutes to avoid killing a genuinely
-    // concurrent second instance sharing the same clientId.
-    const existingByClient = await ctx.db
-      .query("agentSessions")
-      .withIndex("by_user_status", (q) =>
-        q.eq("userId", user._id).eq("status", "connected")
-      )
-      .collect()
+    // If we have an agentId, disconnect all previous sessions for this agent.
+    // agentId is unique per OAuth authorization and persists across reconnections
+    // and token refreshes. When the same agent reconnects (new sessionId, same agentId),
+    // we know the old session is stale and can safely disconnect it.
+    // This is the primary deduplication mechanism — no stale threshold needed.
+    if (args.agentId) {
+      const existingByAgent = await ctx.db
+        .query("agentSessions")
+        .withIndex("by_agent_id", (q) => q.eq("agentId", args.agentId))
+        .collect()
 
-    const STALE_THRESHOLD_MS = 2 * 60 * 1000 // 2 minutes
-    for (const session of existingByClient) {
-      if (
-        session.clientId === args.clientId &&
-        session.sessionId !== args.sessionId &&
-        now - session.lastActivityAt > STALE_THRESHOLD_MS
-      ) {
-        await ctx.db.patch(session._id, {
-          status: "disconnected",
-          disconnectedAt: now,
-        })
+      for (const session of existingByAgent) {
+        if (session.status === "connected" && session.sessionId !== args.sessionId) {
+          await ctx.db.patch(session._id, {
+            status: "disconnected",
+            disconnectedAt: now,
+          })
+        }
       }
     }
 
@@ -60,6 +54,7 @@ export const connect = mutation({
       sessionId: args.sessionId,
       clientId: args.clientId,
       clientName: args.clientName,
+      agentId: args.agentId,
       status: "connected",
       connectedAt: now,
       lastActivityAt: now,
