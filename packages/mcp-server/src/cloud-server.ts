@@ -55,25 +55,46 @@ export async function startCloudServer(): Promise<void> {
     res.json({ status: "ok", mode: "cloud" })
   })
 
-  // --- Status endpoint (shows session counts for monitoring) ---
-  app.get("/status", (_req, res) => {
-    const perUser: Record<string, number> = {}
-    for (const [userId, sessions] of userSessions) {
-      perUser[userId] = sessions.size
-    }
-    res.json({
-      status: "ok",
-      mode: "cloud",
-      activeSessions: transports.size,
-      activeUsers: userSessions.size,
-      sessionsPerUser: perUser,
-      uptimeSeconds: Math.floor(process.uptime()),
-      memoryMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-    })
-  })
-
   // --- MCP endpoint (authenticated) ---
   const bearerAuth = requireBearerAuth({ verifier: provider })
+
+  // --- Status endpoint (admin-only, protected by DODEV_JWT_SECRET as query param) ---
+  // Usage: GET /status?key=<DODEV_JWT_SECRET>
+  app.get("/status", async (req, res) => {
+    try {
+      const key = req.query.key as string | undefined
+      const secret = process.env.DODEV_JWT_SECRET
+      if (!key || !secret || key !== secret) {
+        res.status(403).json({ error: "Forbidden" })
+        return
+      }
+
+      // Resolve user names for the per-user breakdown
+      const convex = getConvexClient()
+      const sessionsPerUser: Record<string, { name: string; email: string; sessions: number }> = {}
+      for (const [userId, sessions] of userSessions) {
+        const u = await convex.query(api.users.getByWorkosId, { workosUserId: userId })
+        sessionsPerUser[userId] = {
+          name: u?.name ?? "Unknown",
+          email: u?.email ?? "Unknown",
+          sessions: sessions.size,
+        }
+      }
+
+      res.json({
+        status: "ok",
+        mode: "cloud",
+        activeSessions: transports.size,
+        activeUsers: userSessions.size,
+        sessionsPerUser,
+        uptimeSeconds: Math.floor(process.uptime()),
+        memoryMB: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+      })
+    } catch (error) {
+      console.error("Status endpoint error:", error)
+      res.status(500).json({ error: "Internal server error" })
+    }
+  })
 
   // Track active transports by session ID
   const transports = new Map<string, StreamableHTTPServerTransport>()
