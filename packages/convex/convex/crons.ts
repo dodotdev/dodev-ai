@@ -13,8 +13,8 @@ crons.interval(
   internal.agentSessions.expireStaleSessions
 )
 
-// Clean up old disconnected/expired agent sessions, every 12 hours
-crons.interval("cleanup old agent sessions", { hours: 12 }, internal.agentSessions.cleanup)
+// Clean up old disconnected/expired agent sessions (24h+), every hour
+crons.interval("cleanup old agent sessions", { hours: 1 }, internal.agentSessions.cleanup)
 
 // Clean up old OAuth client registrations (60+ days), every 24 hours
 crons.interval("cleanup old oauth clients", { hours: 24 }, internal.oauthClients.cleanup)

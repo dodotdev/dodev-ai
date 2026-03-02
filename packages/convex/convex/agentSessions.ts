@@ -195,11 +195,11 @@ export const expireStaleSessions = internalMutation({
   },
 })
 
-/** Delete old disconnected/expired sessions (older than 30 days). Called by cron. */
+/** Delete old disconnected/expired sessions (older than 24 hours). Called by cron. */
 export const cleanup = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000
 
     const old = await ctx.db
       .query("agentSessions")
