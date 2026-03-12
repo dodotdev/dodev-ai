@@ -1,7 +1,22 @@
 import { defineSchema, defineTable } from "convex/server"
 import { v } from "convex/values"
 
+// =============================================================================
+// Deploy 1: Projects -> Spaces rename (dual-table migration)
+//
+// Strategy:
+//   - NEW `spaces` table (exact copy of old `projects` shape)
+//   - `projects` table kept with ALL fields optional (allows draining)
+//   - Child tables gain `spaceId` alongside `projectId`
+//   - New `by_user_space*` indexes mirror `by_user_project*` indexes
+//   - Search/vector indexes gain `spaceId` in filterFields
+//   - Deploy 2 (later) removes `projects` table and old `projectId` fields
+// =============================================================================
+
 export default defineSchema({
+  // ---------------------------------------------------------------------------
+  // users
+  // ---------------------------------------------------------------------------
   users: defineTable({
     // Identity
     workosUserId: v.string(),
@@ -25,7 +40,8 @@ export default defineSchema({
 
     // Settings
     settings: v.object({
-      defaultProjectId: v.optional(v.id("projects")),
+      defaultProjectId: v.optional(v.id("projects")), // legacy — removed in Deploy 2
+      defaultSpaceId: v.optional(v.id("spaces")), // new canonical field
       timezone: v.optional(v.string()),
     }),
 
@@ -40,7 +56,7 @@ export default defineSchema({
       })
     ),
 
-    // Global item counter (shared across all tasks, issues, projects)
+    // Global item counter (shared across all tasks, issues, spaces)
     itemCounter: v.optional(v.number()),
 
     createdAt: v.number(),
@@ -51,7 +67,10 @@ export default defineSchema({
     .index("by_api_key_hash", ["apiKeyHash"])
     .index("by_stripe_customer", ["stripeCustomerId"]),
 
-  projects: defineTable({
+  // ---------------------------------------------------------------------------
+  // spaces (NEW — canonical replacement for projects)
+  // ---------------------------------------------------------------------------
+  spaces: defineTable({
     userId: v.id("users"),
     name: v.string(),
     slug: v.optional(v.string()),
@@ -67,7 +86,7 @@ export default defineSchema({
     issueCounter: v.optional(v.number()),
     metadata: v.optional(v.any()),
 
-    // Project config
+    // Space config
     statuses: v.array(
       v.object({
         id: v.string(),
@@ -128,9 +147,103 @@ export default defineSchema({
     .index("by_user_slug", ["userId", "slug"])
     .index("by_slug", ["slug"]),
 
+  // ---------------------------------------------------------------------------
+  // projects (LEGACY — all fields optional for drain; removed in Deploy 2)
+  // ---------------------------------------------------------------------------
+  projects: defineTable({
+    userId: v.optional(v.id("users")),
+    name: v.optional(v.string()),
+    slug: v.optional(v.string()),
+    description: v.optional(v.string()),
+    status: v.optional(
+      v.union(
+        v.literal("active"),
+        v.literal("paused"),
+        v.literal("completed"),
+        v.literal("archived")
+      )
+    ),
+    itemCounter: v.optional(v.number()),
+    taskCounter: v.optional(v.number()),
+    issueCounter: v.optional(v.number()),
+    metadata: v.optional(v.any()),
+
+    // Project config
+    statuses: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          name: v.string(),
+          category: v.union(
+            v.literal("pending"),
+            v.literal("in_progress"),
+            v.literal("completed"),
+            v.literal("cancelled")
+          ),
+          color: v.string(),
+          position: v.number(),
+        })
+      )
+    ),
+    labels: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          name: v.string(),
+          color: v.string(),
+        })
+      )
+    ),
+    members: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          name: v.string(),
+          role: v.string(),
+          avatarUrl: v.optional(v.string()),
+        })
+      )
+    ),
+    estimateScale: v.optional(
+      v.object({
+        type: v.union(v.literal("points"), v.literal("tshirt"), v.literal("hours")),
+        values: v.array(v.string()),
+      })
+    ),
+    persona: v.optional(
+      v.object({
+        systemPrompt: v.string(),
+      })
+    ),
+
+    // Workspace linking for auto-detection
+    linkedPaths: v.optional(v.array(v.string())),
+    linkedRepos: v.optional(v.array(v.string())),
+
+    // Memory settings
+    memorySettings: v.optional(
+      v.object({
+        autoCapture: v.optional(v.boolean()),
+        defaultTags: v.optional(v.array(v.string())),
+        memoryInstructions: v.optional(v.string()),
+      })
+    ),
+
+    createdAt: v.optional(v.number()),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_status", ["userId", "status"])
+    .index("by_user_slug", ["userId", "slug"])
+    .index("by_slug", ["slug"]),
+
+  // ---------------------------------------------------------------------------
+  // tasks
+  // ---------------------------------------------------------------------------
   tasks: defineTable({
     userId: v.id("users"),
-    projectId: v.optional(v.id("projects")),
+    projectId: v.optional(v.id("projects")), // legacy — removed in Deploy 2
+    spaceId: v.optional(v.id("spaces")), // new canonical field
     number: v.optional(v.number()),
     title: v.string(),
     description: v.optional(v.string()),
@@ -165,6 +278,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
+    // Legacy project indexes (removed in Deploy 2)
     .index("by_user", ["userId"])
     .index("by_user_status", ["userId", "status"])
     .index("by_user_project", ["userId", "projectId"])
@@ -175,14 +289,25 @@ export default defineSchema({
     .index("by_user_project_cycle", ["userId", "projectId", "cycleId"])
     .index("by_user_project_statusId", ["userId", "projectId", "statusId"])
     .index("by_user_project_version", ["userId", "projectId", "versionId"])
+    // New space indexes
+    .index("by_user_space", ["userId", "spaceId"])
+    .index("by_user_space_status", ["userId", "spaceId", "status"])
+    .index("by_user_space_cycle", ["userId", "spaceId", "cycleId"])
+    .index("by_user_space_statusId", ["userId", "spaceId", "statusId"])
+    .index("by_user_space_version", ["userId", "spaceId", "versionId"])
+    // Search index (spaceId added to filterFields)
     .searchIndex("search_title_description", {
       searchField: "title",
-      filterFields: ["userId", "projectId", "status"],
+      filterFields: ["userId", "projectId", "spaceId", "status"],
     }),
 
+  // ---------------------------------------------------------------------------
+  // issues
+  // ---------------------------------------------------------------------------
   issues: defineTable({
     userId: v.id("users"),
-    projectId: v.optional(v.id("projects")),
+    projectId: v.optional(v.id("projects")), // legacy — removed in Deploy 2
+    spaceId: v.optional(v.id("spaces")), // new canonical field
     number: v.optional(v.number()),
     title: v.string(),
     description: v.optional(v.string()),
@@ -226,6 +351,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
+    // Legacy project indexes (removed in Deploy 2)
     .index("by_user", ["userId"])
     .index("by_user_status", ["userId", "status"])
     .index("by_user_project", ["userId", "projectId"])
@@ -237,14 +363,25 @@ export default defineSchema({
     .index("by_user_project_cycle", ["userId", "projectId", "cycleId"])
     .index("by_user_project_statusId", ["userId", "projectId", "statusId"])
     .index("by_user_project_version", ["userId", "projectId", "versionId"])
+    // New space indexes
+    .index("by_user_space", ["userId", "spaceId"])
+    .index("by_user_space_status", ["userId", "spaceId", "status"])
+    .index("by_user_space_cycle", ["userId", "spaceId", "cycleId"])
+    .index("by_user_space_statusId", ["userId", "spaceId", "statusId"])
+    .index("by_user_space_version", ["userId", "spaceId", "versionId"])
+    // Search index (spaceId added to filterFields)
     .searchIndex("search_title_description", {
       searchField: "title",
-      filterFields: ["userId", "projectId", "status"],
+      filterFields: ["userId", "projectId", "spaceId", "status"],
     }),
 
+  // ---------------------------------------------------------------------------
+  // memories
+  // ---------------------------------------------------------------------------
   memories: defineTable({
     userId: v.id("users"),
-    projectId: v.optional(v.id("projects")),
+    projectId: v.optional(v.id("projects")), // legacy — removed in Deploy 2
+    spaceId: v.optional(v.id("spaces")), // new canonical field
     content: v.string(),
     summary: v.optional(v.string()),
     tags: v.array(v.string()),
@@ -268,22 +405,31 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
+    // Legacy project indexes (removed in Deploy 2)
     .index("by_user", ["userId"])
     .index("by_user_project", ["userId", "projectId"])
     .index("by_user_created", ["userId", "createdAt"])
+    // New space indexes
+    .index("by_user_space", ["userId", "spaceId"])
+    // Search index (spaceId added to filterFields)
     .searchIndex("search_content", {
       searchField: "content",
-      filterFields: ["userId", "projectId"],
+      filterFields: ["userId", "projectId", "spaceId"],
     })
+    // Vector index (spaceId added to filterFields)
     .vectorIndex("by_embedding", {
       vectorField: "embedding",
       dimensions: 1536,
-      filterFields: ["userId", "projectId"],
+      filterFields: ["userId", "projectId", "spaceId"],
     }),
 
+  // ---------------------------------------------------------------------------
+  // cycles
+  // ---------------------------------------------------------------------------
   cycles: defineTable({
     userId: v.id("users"),
-    projectId: v.id("projects"),
+    projectId: v.optional(v.id("projects")), // legacy — removed in Deploy 2
+    spaceId: v.optional(v.id("spaces")), // new canonical field
     name: v.string(),
     description: v.optional(v.string()),
     status: v.union(v.literal("upcoming"), v.literal("active"), v.literal("completed")),
@@ -292,12 +438,20 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
+    // Legacy project indexes (removed in Deploy 2)
     .index("by_user_project", ["userId", "projectId"])
-    .index("by_user_project_status", ["userId", "projectId", "status"]),
+    .index("by_user_project_status", ["userId", "projectId", "status"])
+    // New space indexes
+    .index("by_user_space", ["userId", "spaceId"])
+    .index("by_user_space_status", ["userId", "spaceId", "status"]),
 
+  // ---------------------------------------------------------------------------
+  // versions
+  // ---------------------------------------------------------------------------
   versions: defineTable({
     userId: v.id("users"),
-    projectId: v.id("projects"),
+    projectId: v.optional(v.id("projects")), // legacy — removed in Deploy 2
+    spaceId: v.optional(v.id("spaces")), // new canonical field
     name: v.string(),
     description: v.optional(v.string()),
     status: v.union(v.literal("draft"), v.literal("released")),
@@ -305,21 +459,33 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
+    // Legacy project indexes (removed in Deploy 2)
     .index("by_user_project", ["userId", "projectId"])
-    .index("by_user_project_status", ["userId", "projectId", "status"]),
+    .index("by_user_project_status", ["userId", "projectId", "status"])
+    // New space indexes
+    .index("by_user_space", ["userId", "spaceId"])
+    .index("by_user_space_status", ["userId", "spaceId", "status"]),
 
+  // ---------------------------------------------------------------------------
+  // sessions
+  // ---------------------------------------------------------------------------
   sessions: defineTable({
     userId: v.id("users"),
     agentId: v.string(),
-    activeProjectId: v.optional(v.id("projects")),
+    activeProjectId: v.optional(v.id("projects")), // legacy — removed in Deploy 2
+    activeSpaceId: v.optional(v.id("spaces")), // new canonical field
     lastActiveAt: v.number(),
   }).index("by_user_agent", ["userId", "agentId"]),
 
+  // ---------------------------------------------------------------------------
+  // attachments
+  // ---------------------------------------------------------------------------
   attachments: defineTable({
     userId: v.id("users"),
     taskId: v.optional(v.id("tasks")),
     issueId: v.optional(v.id("issues")),
-    projectId: v.optional(v.id("projects")),
+    projectId: v.optional(v.id("projects")), // legacy — removed in Deploy 2
+    spaceId: v.optional(v.id("spaces")), // new canonical field
     storageId: v.id("_storage"),
     filename: v.string(),
     mimeType: v.string(),
@@ -328,17 +494,24 @@ export default defineSchema({
     aiDescription: v.optional(v.string()),
     createdAt: v.number(),
   })
+    // Legacy project indexes (removed in Deploy 2)
     .index("by_user", ["userId"])
     .index("by_task", ["taskId"])
     .index("by_issue", ["issueId"])
     .index("by_user_project", ["userId", "projectId"])
-    .index("by_storage_id", ["storageId"]),
+    .index("by_storage_id", ["storageId"])
+    // New space indexes
+    .index("by_user_space", ["userId", "spaceId"]),
 
+  // ---------------------------------------------------------------------------
+  // comments
+  // ---------------------------------------------------------------------------
   comments: defineTable({
     userId: v.id("users"),
     taskId: v.optional(v.id("tasks")),
     issueId: v.optional(v.id("issues")),
-    projectId: v.optional(v.id("projects")),
+    projectId: v.optional(v.id("projects")), // legacy — removed in Deploy 2
+    spaceId: v.optional(v.id("spaces")), // new canonical field
     parentId: v.optional(v.id("comments")),
     body: v.string(),
     authorName: v.optional(v.string()),
@@ -346,22 +519,32 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
+    // Legacy indexes (removed in Deploy 2)
     .index("by_task", ["taskId"])
     .index("by_issue", ["issueId"])
     .index("by_user", ["userId"])
-    .index("by_parent", ["parentId"]),
+    .index("by_parent", ["parentId"])
+    // New space indexes
+    .index("by_user_space", ["userId", "spaceId"]),
 
+  // ---------------------------------------------------------------------------
+  // usage
+  // ---------------------------------------------------------------------------
   usage: defineTable({
     userId: v.id("users"),
     period: v.string(),
     taskCount: v.optional(v.number()),
     memoryCount: v.number(),
-    projectCount: v.number(),
+    projectCount: v.number(), // legacy — removed in Deploy 2
+    spaceCount: v.optional(v.number()), // new canonical field
     issueCount: v.number(),
     attachmentCount: v.optional(v.number()),
     apiCalls: v.number(),
   }).index("by_user_period", ["userId", "period"]),
 
+  // ---------------------------------------------------------------------------
+  // agentSessions (unchanged — does not reference projects)
+  // ---------------------------------------------------------------------------
   agentSessions: defineTable({
     userId: v.id("users"),
     sessionId: v.string(),
@@ -382,12 +565,18 @@ export default defineSchema({
     .index("by_agent_id", ["agentId"])
     .index("by_last_activity", ["lastActivityAt"]),
 
+  // ---------------------------------------------------------------------------
+  // oauthClients (unchanged — does not reference projects)
+  // ---------------------------------------------------------------------------
   oauthClients: defineTable({
     clientId: v.string(),
     clientData: v.string(), // JSON-serialized OAuthClientInformationFull
     createdAt: v.number(),
   }).index("by_client_id", ["clientId"]),
 
+  // ---------------------------------------------------------------------------
+  // mcpLogs
+  // ---------------------------------------------------------------------------
   mcpLogs: defineTable({
     userId: v.id("users"),
     tool: v.string(),
@@ -396,11 +585,15 @@ export default defineSchema({
     errorCode: v.optional(v.string()),
     errorMessage: v.optional(v.string()),
     durationMs: v.number(),
-    projectId: v.optional(v.string()),
+    projectId: v.optional(v.string()), // legacy — removed in Deploy 2
+    spaceId: v.optional(v.string()), // new canonical field
     createdAt: v.number(),
   })
+    // Legacy indexes (removed in Deploy 2)
     .index("by_user", ["userId"])
     .index("by_user_created", ["userId", "createdAt"])
     .index("by_user_project", ["userId", "projectId"])
-    .index("by_created", ["createdAt"]),
+    .index("by_created", ["createdAt"])
+    // New space indexes
+    .index("by_user_space", ["userId", "spaceId"]),
 })

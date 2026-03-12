@@ -6,8 +6,8 @@ import { detectWorkspace } from "../workspace.js"
 import { generateSetupInstructions } from "./setup-instructions.js"
 import { buildContextWorkflowHint } from "./workflow-hints.js"
 
-/** Derive a project name from workspace path or repo URL */
-function deriveProjectName(workspacePath?: string, repoUrl?: string): string {
+/** Derive a space name from workspace path or repo URL */
+function deriveSpaceName(workspacePath?: string, repoUrl?: string): string {
   if (repoUrl) {
     // "https://github.com/org/my-repo.git" -> "my-repo"
     const match = repoUrl.match(/\/([^/]+?)(?:\.git)?$/)
@@ -17,21 +17,21 @@ function deriveProjectName(workspacePath?: string, repoUrl?: string): string {
     // "/Users/tim/code/my-project" -> "my-project"
     return basename(workspacePath)
   }
-  return "My Project"
+  return "My Space"
 }
 
 export const contextTools: Tool[] = [
   {
     name: "get_context",
     description:
-      "CALL THIS FIRST at the start of every session. Returns everything you need to get oriented: active project (auto-detected from workspace if linked), pending tasks, recent memories (project-scoped + global), project list, project config (workflow statuses, labels, members, estimate scale), AI persona instructions, active cycle, and memory settings. This is your primary way to load context from previous sessions — it includes the most relevant stored memories so you can pick up where you or another agent left off. If this is your first session and no project exists, one will be auto-created from the current workspace.",
+      "CALL THIS FIRST at the start of every session. Returns everything you need to get oriented: active space (auto-detected from workspace if linked), pending tasks, recent memories (space-scoped + global), space list, space config (workflow statuses, labels, members, estimate scale), AI persona instructions, active cycle, and memory settings. This is your primary way to load context from previous sessions — it includes the most relevant stored memories so you can pick up where you or another agent left off. If this is your first session and no space exists, one will be auto-created from the current workspace.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        projectId: {
+        spaceId: {
           type: "string",
           description:
-            "Get context for a specific project. If omitted, auto-detects from the current workspace (if linked) or falls back to the default project.",
+            "Get context for a specific space. If omitted, auto-detects from the current workspace (if linked) or falls back to the default space.",
         },
         taskLimit: {
           type: "number",
@@ -47,14 +47,14 @@ export const contextTools: Tool[] = [
   {
     name: "get_setup_instructions",
     description:
-      "Get CLAUDE.md instructions for configuring AI agents to use dodev.ai proactively. Returns a markdown section you should add to the project's CLAUDE.md file. If a project is linked or specified, the instructions include project-specific context (name, slug, ID). Call this after setting up dodev.ai in a new project, or when you need to add/update dodev.ai instructions in CLAUDE.md.",
+      "Get CLAUDE.md instructions for configuring AI agents to use dodev.ai proactively. Returns a markdown section you should add to the project's CLAUDE.md file. If a space is linked or specified, the instructions include space-specific context (name, slug, ID). Call this after setting up dodev.ai in a new space, or when you need to add/update dodev.ai instructions in CLAUDE.md.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        projectId: {
+        spaceId: {
           type: "string",
           description:
-            "Get instructions for a specific project. If omitted, auto-detects from the current workspace (if linked). Falls back to generic instructions if no project is found.",
+            "Get instructions for a specific space. If omitted, auto-detects from the current workspace (if linked). Falls back to generic instructions if no space is found.",
         },
       },
     },
@@ -70,80 +70,76 @@ export async function handleContextTool(
 
   switch (name) {
     case "get_context": {
-      // Auto-detect workspace info if no explicit projectId
-      const workspace = !args.projectId ? detectWorkspace() : undefined
+      // Auto-detect workspace info if no explicit spaceId
+      const workspace = !args.spaceId ? detectWorkspace() : undefined
 
-      const context = (await client.query(api.projects.getContext, {
+      const context = (await client.query(api.spaces.getContext, {
         apiKeyHash,
-        projectId: args.projectId as string | undefined,
+        spaceId: args.spaceId as string | undefined,
         taskLimit: args.taskLimit as number | undefined,
         memoryLimit: args.memoryLimit as number | undefined,
         workspacePath: workspace?.workspacePath,
         repoUrl: workspace?.repoUrl,
       })) as Record<string, unknown>
 
-      // Add workflow hints if project has statuses
-      const activeProject = context.activeProject as {
+      // Add workflow hints if space has statuses
+      const activeSpace = context.activeSpace as {
         statuses?: { id: string; name: string; category: string }[]
       } | null
-      if (activeProject?.statuses?.length) {
-        context.agentWorkflow = buildContextWorkflowHint(activeProject.statuses)
+      if (activeSpace?.statuses?.length) {
+        context.agentWorkflow = buildContextWorkflowHint(activeSpace.statuses)
       }
 
-      // Auto-create a project if the user has none
-      if (
-        !context.activeProject &&
-        Array.isArray(context.projects) &&
-        context.projects.length === 0
-      ) {
-        const projectName = deriveProjectName(workspace?.workspacePath, workspace?.repoUrl)
+      // Auto-create a space if the user has none
+      if (!context.activeSpace && Array.isArray(context.spaces) && context.spaces.length === 0) {
+        const spaceName = deriveSpaceName(workspace?.workspacePath, workspace?.repoUrl)
 
-        const newProject = (await client.mutation(api.projects.create, {
+        const newSpace = (await client.mutation(api.spaces.create, {
           apiKeyHash,
-          name: projectName,
+          name: spaceName,
           description: `Auto-created from workspace: ${workspace?.workspacePath ?? "unknown"}`,
         })) as { _id: string } | null
 
-        if (newProject) {
-          // Link workspace path and repo to the new project
+        if (newSpace) {
+          // Link workspace path and repo to the new space
           if (workspace?.workspacePath || workspace?.repoUrl) {
             await client
-              .mutation(api.projects.linkProject, {
+              .mutation(api.spaces.linkSpace, {
                 apiKeyHash,
-                projectId: newProject._id,
+                spaceId: newSpace._id,
                 path: workspace?.workspacePath,
                 repo: workspace?.repoUrl,
               })
               .catch(() => {
-                // Non-critical — linking failed but project was created
+                // Non-critical — linking failed but space was created
               })
           }
 
-          // Set as default project
+          // Set as default space
           await client
-            .mutation(api.users.setDefaultProject, {
+            .mutation(api.users.setDefaultSpace, {
               apiKeyHash,
-              projectId: newProject._id,
+              spaceId: newSpace._id,
             })
             .catch(() => {
               // Non-critical
             })
 
-          // Re-query context with the new project
-          const newContext = (await client.query(api.projects.getContext, {
+          // Re-query context with the new space
+          const newContext = (await client.query(api.spaces.getContext, {
             apiKeyHash,
-            projectId: newProject._id,
+            spaceId: newSpace._id,
             taskLimit: args.taskLimit as number | undefined,
             memoryLimit: args.memoryLimit as number | undefined,
             workspacePath: workspace?.workspacePath,
             repoUrl: workspace?.repoUrl,
           })) as Record<string, unknown>
 
-          const newActiveProject = newContext.activeProject as {
+          const newActiveSpace = newContext.activeSpace as {
             statuses?: { id: string; name: string; category: string }[]
           } | null
-          if (newActiveProject?.statuses?.length) {
-            newContext.agentWorkflow = buildContextWorkflowHint(newActiveProject.statuses)
+          if (newActiveSpace?.statuses?.length) {
+            newContext.agentWorkflow = buildContextWorkflowHint(newActiveSpace.statuses)
           }
 
           return newContext
@@ -154,51 +150,51 @@ export async function handleContextTool(
     }
 
     case "get_setup_instructions": {
-      let project: { name: string; slug: string; _id: string } | null = null
+      let space: { name: string; slug: string; _id: string } | null = null
 
-      if (args.projectId) {
-        // Explicit project ID provided
+      if (args.spaceId) {
+        // Explicit space ID provided
         try {
-          project = (await client.query(api.projects.get, {
+          space = (await client.query(api.spaces.get, {
             apiKeyHash,
-            id: args.projectId as string,
+            id: args.spaceId as string,
           })) as { name: string; slug: string; _id: string } | null
         } catch {
-          // Project not found — fall through to generic instructions
+          // Space not found — fall through to generic instructions
         }
       } else {
         // Try workspace auto-detection
         const workspace = detectWorkspace()
         if (workspace.workspacePath || workspace.repoUrl) {
           try {
-            project = (await client.query(api.projects.resolveProjectByWorkspace, {
+            space = (await client.query(api.spaces.resolveSpaceByWorkspace, {
               apiKeyHash,
               workspacePath: workspace.workspacePath,
               repoUrl: workspace.repoUrl,
             })) as { name: string; slug: string; _id: string } | null
           } catch {
-            // No linked project — fall through to generic instructions
+            // No linked space — fall through to generic instructions
           }
         }
       }
 
       const instructions = generateSetupInstructions(
-        project
+        space
           ? {
-              projectName: project.name,
-              projectSlug: project.slug,
-              projectId: project._id,
+              spaceName: space.name,
+              spaceSlug: space.slug,
+              spaceId: space._id,
             }
           : undefined
       )
 
       return {
         instructions,
-        project: project
+        space: space
           ? {
-              projectName: project.name,
-              projectSlug: project.slug,
-              projectId: project._id,
+              spaceName: space.name,
+              spaceSlug: space.slug,
+              spaceId: space._id,
             }
           : null,
       }

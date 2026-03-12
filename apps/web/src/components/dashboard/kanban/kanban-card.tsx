@@ -35,7 +35,7 @@ export interface KanbanTask {
   cycleId?: string
   createdAt: number
   updatedAt: number
-  // Resolved from project config for display
+  // Resolved from space config for display
   issueId?: string
   resolvedLabels?: ResolvedLabel[]
   resolvedAssignee?: ResolvedAssignee

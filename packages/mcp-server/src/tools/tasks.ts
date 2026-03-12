@@ -22,7 +22,7 @@ export const taskTools: Tool[] = [
           enum: ["critical", "major", "minor", "trivial"],
           description: "Severity level (optional for tasks)",
         },
-        projectId: { type: "string", description: "Associate with a specific project" },
+        spaceId: { type: "string", description: "Associate with a specific space" },
         dueDate: {
           type: "number",
           description: "Due date as Unix timestamp (milliseconds)",
@@ -35,16 +35,16 @@ export const taskTools: Tool[] = [
         statusId: {
           type: "string",
           description:
-            "Custom workflow status ID from the project config. Automatically derives the base status category.",
+            "Custom workflow status ID from the space config. Automatically derives the base status category.",
         },
         labelIds: {
           type: "array",
           items: { type: "string" },
-          description: "Label IDs from the project config",
+          description: "Label IDs from the space config",
         },
         assigneeId: {
           type: "string",
-          description: "Member ID from the project config to assign this task to",
+          description: "Member ID from the space config to assign this task to",
         },
         estimate: {
           type: "string",
@@ -99,9 +99,9 @@ export const taskTools: Tool[] = [
           items: { type: "string" },
           description: "Replace tags",
         },
-        projectId: {
+        spaceId: {
           type: ["string", "null"],
-          description: "Move to a different project, or null to unscope",
+          description: "Move to a different space, or null to unscope",
         },
         statusId: {
           type: ["string", "null"],
@@ -155,7 +155,7 @@ export const taskTools: Tool[] = [
     inputSchema: {
       type: "object" as const,
       properties: {
-        projectId: { type: "string", description: "Filter by project" },
+        spaceId: { type: "string", description: "Filter by space" },
         status: {
           type: "string",
           enum: ["pending", "in_progress", "completed", "cancelled"],
@@ -164,7 +164,7 @@ export const taskTools: Tool[] = [
         statusId: {
           type: "string",
           description:
-            "Filter by specific workflow status ID (e.g. Backlog, Task, In Progress, In Review). Use get_context to see available statusIds. Takes priority over status filter when projectId is also provided.",
+            "Filter by specific workflow status ID (e.g. Backlog, Task, In Progress, In Review). Use get_context to see available statusIds. Takes priority over status filter when spaceId is also provided.",
         },
         priority: {
           type: "string",
@@ -231,7 +231,7 @@ export async function handleTaskTool(
         description: args.description as string | undefined,
         priority: args.priority as "low" | "medium" | "high" | "urgent" | undefined,
         severity: args.severity as "critical" | "major" | "minor" | "trivial" | undefined,
-        projectId: args.projectId as string | undefined,
+        spaceId: args.spaceId as string | undefined,
         dueDate: args.dueDate as number | undefined,
         tags: args.tags as string[] | undefined,
         statusId: args.statusId as string | undefined,
@@ -254,7 +254,7 @@ export async function handleTaskTool(
         severity: args.severity as "critical" | "major" | "minor" | "trivial" | null | undefined,
         dueDate: args.dueDate as number | null | undefined,
         tags: args.tags as string[] | undefined,
-        projectId: args.projectId as string | null | undefined,
+        spaceId: args.spaceId as string | null | undefined,
         statusId: args.statusId as string | null | undefined,
         labelIds: args.labelIds as string[] | null | undefined,
         assigneeId: args.assigneeId as string | null | undefined,
@@ -274,7 +274,7 @@ export async function handleTaskTool(
     case "list_tasks": {
       const tasks = await client.query(api.tasks.list, {
         apiKeyHash,
-        projectId: args.projectId as string | undefined,
+        spaceId: args.spaceId as string | undefined,
         status: args.status as string | undefined,
         statusId: args.statusId as string | undefined,
         priority: args.priority as string | undefined,
@@ -283,15 +283,15 @@ export async function handleTaskTool(
         limit: args.limit as number | undefined,
       })
 
-      if (args.projectId) {
+      if (args.spaceId) {
         try {
-          const project = (await client.query(api.projects.get, {
+          const space = (await client.query(api.spaces.get, {
             apiKeyHash,
-            id: args.projectId as string,
+            id: args.spaceId as string,
           })) as { statuses?: { id: string; name: string; category: string }[] } | null
 
-          if (project?.statuses?.length) {
-            const hint = buildListWorkflowHint("task", project.statuses)
+          if (space?.statuses?.length) {
+            const hint = buildListWorkflowHint("task", space.statuses)
             if (hint) return { items: tasks, _workflowHint: hint }
           }
         } catch {
@@ -308,19 +308,19 @@ export async function handleTaskTool(
         id: args.id as string,
       })) as Record<string, unknown> | null
 
-      if (task?.projectId) {
+      if (task?.spaceId) {
         try {
-          const project = (await client.query(api.projects.get, {
+          const space = (await client.query(api.spaces.get, {
             apiKeyHash,
-            id: task.projectId as string,
+            id: task.spaceId as string,
           })) as { statuses?: { id: string; name: string; category: string }[] } | null
 
-          if (project?.statuses?.length) {
+          if (space?.statuses?.length) {
             const hint = buildWorkflowHint(
               "task",
               task.status as string,
               task.statusId as string | undefined,
-              project.statuses
+              space.statuses
             )
             if (hint) {
               return { ...task, _workflowHint: hint }

@@ -30,13 +30,13 @@ export function validateMemoryContent(content: string): string | null {
   return null
 }
 
-/** Validate a project name */
-export function validateProjectName(name: string): string | null {
+/** Validate a space name */
+export function validateSpaceName(name: string): string | null {
   if (!name || name.trim().length === 0) {
-    return "Project name is required"
+    return "Space name is required"
   }
-  if (name.length > VALIDATION.MAX_PROJECT_NAME_LENGTH) {
-    return `Project name must be ${VALIDATION.MAX_PROJECT_NAME_LENGTH} characters or less`
+  if (name.length > VALIDATION.MAX_SPACE_NAME_LENGTH) {
+    return `Space name must be ${VALIDATION.MAX_SPACE_NAME_LENGTH} characters or less`
   }
   return null
 }

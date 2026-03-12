@@ -131,7 +131,9 @@ export class WorkOSOAuthProvider implements OAuthServerProvider {
     // This identifies a specific agent instance (e.g., "Claude Code in project-a")
     // and persists across session reconnections and token refreshes.
     const agentId = generateAgentId()
-    console.error(`[auth] New agent registered: ${agentId} for user ${entry.workosUserId}, client ${client.client_id}`)
+    console.error(
+      `[auth] New agent registered: ${agentId} for user ${entry.workosUserId}, client ${client.client_id}`
+    )
 
     const accessToken = signAccessToken({
       workosUserId: entry.workosUserId,
@@ -178,7 +180,9 @@ export class WorkOSOAuthProvider implements OAuthServerProvider {
 
     // Carry agentId from the old token, or generate a new one for legacy tokens
     const agentId = payload.agentId ?? generateAgentId()
-    console.error(`[auth] Token refresh for user ${payload.sub}, client ${client.client_id}, agent ${agentId}`)
+    console.error(
+      `[auth] Token refresh for user ${payload.sub}, client ${client.client_id}, agent ${agentId}`
+    )
 
     const baseUrl = getBaseUrl()
 

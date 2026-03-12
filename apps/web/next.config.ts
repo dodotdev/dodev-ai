@@ -15,6 +15,15 @@ const nextConfig: NextConfig = {
       process.env.NEXT_PUBLIC_DODEV_MODE ||
       (process.env.WORKOS_CLIENT_ID ? "cloud" : "self-hosted"),
   },
+  async redirects() {
+    return [
+      {
+        source: "/dashboard/projects/:path*",
+        destination: "/dashboard/spaces/:path*",
+        permanent: true,
+      },
+    ]
+  },
 }
 
 export default nextConfig

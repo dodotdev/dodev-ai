@@ -78,7 +78,7 @@ export default function TasksPage() {
         <div>
           <h1 className="text-lg font-semibold tracking-tight">Tasks</h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Global tasks not scoped to any project
+            Global tasks not scoped to any space
           </p>
         </div>
         <TaskForm onSubmit={handleCreate} />

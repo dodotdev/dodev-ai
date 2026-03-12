@@ -21,10 +21,10 @@ export const memoryTools: Tool[] = [
           description:
             'Tags for categorization. Use consistent, lowercase tags (e.g. ["architecture", "database", "decision", "preference", "debugging", "deploy", "gotcha"]). Max 20 tags.',
         },
-        projectId: {
+        spaceId: {
           type: "string",
           description:
-            "Associate with a specific project. Omit for user-global memories (preferences, cross-project knowledge).",
+            "Associate with a specific space. Omit for user-global memories (preferences, cross-space knowledge).",
         },
         source: {
           type: "string",
@@ -58,10 +58,10 @@ export const memoryTools: Tool[] = [
           description:
             "Natural language search query. Describe what you're looking for conceptually — don't just use keywords. E.g. 'How is authentication configured?' rather than 'auth config'.",
         },
-        projectId: {
+        spaceId: {
           type: "string",
           description:
-            "Scope search to a specific project. Both project-scoped and global memories are searched by default.",
+            "Scope search to a specific space. Both space-scoped and global memories are searched by default.",
         },
         tags: {
           type: "array",
@@ -87,7 +87,7 @@ export const memoryTools: Tool[] = [
         globalScope: {
           type: "boolean",
           description:
-            "When true and projectId is set, also include global (non-project) memories. Default: false.",
+            "When true and spaceId is set, also include global (non-space) memories. Default: false.",
         },
       },
       required: ["query"],
@@ -100,9 +100,9 @@ export const memoryTools: Tool[] = [
     inputSchema: {
       type: "object" as const,
       properties: {
-        projectId: {
+        spaceId: {
           type: "string",
-          description: "Filter to memories in a specific project. Omit to list all memories.",
+          description: "Filter to memories in a specific space. Omit to list all memories.",
         },
         tags: {
           type: "array",
@@ -138,10 +138,10 @@ export const memoryTools: Tool[] = [
           items: { type: "string" },
           description: "Replace all tags. Only provide if changing tags.",
         },
-        projectId: {
+        spaceId: {
           type: ["string", "null"],
           description:
-            "Move to a different project, or null to make it global. Only provide if changing project scope.",
+            "Move to a different space, or null to make it global. Only provide if changing space scope.",
         },
         type: {
           type: "string",
@@ -183,7 +183,7 @@ export async function handleMemoryTool(
         apiKeyHash,
         content: args.content as string,
         tags: args.tags as string[] | undefined,
-        projectId: args.projectId as string | undefined,
+        spaceId: args.spaceId as string | undefined,
         source: args.source as string | undefined,
         type: args.type as string | undefined,
         importance: args.importance as number | undefined,
@@ -197,7 +197,7 @@ export async function handleMemoryTool(
         return await client.action(api.memories.hybridSearch, {
           apiKeyHash,
           query: args.query as string,
-          projectId: args.projectId as string | undefined,
+          spaceId: args.spaceId as string | undefined,
           tags: args.tags as string[] | undefined,
           limit: args.limit as number | undefined,
           type: args.type as string | undefined,
@@ -210,7 +210,7 @@ export async function handleMemoryTool(
       return await client.query(api.memories.search, {
         apiKeyHash,
         query: args.query as string,
-        projectId: args.projectId as string | undefined,
+        spaceId: args.spaceId as string | undefined,
         tags: args.tags as string[] | undefined,
         limit: args.limit as number | undefined,
         type: args.type as string | undefined,
@@ -220,7 +220,7 @@ export async function handleMemoryTool(
     case "list_memories":
       return await client.query(api.memories.listMemories, {
         apiKeyHash,
-        projectId: args.projectId as string | undefined,
+        spaceId: args.spaceId as string | undefined,
         tags: args.tags as string[] | undefined,
         limit: args.limit as number | undefined,
         type: args.type as string | undefined,
@@ -232,7 +232,7 @@ export async function handleMemoryTool(
         id: args.id as string,
         content: args.content as string | undefined,
         tags: args.tags as string[] | undefined,
-        projectId: args.projectId as string | null | undefined,
+        spaceId: args.spaceId as string | null | undefined,
         type: args.type as string | undefined,
         importance: args.importance as number | undefined,
       })

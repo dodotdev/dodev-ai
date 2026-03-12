@@ -19,13 +19,7 @@ export function getCurrentPeriod(): string {
 export async function incrementUsage(
   ctx: MutationCtx,
   userId: Id<"users">,
-  field:
-    | "taskCount"
-    | "memoryCount"
-    | "projectCount"
-    | "issueCount"
-    | "attachmentCount"
-    | "apiCalls"
+  field: "taskCount" | "memoryCount" | "spaceCount" | "issueCount" | "attachmentCount" | "apiCalls"
 ): Promise<void> {
   const period = getCurrentPeriod()
 
@@ -44,7 +38,8 @@ export async function incrementUsage(
       period,
       taskCount: field === "taskCount" ? 1 : 0,
       memoryCount: field === "memoryCount" ? 1 : 0,
-      projectCount: field === "projectCount" ? 1 : 0,
+      projectCount: 0, // legacy — always 0 for new records
+      spaceCount: field === "spaceCount" ? 1 : 0,
       issueCount: field === "issueCount" ? 1 : 0,
       attachmentCount: field === "attachmentCount" ? 1 : 0,
       apiCalls: field === "apiCalls" ? 1 : 0,

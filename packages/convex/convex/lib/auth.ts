@@ -30,11 +30,11 @@ export async function authenticateApiKey(
 export async function checkQuota(
   ctx: QueryCtx | MutationCtx,
   user: Doc<"users">,
-  resource: "tasks" | "memories" | "projects" | "issues" | "attachments"
+  resource: "tasks" | "memories" | "spaces" | "issues" | "attachments"
 ): Promise<void> {
   if (user.plan !== "free") return
 
-  const limits = { tasks: 100, memories: 50, projects: 1, issues: 200, attachments: 50 }
+  const limits = { tasks: 100, memories: 50, spaces: 1, issues: 200, attachments: 50 }
   const period = getCurrentPeriod()
 
   const usage = await ctx.db
@@ -45,7 +45,7 @@ export async function checkQuota(
   const countField = `${resource}Count` as
     | "taskCount"
     | "memoryCount"
-    | "projectCount"
+    | "spaceCount"
     | "issueCount"
     | "attachmentCount"
   const count = usage?.[countField] ?? 0

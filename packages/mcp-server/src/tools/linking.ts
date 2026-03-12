@@ -5,15 +5,15 @@ import { generateSetupInstructions } from "./setup-instructions.js"
 
 export const linkingTools: Tool[] = [
   {
-    name: "link_project",
+    name: "link_space",
     description:
-      "Link a workspace path or git repository to a project for automatic detection. Once linked, get_context will auto-resolve the project when called from this workspace. You should call this right after creating a project to associate it with the current codebase. Returns setup instructions for CLAUDE.md — add them to the project's CLAUDE.md so AI agents use dodev.ai proactively.",
+      "Link a workspace path or git repository to a space for automatic detection. Once linked, get_context will auto-resolve the space when called from this workspace. You should call this right after creating a space to associate it with the current codebase. Returns setup instructions for CLAUDE.md — add them to the project's CLAUDE.md so AI agents use dodev.ai proactively.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        projectId: {
+        spaceId: {
           type: "string",
-          description: "The project ID to link.",
+          description: "The space ID to link.",
         },
         path: {
           type: "string",
@@ -26,19 +26,19 @@ export const linkingTools: Tool[] = [
             'Git remote URL to link (e.g. "git@github.com:org/repo.git" or "https://github.com/org/repo"). Normalized automatically.',
         },
       },
-      required: ["projectId"],
+      required: ["spaceId"],
     },
   },
   {
-    name: "unlink_project",
+    name: "unlink_space",
     description:
-      "Remove a workspace path or git repository link from a project. Use when a project is no longer associated with a particular workspace.",
+      "Remove a workspace path or git repository link from a space. Use when a space is no longer associated with a particular workspace.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        projectId: {
+        spaceId: {
           type: "string",
-          description: "The project ID to unlink from.",
+          description: "The space ID to unlink from.",
         },
         path: {
           type: "string",
@@ -49,19 +49,19 @@ export const linkingTools: Tool[] = [
           description: "The git remote URL to remove.",
         },
       },
-      required: ["projectId"],
+      required: ["spaceId"],
     },
   },
   {
     name: "update_memory_settings",
     description:
-      "Configure memory behavior for a project or globally. Project-level: set default tags and memory instructions. User-level (omit projectId): configure embedding provider settings.",
+      "Configure memory behavior for a space or globally. Space-level: set default tags and memory instructions. User-level (omit spaceId): configure embedding provider settings.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        projectId: {
+        spaceId: {
           type: "string",
-          description: "Project ID to configure. Omit to update user-level settings.",
+          description: "Space ID to configure. Omit to update user-level settings.",
         },
         autoCapture: {
           type: "boolean",
@@ -70,12 +70,12 @@ export const linkingTools: Tool[] = [
         defaultTags: {
           type: "array",
           items: { type: "string" },
-          description: "Default tags automatically added to new memories in this project.",
+          description: "Default tags automatically added to new memories in this space.",
         },
         memoryInstructions: {
           type: "string",
           description:
-            "Custom instructions for how AI agents should manage memories in this project.",
+            "Custom instructions for how AI agents should manage memories in this space.",
         },
         embeddingProvider: {
           type: "string",
@@ -107,39 +107,39 @@ export async function handleLinkingTool(
   const apiKeyHash = getApiKeyHash()
 
   switch (name) {
-    case "link_project": {
-      const project = (await client.mutation(api.projects.linkProject, {
+    case "link_space": {
+      const space = (await client.mutation(api.spaces.linkSpace, {
         apiKeyHash,
-        projectId: args.projectId as string,
+        spaceId: args.spaceId as string,
         path: args.path as string | undefined,
         repo: args.repo as string | undefined,
       })) as { _id: string; name: string; slug: string }
 
       const setupInstructions = generateSetupInstructions({
-        projectName: project.name,
-        projectSlug: project.slug,
-        projectId: project._id,
+        spaceName: space.name,
+        spaceSlug: space.slug,
+        spaceId: space._id,
       })
 
       return {
-        project,
+        space,
         setupInstructions,
         hint: "Add the setupInstructions to this project's CLAUDE.md file so AI agents use dodev.ai proactively in every session.",
       }
     }
 
-    case "unlink_project":
-      return await client.mutation(api.projects.unlinkProject, {
+    case "unlink_space":
+      return await client.mutation(api.spaces.unlinkSpace, {
         apiKeyHash,
-        projectId: args.projectId as string,
+        spaceId: args.spaceId as string,
         path: args.path as string | undefined,
         repo: args.repo as string | undefined,
       })
 
     case "update_memory_settings":
-      return await client.mutation(api.projectConfig.updateMemorySettings, {
+      return await client.mutation(api.spaceConfig.updateMemorySettings, {
         apiKeyHash,
-        projectId: args.projectId as string | undefined,
+        spaceId: args.spaceId as string | undefined,
         autoCapture: args.autoCapture as boolean | undefined,
         defaultTags: args.defaultTags as string[] | undefined,
         memoryInstructions: args.memoryInstructions as string | undefined,

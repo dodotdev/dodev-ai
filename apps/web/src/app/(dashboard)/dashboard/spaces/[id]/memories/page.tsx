@@ -26,7 +26,7 @@ const MEMORY_TYPES = [
   { value: "learning", label: "Learning" },
 ] as const
 
-export default function ProjectMemoriesPage() {
+export default function SpaceMemoriesPage() {
   const { id } = useParams<{ id: string }>()
   const { apiKeyHash, isLoading: authLoading } = useAuth()
   const [search, setSearch] = useState("")
@@ -37,14 +37,14 @@ export default function ProjectMemoriesPage() {
   const searchResults = useQuery(
     api.memories.search,
     apiKeyHash && search.length >= 2
-      ? { apiKeyHash, query: search, projectId: id as never, type: typeArg as any }
+      ? { apiKeyHash, query: search, spaceId: id as never, type: typeArg as any }
       : "skip"
   )
 
   const allMemories = useQuery(
     api.memories.listMemories,
     apiKeyHash && search.length < 2
-      ? { apiKeyHash, projectId: id as never, type: typeArg as any }
+      ? { apiKeyHash, spaceId: id as never, type: typeArg as any }
       : "skip"
   )
 
@@ -73,7 +73,7 @@ export default function ProjectMemoriesPage() {
       source: data.source || "web-dashboard",
       type: data.type as any,
       importance: data.importance,
-      projectId: id as never,
+      spaceId: id as never,
     })
   }
 
@@ -97,7 +97,7 @@ export default function ProjectMemoriesPage() {
         <div>
           <h1 className="text-lg font-semibold tracking-tight">Memories</h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Context and decisions scoped to this project
+            Context and decisions scoped to this space
           </p>
         </div>
         <MemoryForm onSubmit={handleCreate} />

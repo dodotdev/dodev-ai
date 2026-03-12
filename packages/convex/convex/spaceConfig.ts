@@ -10,11 +10,11 @@ const statusCategoryValidator = v.union(
   v.literal("cancelled")
 )
 
-/** Update all workflow statuses for a project */
+/** Update all workflow statuses for a space */
 export const updateStatuses = mutation({
   args: {
     apiKeyHash: v.string(),
-    projectId: v.id("projects"),
+    spaceId: v.id("spaces"),
     statuses: v.array(
       v.object({
         id: v.optional(v.string()),
@@ -27,8 +27,8 @@ export const updateStatuses = mutation({
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const project = await ctx.db.get(args.projectId)
-    if (!project || project.userId !== user._id) {
+    const space = await ctx.db.get(args.spaceId)
+    if (!space || space.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
 
@@ -58,7 +58,7 @@ export const updateStatuses = mutation({
     // Clear orphaned statusId refs on tasks
     const tasks = await ctx.db
       .query("tasks")
-      .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.projectId))
+      .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.spaceId))
       .collect()
 
     for (const task of tasks) {
@@ -67,60 +67,60 @@ export const updateStatuses = mutation({
       }
     }
 
-    await ctx.db.patch(args.projectId, { statuses, updatedAt: Date.now() })
-    return await ctx.db.get(args.projectId)
+    await ctx.db.patch(args.spaceId, { statuses, updatedAt: Date.now() })
+    return await ctx.db.get(args.spaceId)
   },
 })
 
-/** Add a label to a project */
+/** Add a label to a space */
 export const addLabel = mutation({
   args: {
     apiKeyHash: v.string(),
-    projectId: v.id("projects"),
+    spaceId: v.id("spaces"),
     name: v.string(),
     color: v.string(),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const project = await ctx.db.get(args.projectId)
-    if (!project || project.userId !== user._id) {
+    const space = await ctx.db.get(args.spaceId)
+    if (!space || space.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
 
-    if ((project.labels ?? []).length >= 50) {
+    if (space.labels.length >= 50) {
       throw new ConvexError("VALIDATION_ERROR")
     }
 
     const label = { id: generateConfigId("lb"), name: args.name, color: args.color }
-    await ctx.db.patch(args.projectId, {
-      labels: [...(project.labels ?? []), label],
+    await ctx.db.patch(args.spaceId, {
+      labels: [...space.labels, label],
       updatedAt: Date.now(),
     })
     return label
   },
 })
 
-/** Remove a label from a project */
+/** Remove a label from a space */
 export const removeLabel = mutation({
   args: {
     apiKeyHash: v.string(),
-    projectId: v.id("projects"),
+    spaceId: v.id("spaces"),
     labelId: v.string(),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const project = await ctx.db.get(args.projectId)
-    if (!project || project.userId !== user._id) {
+    const space = await ctx.db.get(args.spaceId)
+    if (!space || space.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
 
-    const labels = (project.labels ?? []).filter((l) => l.id !== args.labelId)
-    await ctx.db.patch(args.projectId, { labels, updatedAt: Date.now() })
+    const labels = space.labels.filter((l) => l.id !== args.labelId)
+    await ctx.db.patch(args.spaceId, { labels, updatedAt: Date.now() })
 
     // Clear labelIds refs from tasks
     const tasks = await ctx.db
       .query("tasks")
-      .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.projectId))
+      .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.spaceId))
       .collect()
 
     for (const task of tasks) {
@@ -137,23 +137,23 @@ export const removeLabel = mutation({
   },
 })
 
-/** Update a label */
+/** Update a label in a space */
 export const updateLabel = mutation({
   args: {
     apiKeyHash: v.string(),
-    projectId: v.id("projects"),
+    spaceId: v.id("spaces"),
     labelId: v.string(),
     name: v.optional(v.string()),
     color: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const project = await ctx.db.get(args.projectId)
-    if (!project || project.userId !== user._id) {
+    const space = await ctx.db.get(args.spaceId)
+    if (!space || space.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
 
-    const labels = (project.labels ?? []).map((l) => {
+    const labels = space.labels.map((l) => {
       if (l.id !== args.labelId) return l
       return {
         ...l,
@@ -162,28 +162,28 @@ export const updateLabel = mutation({
       }
     })
 
-    await ctx.db.patch(args.projectId, { labels, updatedAt: Date.now() })
+    await ctx.db.patch(args.spaceId, { labels, updatedAt: Date.now() })
     return labels.find((l) => l.id === args.labelId)
   },
 })
 
-/** Add a member to a project */
+/** Add a member to a space */
 export const addMember = mutation({
   args: {
     apiKeyHash: v.string(),
-    projectId: v.id("projects"),
+    spaceId: v.id("spaces"),
     name: v.string(),
     role: v.string(),
     avatarUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const project = await ctx.db.get(args.projectId)
-    if (!project || project.userId !== user._id) {
+    const space = await ctx.db.get(args.spaceId)
+    if (!space || space.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
 
-    if ((project.members ?? []).length >= 50) {
+    if (space.members.length >= 50) {
       throw new ConvexError("VALIDATION_ERROR")
     }
 
@@ -193,35 +193,35 @@ export const addMember = mutation({
       role: args.role,
       avatarUrl: args.avatarUrl,
     }
-    await ctx.db.patch(args.projectId, {
-      members: [...(project.members ?? []), member],
+    await ctx.db.patch(args.spaceId, {
+      members: [...space.members, member],
       updatedAt: Date.now(),
     })
     return member
   },
 })
 
-/** Remove a member from a project */
+/** Remove a member from a space */
 export const removeMember = mutation({
   args: {
     apiKeyHash: v.string(),
-    projectId: v.id("projects"),
+    spaceId: v.id("spaces"),
     memberId: v.string(),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const project = await ctx.db.get(args.projectId)
-    if (!project || project.userId !== user._id) {
+    const space = await ctx.db.get(args.spaceId)
+    if (!space || space.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
 
-    const members = (project.members ?? []).filter((m) => m.id !== args.memberId)
-    await ctx.db.patch(args.projectId, { members, updatedAt: Date.now() })
+    const members = space.members.filter((m) => m.id !== args.memberId)
+    await ctx.db.patch(args.spaceId, { members, updatedAt: Date.now() })
 
     // Clear assigneeId refs from tasks
     const tasks = await ctx.db
       .query("tasks")
-      .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.projectId))
+      .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.spaceId))
       .collect()
 
     for (const task of tasks) {
@@ -234,11 +234,11 @@ export const removeMember = mutation({
   },
 })
 
-/** Update a member */
+/** Update a member in a space */
 export const updateMember = mutation({
   args: {
     apiKeyHash: v.string(),
-    projectId: v.id("projects"),
+    spaceId: v.id("spaces"),
     memberId: v.string(),
     name: v.optional(v.string()),
     role: v.optional(v.string()),
@@ -246,12 +246,12 @@ export const updateMember = mutation({
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const project = await ctx.db.get(args.projectId)
-    if (!project || project.userId !== user._id) {
+    const space = await ctx.db.get(args.spaceId)
+    if (!space || space.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
 
-    const members = (project.members ?? []).map((m) => {
+    const members = space.members.map((m) => {
       if (m.id !== args.memberId) return m
       return {
         ...m,
@@ -261,35 +261,33 @@ export const updateMember = mutation({
       }
     })
 
-    await ctx.db.patch(args.projectId, { members, updatedAt: Date.now() })
+    await ctx.db.patch(args.spaceId, { members, updatedAt: Date.now() })
     return members.find((m) => m.id === args.memberId)
   },
 })
 
-/** Update estimate scale for a project */
+/** Update estimate scale for a space */
 export const updateEstimateScale = mutation({
   args: {
     apiKeyHash: v.string(),
-    projectId: v.id("projects"),
+    spaceId: v.id("spaces"),
     type: v.union(v.literal("points"), v.literal("tshirt"), v.literal("hours")),
     values: v.array(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const project = await ctx.db.get(args.projectId)
-    if (!project || project.userId !== user._id) {
+    const space = await ctx.db.get(args.spaceId)
+    if (!space || space.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
 
     const estimateScale = { type: args.type, values: args.values }
 
     // If scale type changed, clear estimates from tasks
-    if (project.estimateScale?.type !== args.type) {
+    if (space.estimateScale.type !== args.type) {
       const tasks = await ctx.db
         .query("tasks")
-        .withIndex("by_user_project", (q) =>
-          q.eq("userId", user._id).eq("projectId", args.projectId)
-        )
+        .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.spaceId))
         .collect()
 
       for (const task of tasks) {
@@ -299,21 +297,21 @@ export const updateEstimateScale = mutation({
       }
     }
 
-    await ctx.db.patch(args.projectId, { estimateScale, updatedAt: Date.now() })
+    await ctx.db.patch(args.spaceId, { estimateScale, updatedAt: Date.now() })
     return estimateScale
   },
 })
 
-/** Update memory settings for a project or user */
+/** Update memory settings for a space or user */
 export const updateMemorySettings = mutation({
   args: {
     apiKeyHash: v.string(),
-    projectId: v.optional(v.id("projects")),
-    // Project-level settings
+    spaceId: v.optional(v.id("spaces")),
+    // Space-level settings
     autoCapture: v.optional(v.boolean()),
     defaultTags: v.optional(v.array(v.string())),
     memoryInstructions: v.optional(v.string()),
-    // User-level settings (only when no projectId)
+    // User-level settings (only when no spaceId)
     embeddingProvider: v.optional(v.string()),
     embeddingModel: v.optional(v.string()),
     embeddingBaseUrl: v.optional(v.string()),
@@ -322,14 +320,14 @@ export const updateMemorySettings = mutation({
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
 
-    if (args.projectId) {
-      // Update project-level memory settings
-      const project = await ctx.db.get(args.projectId)
-      if (!project || project.userId !== user._id) {
+    if (args.spaceId) {
+      // Update space-level memory settings
+      const space = await ctx.db.get(args.spaceId)
+      if (!space || space.userId !== user._id) {
         throw new ConvexError("NOT_FOUND")
       }
 
-      const existing = project.memorySettings ?? {}
+      const existing = space.memorySettings ?? {}
       const memorySettings = {
         ...existing,
         ...(args.autoCapture !== undefined ? { autoCapture: args.autoCapture } : {}),
@@ -339,7 +337,7 @@ export const updateMemorySettings = mutation({
           : {}),
       }
 
-      await ctx.db.patch(args.projectId, { memorySettings, updatedAt: Date.now() })
+      await ctx.db.patch(args.spaceId, { memorySettings, updatedAt: Date.now() })
       return { memorySettings }
     }
 
@@ -361,17 +359,17 @@ export const updateMemorySettings = mutation({
   },
 })
 
-/** Update AI persona for a project */
+/** Update AI persona for a space */
 export const updatePersona = mutation({
   args: {
     apiKeyHash: v.string(),
-    projectId: v.id("projects"),
+    spaceId: v.id("spaces"),
     systemPrompt: v.optional(v.union(v.string(), v.null())),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const project = await ctx.db.get(args.projectId)
-    if (!project || project.userId !== user._id) {
+    const space = await ctx.db.get(args.spaceId)
+    if (!space || space.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
 
@@ -380,7 +378,7 @@ export const updatePersona = mutation({
         ? { systemPrompt: args.systemPrompt.trim() }
         : undefined
 
-    await ctx.db.patch(args.projectId, { persona, updatedAt: Date.now() })
+    await ctx.db.patch(args.spaceId, { persona, updatedAt: Date.now() })
     return { persona }
   },
 })

@@ -5,7 +5,8 @@ import { authenticateApiKey } from "./lib/auth"
 export const create = mutation({
   args: {
     apiKeyHash: v.string(),
-    projectId: v.id("projects"),
+    projectId: v.optional(v.id("projects")),
+    spaceId: v.optional(v.id("spaces")),
     name: v.string(),
     description: v.optional(v.string()),
     status: v.optional(v.union(v.literal("upcoming"), v.literal("active"), v.literal("completed"))),
@@ -14,9 +15,25 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const project = await ctx.db.get(args.projectId)
-    if (!project || project.userId !== user._id) {
-      throw new ConvexError("NOT_FOUND")
+
+    if (!args.spaceId && !args.projectId) {
+      throw new ConvexError("VALIDATION_ERROR: either spaceId or projectId is required")
+    }
+
+    // Validate space if provided (takes priority)
+    if (args.spaceId) {
+      const space = await ctx.db.get(args.spaceId)
+      if (!space || space.userId !== user._id) {
+        throw new ConvexError("NOT_FOUND")
+      }
+    }
+
+    // Validate project if provided
+    if (args.projectId) {
+      const project = await ctx.db.get(args.projectId)
+      if (!project || project.userId !== user._id) {
+        throw new ConvexError("NOT_FOUND")
+      }
     }
 
     if (args.endDate <= args.startDate) {
@@ -27,6 +44,7 @@ export const create = mutation({
     const id = await ctx.db.insert("cycles", {
       userId: user._id,
       projectId: args.projectId,
+      spaceId: args.spaceId,
       name: args.name,
       description: args.description,
       status: args.status ?? "upcoming",
@@ -43,28 +61,56 @@ export const create = mutation({
 export const list = query({
   args: {
     apiKeyHash: v.string(),
-    projectId: v.id("projects"),
+    projectId: v.optional(v.id("projects")),
+    spaceId: v.optional(v.id("spaces")),
     status: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
 
-    if (args.status) {
+    // Space-based query path (preferred)
+    if (args.spaceId) {
+      if (args.status) {
+        return await ctx.db
+          .query("cycles")
+          .withIndex("by_user_space_status", (q) =>
+            q
+              .eq("userId", user._id)
+              .eq("spaceId", args.spaceId!)
+              .eq("status", args.status as "upcoming" | "active" | "completed")
+          )
+          .collect()
+      }
+
       return await ctx.db
         .query("cycles")
-        .withIndex("by_user_project_status", (q) =>
-          q
-            .eq("userId", user._id)
-            .eq("projectId", args.projectId)
-            .eq("status", args.status as "upcoming" | "active" | "completed")
+        .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.spaceId!))
+        .collect()
+    }
+
+    // Legacy project-based query path
+    if (args.projectId) {
+      if (args.status) {
+        return await ctx.db
+          .query("cycles")
+          .withIndex("by_user_project_status", (q) =>
+            q
+              .eq("userId", user._id)
+              .eq("projectId", args.projectId!)
+              .eq("status", args.status as "upcoming" | "active" | "completed")
+          )
+          .collect()
+      }
+
+      return await ctx.db
+        .query("cycles")
+        .withIndex("by_user_project", (q) =>
+          q.eq("userId", user._id).eq("projectId", args.projectId!)
         )
         .collect()
     }
 
-    return await ctx.db
-      .query("cycles")
-      .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.projectId))
-      .collect()
+    throw new ConvexError("VALIDATION_ERROR: either spaceId or projectId is required")
   },
 })
 
@@ -125,12 +171,22 @@ export const remove = mutation({
     }
 
     // Clear cycleId from referencing tasks
-    const tasks = await ctx.db
-      .query("tasks")
-      .withIndex("by_user_project_cycle", (q) =>
-        q.eq("userId", user._id).eq("projectId", cycle.projectId).eq("cycleId", args.id)
-      )
-      .collect()
+    let tasks
+    if (cycle.spaceId) {
+      tasks = await ctx.db
+        .query("tasks")
+        .withIndex("by_user_space_cycle", (q) =>
+          q.eq("userId", user._id).eq("spaceId", cycle.spaceId!).eq("cycleId", args.id)
+        )
+        .collect()
+    } else {
+      tasks = await ctx.db
+        .query("tasks")
+        .withIndex("by_user_project_cycle", (q) =>
+          q.eq("userId", user._id).eq("projectId", cycle.projectId).eq("cycleId", args.id)
+        )
+        .collect()
+    }
 
     for (const task of tasks) {
       await ctx.db.patch(task._id, { cycleId: undefined, updatedAt: Date.now() })

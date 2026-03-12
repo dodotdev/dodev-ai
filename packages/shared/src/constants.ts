@@ -9,20 +9,20 @@ export const API_KEY_LENGTH = 32
 /** Plan limits for free tier */
 export const PLAN_LIMITS: Record<
   PlanTier,
-  { tasks: number; memories: number; projects: number; issues: number; attachments: number }
+  { tasks: number; memories: number; spaces: number; issues: number; attachments: number }
 > = {
-  free: { tasks: 100, memories: 50, projects: 1, issues: 200, attachments: 50 },
+  free: { tasks: 100, memories: 50, spaces: 1, issues: 200, attachments: 50 },
   pro: {
     tasks: Infinity,
     memories: Infinity,
-    projects: Infinity,
+    spaces: Infinity,
     issues: Infinity,
     attachments: Infinity,
   },
   team: {
     tasks: Infinity,
     memories: Infinity,
-    projects: Infinity,
+    spaces: Infinity,
     issues: Infinity,
     attachments: Infinity,
   },
@@ -44,7 +44,7 @@ export const VALIDATION = {
   /** Maximum length for memory content */
   MAX_MEMORY_CONTENT_LENGTH: 10_000,
   /** Maximum length for project names */
-  MAX_PROJECT_NAME_LENGTH: 100,
+  MAX_SPACE_NAME_LENGTH: 100,
   /** Maximum number of tags per item */
   MAX_TAGS: 20,
   /** Maximum length for a single tag */

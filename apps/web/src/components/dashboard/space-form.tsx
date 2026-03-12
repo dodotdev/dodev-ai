@@ -14,18 +14,18 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
-interface ProjectFormProps {
+interface SpaceFormProps {
   onSubmit: (data: { name: string; slug?: string; description?: string }) => void
 }
 
-export function ProjectForm({ onSubmit }: ProjectFormProps) {
+export function SpaceForm({ onSubmit }: SpaceFormProps) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [slug, setSlug] = useState("")
   const [description, setDescription] = useState("")
 
-  function deriveSlug(projectName: string): string {
-    const words = projectName.trim().split(/\s+/)
+  function deriveSlug(spaceName: string): string {
+    const words = spaceName.trim().split(/\s+/)
     if (words.length >= 2) {
       return words
         .map((w) => w[0])
@@ -62,12 +62,12 @@ export function ProjectForm({ onSubmit }: ProjectFormProps) {
           className="bg-gradient-to-r from-emerald-400 to-emerald-600 text-white hover:from-emerald-500 hover:to-emerald-700"
         >
           <Plus className="mr-1 size-4" />
-          New Project
+          New Space
         </Button>
       </DialogTrigger>
       <DialogContent className="overflow-visible">
         <DialogHeader>
-          <DialogTitle>Create Project</DialogTitle>
+          <DialogTitle>Create Space</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-[1fr_auto] gap-3">
@@ -77,7 +77,7 @@ export function ProjectForm({ onSubmit }: ProjectFormProps) {
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Project name"
+                placeholder="Space name"
                 required
               />
             </div>
@@ -115,7 +115,7 @@ export function ProjectForm({ onSubmit }: ProjectFormProps) {
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What is this project about?"
+              placeholder="What is this space about?"
               rows={3}
             />
           </div>

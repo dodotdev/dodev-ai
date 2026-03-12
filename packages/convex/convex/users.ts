@@ -262,6 +262,24 @@ export const setDefaultProject = mutation({
   },
 })
 
+export const setDefaultSpace = mutation({
+  args: {
+    apiKeyHash: v.string(),
+    spaceId: v.id("spaces"),
+  },
+  handler: async (ctx, args) => {
+    const user = await authenticateApiKey(ctx, args.apiKeyHash)
+    await ctx.db.patch(user._id, {
+      settings: {
+        ...user.settings,
+        defaultSpaceId: args.spaceId,
+      } as any,
+      updatedAt: Date.now(),
+    })
+    return await ctx.db.get(user._id)
+  },
+})
+
 export const adminDeleteByWorkosId = mutation({
   args: { workosUserId: v.string() },
   handler: async (ctx, args) => {

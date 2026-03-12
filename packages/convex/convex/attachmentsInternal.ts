@@ -30,6 +30,7 @@ export const internalSave = internalMutation({
     taskId: v.optional(v.id("tasks")),
     issueId: v.optional(v.id("issues")),
     projectId: v.optional(v.id("projects")),
+    spaceId: v.optional(v.id("spaces")),
     filename: v.string(),
     mimeType: v.string(),
     size: v.number(),
@@ -42,6 +43,7 @@ export const internalSave = internalMutation({
       taskId: args.taskId,
       issueId: args.issueId,
       projectId: args.projectId,
+      spaceId: args.spaceId,
       storageId: args.storageId,
       filename: args.filename,
       mimeType: args.mimeType,
@@ -75,7 +77,10 @@ export const internalGetTaskParent = internalQuery({
   handler: async (ctx, args) => {
     const task = await ctx.db.get(args.id)
     if (!task || task.userId !== args.userId) return null
-    return { projectId: task.projectId as string | undefined }
+    return {
+      projectId: task.projectId as string | undefined,
+      spaceId: (task as any).spaceId as string | undefined,
+    }
   },
 })
 
@@ -88,7 +93,10 @@ export const internalGetIssueParent = internalQuery({
   handler: async (ctx, args) => {
     const issue = await ctx.db.get(args.id)
     if (!issue || issue.userId !== args.userId) return null
-    return { projectId: issue.projectId as string | undefined }
+    return {
+      projectId: issue.projectId as string | undefined,
+      spaceId: (issue as any).spaceId as string | undefined,
+    }
   },
 })
 
@@ -126,22 +134,25 @@ export const uploadFromBase64 = action({
       throw new ConvexError("VALIDATION_ERROR: provide only one of taskId or issueId, not both")
     }
 
-    // 3. Validate parent exists and get projectId
+    // 3. Validate parent exists and get projectId/spaceId
     let projectId: string | undefined
+    let spaceId: string | undefined
     if (args.taskId) {
       const task = (await ctx.runQuery(internal.attachmentsInternal.internalGetTaskParent, {
         id: args.taskId as any,
         userId: user._id,
-      })) as { projectId: string | undefined } | null
+      })) as { projectId: string | undefined; spaceId: string | undefined } | null
       if (!task) throw new ConvexError("NOT_FOUND")
       projectId = task.projectId
+      spaceId = task.spaceId
     } else if (args.issueId) {
       const issue = (await ctx.runQuery(internal.attachmentsInternal.internalGetIssueParent, {
         id: args.issueId as any,
         userId: user._id,
-      })) as { projectId: string | undefined } | null
+      })) as { projectId: string | undefined; spaceId: string | undefined } | null
       if (!issue) throw new ConvexError("NOT_FOUND")
       projectId = issue.projectId
+      spaceId = issue.spaceId
     }
 
     // 4. Generate upload URL
@@ -177,6 +188,7 @@ export const uploadFromBase64 = action({
       taskId: args.taskId as any,
       issueId: args.issueId as any,
       projectId: projectId as any,
+      spaceId: spaceId as any,
       filename: args.filename,
       mimeType: args.mimeType,
       size: args.size,

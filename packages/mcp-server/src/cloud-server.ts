@@ -94,10 +94,7 @@ export async function startCloudServer(): Promise<void> {
       // Return auto-refreshing HTML page with pretty-printed JSON
       // Data is server-rendered into a <pre> tag as escaped text — no client-side injection
       const jsonPretty = JSON.stringify(data, null, 2)
-      const escaped = jsonPretty
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
+      const escaped = jsonPretty.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
       res.setHeader("Content-Type", "text/html")
       res.send(`<!DOCTYPE html>
 <html>
@@ -271,7 +268,9 @@ export async function startCloudServer(): Promise<void> {
         if (agentId) {
           const existingSid = agentSessionMap.get(agentId)
           if (existingSid && existingSid !== transport.sessionId) {
-            console.error(`[mcp] Agent ${agentId} reconnected — evicting old session ${existingSid}`)
+            console.error(
+              `[mcp] Agent ${agentId} reconnected — evicting old session ${existingSid}`
+            )
             evictSession(existingSid)
           }
         }
@@ -285,7 +284,9 @@ export async function startCloudServer(): Promise<void> {
           })
           const toEvict = sorted.slice(0, userSessionSet.size - MAX_SESSIONS_PER_USER + 1)
           for (const sid of toEvict) {
-            console.error(`[mcp] Per-user limit (${MAX_SESSIONS_PER_USER}) — evicting old session ${sid} for user ${workosUserId}`)
+            console.error(
+              `[mcp] Per-user limit (${MAX_SESSIONS_PER_USER}) — evicting old session ${sid} for user ${workosUserId}`
+            )
             evictSession(sid)
           }
         }
@@ -301,7 +302,9 @@ export async function startCloudServer(): Promise<void> {
             }
           }
           if (oldestSid) {
-            console.error(`[mcp] Global max sessions (${MAX_SESSIONS}) — evicting oldest: ${oldestSid}`)
+            console.error(
+              `[mcp] Global max sessions (${MAX_SESSIONS}) — evicting oldest: ${oldestSid}`
+            )
             evictSession(oldestSid)
           }
         }

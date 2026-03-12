@@ -22,7 +22,7 @@ interface EstimateScale {
 }
 
 interface EstimateEditorProps {
-  projectId: string
+  spaceId: string
   estimateScale: EstimateScale
 }
 
@@ -38,9 +38,9 @@ const DEFAULT_VALUES: Record<string, string[]> = {
   hours: ["1h", "2h", "4h", "8h", "16h", "24h"],
 }
 
-export function EstimateEditor({ projectId, estimateScale }: EstimateEditorProps) {
+export function EstimateEditor({ spaceId, estimateScale }: EstimateEditorProps) {
   const { apiKeyHash } = useAuth()
-  const updateEstimateScale = useMutation(api.projectConfig.updateEstimateScale)
+  const updateEstimateScale = useMutation(api.spaceConfig.updateEstimateScale)
 
   const [type, setType] = useState(estimateScale.type)
   const [values, setValues] = useState<string[]>(estimateScale.values)
@@ -96,7 +96,7 @@ export function EstimateEditor({ projectId, estimateScale }: EstimateEditorProps
     try {
       await updateEstimateScale({
         apiKeyHash,
-        projectId: projectId as never,
+        spaceId: spaceId as never,
         type: type as "points" | "tshirt" | "hours",
         values: trimmedValues,
       })

@@ -13,6 +13,7 @@ export const write = mutation({
     errorMessage: v.optional(v.string()),
     durationMs: v.number(),
     projectId: v.optional(v.string()),
+    spaceId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
@@ -25,6 +26,7 @@ export const write = mutation({
       errorMessage: args.errorMessage,
       durationMs: args.durationMs,
       projectId: args.projectId,
+      spaceId: args.spaceId,
       createdAt: Date.now(),
     })
   },
@@ -34,6 +36,7 @@ export const write = mutation({
 export const list = query({
   args: {
     apiKeyHash: v.string(),
+    spaceId: v.optional(v.string()),
     projectId: v.optional(v.string()),
     limit: v.optional(v.number()),
   },
@@ -41,7 +44,18 @@ export const list = query({
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
     const limit = Math.min(args.limit ?? 50, 200)
 
-    if (args.projectId) {
+    // Prefer spaceId, fall back to projectId for backward compat
+    const filterSpaceId = args.spaceId ?? args.projectId
+
+    if (filterSpaceId) {
+      // Try space index first, fall back to project index
+      if (args.spaceId) {
+        return await ctx.db
+          .query("mcpLogs")
+          .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.spaceId))
+          .order("desc")
+          .take(limit)
+      }
       return await ctx.db
         .query("mcpLogs")
         .withIndex("by_user_project", (q) =>

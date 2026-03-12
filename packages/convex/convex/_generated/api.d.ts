@@ -26,6 +26,8 @@ import type * as oauthClients from "../oauthClients.js";
 import type * as projectConfig from "../projectConfig.js";
 import type * as projects from "../projects.js";
 import type * as sessions from "../sessions.js";
+import type * as spaceConfig from "../spaceConfig.js";
+import type * as spaces from "../spaces.js";
 import type * as tasks from "../tasks.js";
 import type * as usage from "../usage.js";
 import type * as users from "../users.js";
@@ -56,6 +58,8 @@ declare const fullApi: ApiFromModules<{
   projectConfig: typeof projectConfig;
   projects: typeof projects;
   sessions: typeof sessions;
+  spaceConfig: typeof spaceConfig;
+  spaces: typeof spaces;
   tasks: typeof tasks;
   usage: typeof usage;
   users: typeof users;

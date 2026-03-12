@@ -6,11 +6,11 @@ export const versionTools: Tool[] = [
   {
     name: "create_version",
     description:
-      "Create a new version for a project. Versions track releases and can have tasks/issues linked as changelog entries.",
+      "Create a new version for a space. Versions track releases and can have tasks/issues linked as changelog entries.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        projectId: { type: "string", description: "The project ID" },
+        spaceId: { type: "string", description: "The space ID" },
         name: { type: "string", description: 'Version name (e.g. "0.0.8", "1.0.0")' },
         description: { type: "string", description: "Version description or release notes" },
         status: {
@@ -19,23 +19,23 @@ export const versionTools: Tool[] = [
           description: 'Initial status. Default: "draft"',
         },
       },
-      required: ["projectId", "name"],
+      required: ["spaceId", "name"],
     },
   },
   {
     name: "list_versions",
-    description: "List versions for a project, optionally filtered by status.",
+    description: "List versions for a space, optionally filtered by status.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        projectId: { type: "string", description: "The project ID" },
+        spaceId: { type: "string", description: "The space ID" },
         status: {
           type: "string",
           enum: ["draft", "released"],
           description: "Filter by version status",
         },
       },
-      required: ["projectId"],
+      required: ["spaceId"],
     },
   },
   {
@@ -113,7 +113,7 @@ export async function handleVersionTool(
     case "create_version":
       return await client.mutation(api.versions.create, {
         apiKeyHash,
-        projectId: args.projectId as string,
+        spaceId: args.spaceId as string,
         name: args.name as string,
         description: args.description as string | undefined,
         status: args.status as "draft" | "released" | undefined,
@@ -122,7 +122,7 @@ export async function handleVersionTool(
     case "list_versions":
       return await client.query(api.versions.list, {
         apiKeyHash,
-        projectId: args.projectId as string,
+        spaceId: args.spaceId as string,
         status: args.status as string | undefined,
       })
 

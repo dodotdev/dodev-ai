@@ -12,13 +12,13 @@ import { Textarea } from "@/components/ui/textarea"
 const MAX_PROMPT_LENGTH = 10_000
 
 interface PersonaEditorProps {
-  projectId: string
+  spaceId: string
   persona?: { systemPrompt: string }
 }
 
-export function PersonaEditor({ projectId, persona }: PersonaEditorProps) {
+export function PersonaEditor({ spaceId, persona }: PersonaEditorProps) {
   const { apiKeyHash } = useAuth()
-  const updatePersona = useMutation(api.projectConfig.updatePersona)
+  const updatePersona = useMutation(api.spaceConfig.updatePersona)
 
   const [systemPrompt, setSystemPrompt] = useState(persona?.systemPrompt ?? "")
   const [isSaving, setIsSaving] = useState(false)
@@ -48,7 +48,7 @@ export function PersonaEditor({ projectId, persona }: PersonaEditorProps) {
     setError(null)
     setSuccessMessage(null)
     try {
-      await updatePersona({ apiKeyHash, projectId: projectId as never, systemPrompt: trimmed })
+      await updatePersona({ apiKeyHash, spaceId: spaceId as never, systemPrompt: trimmed })
       setSuccessMessage("Persona saved.")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save persona")
@@ -64,7 +64,7 @@ export function PersonaEditor({ projectId, persona }: PersonaEditorProps) {
     setError(null)
     setSuccessMessage(null)
     try {
-      await updatePersona({ apiKeyHash, projectId: projectId as never, systemPrompt: null })
+      await updatePersona({ apiKeyHash, spaceId: spaceId as never, systemPrompt: null })
       setSystemPrompt("")
       setSuccessMessage("Persona cleared.")
     } catch (err) {
@@ -82,7 +82,7 @@ export function PersonaEditor({ projectId, persona }: PersonaEditorProps) {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Define a system prompt to customize how the AI agent behaves when working on this project.
+        Define a system prompt to customize how the AI agent behaves when working on this space.
         This prompt is injected into every tool call context.
       </p>
 

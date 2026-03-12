@@ -43,21 +43,25 @@ export const save = mutation({
       throw new ConvexError("VALIDATION_ERROR: provide only one of taskId or issueId, not both")
     }
 
-    // Validate parent exists and belongs to user, extract projectId
+    // Validate parent exists and belongs to user, extract projectId/spaceId
     // biome-ignore lint/suspicious/noExplicitAny: projectId comes from parent task/issue lookup
     let projectId: any
+    // biome-ignore lint/suspicious/noExplicitAny: spaceId comes from parent task/issue lookup
+    let spaceId: any
     if (args.taskId) {
       const task = await ctx.db.get(args.taskId)
       if (!task || task.userId !== user._id) {
         throw new ConvexError("NOT_FOUND")
       }
       projectId = task.projectId
+      spaceId = (task as any).spaceId
     } else if (args.issueId) {
       const issue = await ctx.db.get(args.issueId)
       if (!issue || issue.userId !== user._id) {
         throw new ConvexError("NOT_FOUND")
       }
       projectId = issue.projectId
+      spaceId = (issue as any).spaceId
     }
 
     await checkQuota(ctx, user, "attachments")
@@ -68,6 +72,7 @@ export const save = mutation({
       taskId: args.taskId,
       issueId: args.issueId,
       projectId,
+      spaceId,
       storageId: args.storageId,
       filename: args.filename,
       mimeType: args.mimeType,

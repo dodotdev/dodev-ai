@@ -12,10 +12,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn, formatRelativeTime } from "@/lib/utils"
 
 interface VersionEditorProps {
-  projectId: string
+  spaceId: string
 }
 
-export function VersionEditor({ projectId }: VersionEditorProps) {
+export function VersionEditor({ spaceId }: VersionEditorProps) {
   const { apiKeyHash } = useAuth()
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState("")
@@ -24,7 +24,7 @@ export function VersionEditor({ projectId }: VersionEditorProps) {
 
   const versions = useQuery(
     api.versions.list,
-    apiKeyHash ? { apiKeyHash, projectId: projectId as never } : "skip"
+    apiKeyHash ? { apiKeyHash, spaceId: spaceId as never } : "skip"
   )
 
   const createVersion = useMutation(api.versions.create)
@@ -35,14 +35,14 @@ export function VersionEditor({ projectId }: VersionEditorProps) {
     if (!apiKeyHash || !newName.trim()) return
     await createVersion({
       apiKeyHash,
-      projectId: projectId as never,
+      spaceId: spaceId as never,
       name: newName.trim(),
       description: newDesc.trim() || undefined,
     })
     setNewName("")
     setNewDesc("")
     setCreating(false)
-  }, [apiKeyHash, projectId, newName, newDesc, createVersion])
+  }, [apiKeyHash, spaceId, newName, newDesc, createVersion])
 
   const handleRelease = useCallback(
     async (versionId: string) => {

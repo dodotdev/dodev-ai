@@ -28,6 +28,7 @@ export const add = mutation({
     content: v.string(),
     tags: v.optional(v.array(v.string())),
     projectId: v.optional(v.id("projects")),
+    spaceId: v.optional(v.id("spaces")),
     source: v.optional(v.string()),
     type: memoryTypeValidator,
     importance: v.optional(v.number()),
@@ -36,9 +37,15 @@ export const add = mutation({
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
     await checkQuota(ctx, user, "memories")
 
-    // Merge project's defaultTags if configured
+    // Merge defaultTags from space (preferred) or project
     let tags = args.tags ?? []
-    if (args.projectId) {
+    if (args.spaceId) {
+      const space = await ctx.db.get(args.spaceId)
+      if (space?.memorySettings?.defaultTags) {
+        const defaultTags = space.memorySettings.defaultTags
+        tags = [...new Set([...tags, ...defaultTags])]
+      }
+    } else if (args.projectId) {
       const project = await ctx.db.get(args.projectId)
       if (project?.memorySettings?.defaultTags) {
         const defaultTags = project.memorySettings.defaultTags
@@ -54,6 +61,7 @@ export const add = mutation({
     const id = await ctx.db.insert("memories", {
       userId: user._id,
       projectId: args.projectId,
+      spaceId: args.spaceId,
       content: args.content,
       tags,
       source: args.source,
@@ -79,6 +87,7 @@ export const search = query({
     apiKeyHash: v.string(),
     query: v.string(),
     projectId: v.optional(v.id("projects")),
+    spaceId: v.optional(v.id("spaces")),
     globalOnly: v.optional(v.boolean()),
     tags: v.optional(v.array(v.string())),
     limit: v.optional(v.number()),
@@ -93,7 +102,8 @@ export const search = query({
       .withSearchIndex("search_content", (q) => {
         let search = q.search("content", args.query)
         search = search.eq("userId", user._id)
-        if (args.projectId) search = search.eq("projectId", args.projectId)
+        if (args.spaceId) search = search.eq("spaceId", args.spaceId)
+        else if (args.projectId) search = search.eq("projectId", args.projectId)
         return search
       })
       .take(limit)
@@ -123,6 +133,7 @@ export const listMemories = query({
   args: {
     apiKeyHash: v.string(),
     projectId: v.optional(v.id("projects")),
+    spaceId: v.optional(v.id("spaces")),
     globalOnly: v.optional(v.boolean()),
     tags: v.optional(v.array(v.string())),
     limit: v.optional(v.number()),
@@ -133,7 +144,11 @@ export const listMemories = query({
     const limit = Math.min(args.limit ?? 20, 100)
 
     let memoryQuery
-    if (args.projectId) {
+    if (args.spaceId) {
+      memoryQuery = ctx.db
+        .query("memories")
+        .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.spaceId!))
+    } else if (args.projectId) {
       memoryQuery = ctx.db
         .query("memories")
         .withIndex("by_user_project", (q) =>
@@ -173,6 +188,7 @@ export const update = mutation({
     content: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
     projectId: v.optional(v.union(v.id("projects"), v.null())),
+    spaceId: v.optional(v.union(v.id("spaces"), v.null())),
     type: memoryTypeValidator,
     importance: v.optional(v.number()),
   },
@@ -187,6 +203,7 @@ export const update = mutation({
     if (args.content !== undefined) updates.content = args.content
     if (args.tags !== undefined) updates.tags = args.tags
     if (args.projectId !== undefined) updates.projectId = args.projectId ?? undefined
+    if (args.spaceId !== undefined) updates.spaceId = args.spaceId ?? undefined
     if (args.type !== undefined) updates.type = args.type
     if (args.importance !== undefined) {
       updates.importance = Math.max(0, Math.min(1, args.importance))
@@ -268,6 +285,7 @@ export const keywordSearch = internalQuery({
     userId: v.id("users"),
     query: v.string(),
     projectId: v.optional(v.id("projects")),
+    spaceId: v.optional(v.id("spaces")),
     type: memoryTypeValidator,
     limit: v.number(),
   },
@@ -277,7 +295,8 @@ export const keywordSearch = internalQuery({
       .withSearchIndex("search_content", (q) => {
         let search = q.search("content", args.query)
         search = search.eq("userId", args.userId)
-        if (args.projectId) search = search.eq("projectId", args.projectId)
+        if (args.spaceId) search = search.eq("spaceId", args.spaceId)
+        else if (args.projectId) search = search.eq("projectId", args.projectId)
         return search
       })
       .take(args.limit)
@@ -297,6 +316,7 @@ export const hybridSearch = action({
     apiKeyHash: v.string(),
     query: v.string(),
     projectId: v.optional(v.id("projects")),
+    spaceId: v.optional(v.id("spaces")),
     tags: v.optional(v.array(v.string())),
     type: memoryTypeValidator,
     mode: v.optional(v.union(v.literal("keyword"), v.literal("semantic"), v.literal("hybrid"))),
@@ -322,6 +342,7 @@ export const hybridSearch = action({
       importance?: number
       embedding?: number[]
       projectId?: string
+      spaceId?: string
       userId: string
       createdAt: number
       updatedAt: number
@@ -332,22 +353,24 @@ export const hybridSearch = action({
       _score: number
     }> = []
 
-    // Run keyword search
+    // Run keyword search — prefer spaceId over projectId
     if (mode === "keyword" || mode === "hybrid") {
       keywordResults = await ctx.runQuery(internal.memories.keywordSearch, {
         userId: user._id,
         query: args.query,
-        projectId: args.projectId,
+        projectId: args.spaceId ? undefined : args.projectId,
+        spaceId: args.spaceId,
         type: args.type,
         limit,
       })
 
-      // If globalScope and projectId specified, also search global memories
-      if (args.globalScope && args.projectId) {
+      // If globalScope and scoped to a space/project, also search global memories
+      if (args.globalScope && (args.spaceId || args.projectId)) {
         const globalKeyword = await ctx.runQuery(internal.memories.keywordSearch, {
           userId: user._id,
           query: args.query,
           projectId: undefined,
+          spaceId: undefined,
           type: args.type,
           limit,
         })
@@ -356,25 +379,23 @@ export const hybridSearch = action({
       }
     }
 
-    // Run vector search
+    // Run vector search — prefer spaceId over projectId
     if (mode === "semantic" || mode === "hybrid") {
       const queryEmbedding = await generateEmbedding(args.query)
       if (queryEmbedding) {
-        const filter: Record<string, unknown> = { userId: user._id }
-        if (args.projectId) filter.projectId = args.projectId
-
         vectorResults = await ctx.vectorSearch("memories", "by_embedding", {
           vector: queryEmbedding,
           limit,
           filter: (q) => {
             let f = q.eq("userId", user._id)
-            if (args.projectId) f = q.eq("projectId", args.projectId)
+            if (args.spaceId) f = q.eq("spaceId", args.spaceId)
+            else if (args.projectId) f = q.eq("projectId", args.projectId)
             return f
           },
         })
 
         // If globalScope, also search global memories
-        if (args.globalScope && args.projectId) {
+        if (args.globalScope && (args.spaceId || args.projectId)) {
           const globalVector = await ctx.vectorSearch("memories", "by_embedding", {
             vector: queryEmbedding,
             limit,

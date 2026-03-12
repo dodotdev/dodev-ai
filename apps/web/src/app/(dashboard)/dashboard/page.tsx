@@ -70,7 +70,7 @@ const memoryTypeColors: Record<string, string> = {
 export default function DashboardPage() {
   const { apiKeyHash, isLoading: authLoading } = useAuth()
 
-  const context = useQuery(api.projects.getContext, apiKeyHash ? { apiKeyHash } : "skip")
+  const context = useQuery(api.spaces.getContext, apiKeyHash ? { apiKeyHash } : "skip")
   const usage = useQuery(api.usage.getCurrentUsage, apiKeyHash ? { apiKeyHash } : "skip")
   const recentTasks = useQuery(api.tasks.list, apiKeyHash ? { apiKeyHash, limit: 10 } : "skip")
   const mcpLogs = useQuery(api.mcpLogs.list, apiKeyHash ? { apiKeyHash, limit: 25 } : "skip")
@@ -106,8 +106,8 @@ export default function DashboardPage() {
     .sort((a, b) => (priorityOrder[a.priority] ?? 9) - (priorityOrder[b.priority] ?? 9))
     .slice(0, 5)
 
-  // Active project info
-  const activeProject = context?.activeProject
+  // Active space info
+  const activeSpace = context?.activeSpace
   const activeCycle = context?.activeCycle
   const recentMemories = (context?.recentMemories ?? []).slice(0, 3)
 
@@ -263,10 +263,10 @@ export default function DashboardPage() {
           {/* Connected Agents */}
           <ConnectedAgents />
 
-          {/* Active Project Card */}
-          {activeProject ? (
-            <ActiveProjectCard
-              project={activeProject}
+          {/* Active Space Card */}
+          {activeSpace ? (
+            <ActiveSpaceCard
+              space={activeSpace}
               pending={pendingCount}
               inProgress={inProgressCount}
               completed={completedCount}
@@ -276,16 +276,16 @@ export default function DashboardPage() {
             <div className="rounded-2xl border border-border bg-white p-5 dark:bg-card">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <FolderOpen className="size-4" />
-                <span className="text-sm font-medium">No Active Project</span>
+                <span className="text-sm font-medium">No Active Space</span>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                Create a project or set one as active via the MCP server.
+                Create a space or set one as active via the MCP server.
               </p>
               <Link
-                href="/dashboard/projects"
+                href="/dashboard/spaces"
                 className="mt-3 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                Go to Projects
+                Go to Spaces
                 <ArrowRight className="size-3" />
               </Link>
             </div>
@@ -303,17 +303,17 @@ export default function DashboardPage() {
 }
 
 // ---------------------------------------------------------------------------
-// Active Project Card
+// Active Space Card
 // ---------------------------------------------------------------------------
 
-function ActiveProjectCard({
-  project,
+function ActiveSpaceCard({
+  space,
   pending,
   inProgress,
   completed,
   cycle,
 }: {
-  project: {
+  space: {
     _id: string
     name: string
     slug?: string
@@ -332,15 +332,15 @@ function ActiveProjectCard({
     <div className="rounded-2xl border border-border bg-white p-5 dark:bg-card">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold truncate">{project.name}</h3>
-          {project.slug && (
+          <h3 className="text-sm font-semibold truncate">{space.name}</h3>
+          {space.slug && (
             <Badge variant="secondary" className="mt-1 text-[10px] font-mono">
-              {project.slug}
+              {space.slug}
             </Badge>
           )}
         </div>
         <Link
-          href={`/dashboard/projects/${project._id}`}
+          href={`/dashboard/spaces/${space._id}`}
           className="shrink-0 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           Open
@@ -348,8 +348,8 @@ function ActiveProjectCard({
         </Link>
       </div>
 
-      {project.description && (
-        <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{project.description}</p>
+      {space.description && (
+        <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{space.description}</p>
       )}
 
       {/* Stats row */}

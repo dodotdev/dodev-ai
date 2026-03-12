@@ -2,43 +2,43 @@
 
 import { api } from "@dodev/convex/api"
 import { useMutation, useQuery } from "convex/react"
-import { Loader2 } from "lucide-react"
+import { Loader2, Plus } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useState } from "react"
-import { IssueForm } from "@/components/dashboard/issue-form"
 import { ItemDetailView } from "@/components/dashboard/item-detail-view"
 import { LinearListView, type ListItem } from "@/components/dashboard/linear-list-view"
-import { ProjectHeader } from "@/components/dashboard/project-header"
 import { SlideView } from "@/components/dashboard/slide-view"
+import { SpaceHeader } from "@/components/dashboard/space-header"
+import { TaskForm } from "@/components/dashboard/task-form"
 import { useAuth } from "@/components/providers/auth-provider"
 import { useUploadAttachments } from "@/hooks/use-upload-attachments"
 
-export default function ProjectIssuesPage() {
+export default function SpaceTasksPage() {
   const { id } = useParams<{ id: string }>()
   const { apiKeyHash, isLoading: authLoading } = useAuth()
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
 
-  const project = useQuery(api.projects.get, apiKeyHash ? { apiKeyHash, id: id as never } : "skip")
+  const space = useQuery(api.spaces.get, apiKeyHash ? { apiKeyHash, id: id as never } : "skip")
 
-  const issues = useQuery(
-    api.issues.list,
-    apiKeyHash ? { apiKeyHash, projectId: id as never, limit: 100 } : "skip"
+  const tasks = useQuery(
+    api.tasks.list,
+    apiKeyHash ? { apiKeyHash, spaceId: id as never, limit: 100 } : "skip"
   )
 
   // Comments query (only when item selected)
   const comments = useQuery(
     api.comments.list,
-    selectedItemId && apiKeyHash ? { apiKeyHash, issueId: selectedItemId as never } : "skip"
+    selectedItemId && apiKeyHash ? { apiKeyHash, taskId: selectedItemId as never } : "skip"
   )
 
   const versions = useQuery(
     api.versions.list,
-    apiKeyHash ? { apiKeyHash, projectId: id as never } : "skip"
+    apiKeyHash ? { apiKeyHash, spaceId: id as never } : "skip"
   )
 
-  const updateIssue = useMutation(api.issues.update)
-  const createIssue = useMutation(api.issues.create)
-  const deleteIssue = useMutation(api.issues.remove)
+  const updateTask = useMutation(api.tasks.update)
+  const createTask = useMutation(api.tasks.create)
+  const deleteTask = useMutation(api.tasks.remove)
   const createComment = useMutation(api.comments.create)
   const updateComment = useMutation(api.comments.update)
   const deleteComment = useMutation(api.comments.remove)
@@ -52,7 +52,7 @@ export default function ProjectIssuesPage() {
     )
   }
 
-  if (project === undefined || issues === undefined) {
+  if (space === undefined || tasks === undefined) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
@@ -60,15 +60,15 @@ export default function ProjectIssuesPage() {
     )
   }
 
-  const projectStatuses = project?.statuses ?? []
-  const projectLabels = project?.labels ?? []
-  const projectMembers = project?.members ?? []
+  const spaceStatuses = space?.statuses ?? []
+  const spaceLabels = space?.labels ?? []
+  const spaceMembers = space?.members ?? []
 
-  async function handleStatusChange(issueId: string, newStatus: string, statusId?: string) {
+  async function handleStatusChange(taskId: string, newStatus: string, statusId?: string) {
     if (!apiKeyHash) return
-    await updateIssue({
+    await updateTask({
       apiKeyHash,
-      id: issueId as never,
+      id: taskId as never,
       status: newStatus as "pending" | "in_progress" | "completed" | "cancelled",
       ...(statusId ? { statusId } : {}),
     })
@@ -77,8 +77,6 @@ export default function ProjectIssuesPage() {
   async function handleCreate(data: {
     title: string
     description?: string
-    type: string
-    severity: string
     priority: string
     tags?: string[]
     statusId?: string
@@ -88,22 +86,20 @@ export default function ProjectIssuesPage() {
     attachments?: File[]
   }) {
     if (!apiKeyHash) return
-    const created = await createIssue({
+    const created = await createTask({
       apiKeyHash,
       title: data.title,
       description: data.description,
-      type: data.type as "bug" | "feature" | "improvement" | "task",
-      severity: data.severity as "critical" | "major" | "minor" | "trivial",
       priority: data.priority as "low" | "medium" | "high" | "urgent",
       tags: data.tags,
-      projectId: id as never,
+      spaceId: id as never,
       statusId: data.statusId,
       labelIds: data.labelIds,
       assigneeId: data.assigneeId,
       estimate: data.estimate,
     })
     if (data.attachments?.length && created?._id) {
-      await uploadAttachments(data.attachments, { issueId: created._id as string })
+      await uploadAttachments(data.attachments, { taskId: created._id as string })
     }
   }
 
@@ -111,7 +107,7 @@ export default function ProjectIssuesPage() {
     if (!apiKeyHash || !selectedItemId) return
     await createComment({
       apiKeyHash,
-      issueId: selectedItemId as never,
+      taskId: selectedItemId as never,
       body,
       authorType: "user" as const,
     })
@@ -129,7 +125,7 @@ export default function ProjectIssuesPage() {
 
   async function handleUpdateItem(updates: Record<string, unknown>) {
     if (!apiKeyHash || !selectedItemId) return
-    await updateIssue({
+    await updateTask({
       apiKeyHash,
       id: selectedItemId as never,
       ...updates,
@@ -138,29 +134,27 @@ export default function ProjectIssuesPage() {
 
   async function handleDeleteItem() {
     if (!apiKeyHash || !selectedItemId) return
-    await deleteIssue({ apiKeyHash, id: selectedItemId as never })
+    await deleteTask({ apiKeyHash, id: selectedItemId as never })
     setSelectedItemId(null)
   }
 
   // Resolve labels and assignees for display
-  const labelMap = new Map(projectLabels.map((l) => [l.id, l]))
-  const memberMap = new Map(projectMembers.map((m) => [m.id, m]))
-  const projectSlug = project?.slug
+  const labelMap = new Map(spaceLabels.map((l) => [l.id, l]))
+  const memberMap = new Map(spaceMembers.map((m) => [m.id, m]))
+  const spaceSlug = space?.slug
 
-  const mapped: ListItem[] = (issues ?? []).map((i) => {
-    const raw = i as Record<string, unknown>
-    const issueNumber = raw.number as number | undefined
+  const mapped: ListItem[] = (tasks ?? []).map((t) => {
+    const raw = t as Record<string, unknown>
+    const taskNumber = raw.number as number | undefined
     return {
-      _id: i._id as string,
-      title: i.title,
+      _id: t._id as string,
+      title: t.title,
       description: raw.description as string | undefined,
-      status: i.status,
-      priority: i.priority,
-      type: i.type,
-      severity: i.severity,
+      status: t.status,
+      priority: t.priority,
       tags: (raw.tags as string[]) ?? [],
       dueDate: raw.dueDate as number | undefined,
-      number: issueNumber,
+      number: taskNumber,
       statusId: raw.statusId as string | undefined,
       labelIds: raw.labelIds as string[] | undefined,
       assigneeId: raw.assigneeId as string | undefined,
@@ -170,7 +164,7 @@ export default function ProjectIssuesPage() {
       versionId: raw.versionId as string | undefined,
       createdAt: (raw.createdAt ?? raw._creationTime) as number,
       updatedAt: (raw.updatedAt ?? raw._creationTime) as number,
-      issueId: projectSlug && issueNumber ? `${projectSlug}-${issueNumber}` : undefined,
+      issueId: spaceSlug && taskNumber ? `${spaceSlug}-${taskNumber}` : undefined,
       resolvedLabels: (raw.labelIds as string[] | undefined)
         ?.map((lid) => labelMap.get(lid))
         .filter(Boolean) as Array<{ id: string; name: string; color: string }> | undefined,
@@ -195,30 +189,52 @@ export default function ProjectIssuesPage() {
 
   return (
     <div className="space-y-6">
-      <ProjectHeader title="Issues" actions={<IssueForm onSubmit={handleCreate} />} />
+      <SpaceHeader
+        title="Tasks"
+        actions={
+          <TaskForm
+            onSubmit={handleCreate}
+            projectConfig={{
+              statuses: spaceStatuses,
+              labels: spaceLabels,
+              members: spaceMembers,
+              estimateScale: space?.estimateScale,
+            }}
+            trigger={
+              <button
+                type="button"
+                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                title="New task"
+              >
+                <Plus className="size-4" />
+              </button>
+            }
+          />
+        }
+      />
 
       <SlideView
         showDetail={!!selectedItem}
         listContent={
           <LinearListView
             items={mapped}
-            statuses={projectStatuses}
+            statuses={spaceStatuses}
             onStatusChange={handleStatusChange}
             onItemClick={(item) => setSelectedItemId(item._id)}
-            emptyMessage="No issues yet. Create one from the MCP server or the form above."
-            storageKey={`issues:${id}`}
+            emptyMessage="No tasks yet. Create one from the MCP server or the form above."
+            storageKey={`tasks:${id}`}
           />
         }
         detailContent={
           selectedItem ? (
             <ItemDetailView
               item={selectedItem}
-              projectSlug={projectSlug}
+              projectSlug={spaceSlug}
               projectConfig={{
-                statuses: projectStatuses,
-                labels: projectLabels,
-                members: projectMembers,
-                estimateScale: project?.estimateScale,
+                statuses: spaceStatuses,
+                labels: spaceLabels,
+                members: spaceMembers,
+                estimateScale: space?.estimateScale,
               }}
               versions={(versions ?? []).map((v) => ({
                 _id: v._id as string,

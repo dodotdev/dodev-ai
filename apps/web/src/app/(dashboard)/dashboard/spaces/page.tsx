@@ -3,20 +3,17 @@
 import { api } from "@dodev/convex/api"
 import { useMutation, useQuery } from "convex/react"
 import { Loader2 } from "lucide-react"
-import { ProjectCards } from "@/components/dashboard/project-cards"
-import { ProjectForm } from "@/components/dashboard/project-form"
+import { SpaceCards } from "@/components/dashboard/space-cards"
+import { SpaceForm } from "@/components/dashboard/space-form"
 import { useAuth } from "@/components/providers/auth-provider"
 
-export default function ProjectsPage() {
+export default function SpacesPage() {
   const { apiKeyHash, isLoading: authLoading } = useAuth()
 
-  const projects = useQuery(
-    api.projects.list,
-    apiKeyHash ? { apiKeyHash, includeStats: true } : "skip"
-  )
+  const spaces = useQuery(api.spaces.list, apiKeyHash ? { apiKeyHash, includeStats: true } : "skip")
 
-  const createProject = useMutation(api.projects.create)
-  const archiveProject = useMutation(api.projects.archive)
+  const createSpace = useMutation(api.spaces.create)
+  const archiveSpace = useMutation(api.spaces.archive)
 
   if (authLoading || !apiKeyHash) {
     return (
@@ -28,7 +25,7 @@ export default function ProjectsPage() {
 
   async function handleCreate(data: { name: string; slug?: string; description?: string }) {
     if (!apiKeyHash) return
-    await createProject({
+    await createSpace({
       apiKeyHash,
       name: data.name,
       slug: data.slug,
@@ -38,23 +35,23 @@ export default function ProjectsPage() {
 
   async function handleArchive(id: string) {
     if (!apiKeyHash) return
-    await archiveProject({
+    await archiveSpace({
       apiKeyHash,
       id: id as never, // Convex ID type
     })
   }
 
-  const mapped = (projects ?? []).map((t) => ({
-    _id: t._id as string,
-    name: t.name,
-    description: t.description,
-    status: t.status,
-    createdAt: t.createdAt,
-    updatedAt: t.updatedAt,
+  const mapped = (spaces ?? []).map((s) => ({
+    _id: s._id as string,
+    name: s.name,
+    description: s.description,
+    status: s.status,
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
     stats:
-      "stats" in t
+      "stats" in s
         ? (
-            t as {
+            s as {
               stats: {
                 totalTasks: number
                 pendingTasks: number
@@ -71,13 +68,13 @@ export default function ProjectsPage() {
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Organize work by project context</p>
+          <h1 className="text-2xl font-bold tracking-tight">Spaces</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Organize work by space context</p>
         </div>
-        <ProjectForm onSubmit={handleCreate} />
+        <SpaceForm onSubmit={handleCreate} />
       </div>
 
-      <ProjectCards projects={mapped} onArchive={handleArchive} />
+      <SpaceCards spaces={mapped} onArchive={handleArchive} />
     </div>
   )
 }

@@ -37,21 +37,21 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]["key"]
 
-export function ProjectHeader({ title, actions }: { title: string; actions?: React.ReactNode }) {
+export function SpaceHeader({ title, actions }: { title: string; actions?: React.ReactNode }) {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const { apiKeyHash } = useAuth()
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  const project = useQuery(api.projects.get, apiKeyHash ? { apiKeyHash, id: id as never } : "skip")
+  const space = useQuery(api.spaces.get, apiKeyHash ? { apiKeyHash, id: id as never } : "skip")
 
   useEffect(() => {
-    if (project === null) {
+    if (space === null) {
       router.replace("/dashboard")
     }
-  }, [project, router])
+  }, [space, router])
 
-  if (!project) return null
+  if (!space) return null
 
   return (
     <>
@@ -63,7 +63,7 @@ export function ProjectHeader({ title, actions }: { title: string; actions?: Rea
             type="button"
             onClick={() => setSettingsOpen(true)}
             className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            title="Project settings"
+            title="Space settings"
           >
             <Settings className="size-4" />
           </button>
@@ -71,18 +71,18 @@ export function ProjectHeader({ title, actions }: { title: string; actions?: Rea
       </div>
 
       {settingsOpen && (
-        <ProjectSettingsModal projectId={id} open={settingsOpen} onOpenChange={setSettingsOpen} />
+        <SpaceSettingsModal spaceId={id} open={settingsOpen} onOpenChange={setSettingsOpen} />
       )}
     </>
   )
 }
 
-function ProjectSettingsModal({
-  projectId,
+function SpaceSettingsModal({
+  spaceId,
   open,
   onOpenChange,
 }: {
-  projectId: string
+  spaceId: string
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
@@ -92,14 +92,11 @@ function ProjectSettingsModal({
   const [confirmAction, setConfirmAction] = useState<"archive" | "delete" | null>(null)
   const [saving, setSaving] = useState(false)
 
-  const project = useQuery(
-    api.projects.get,
-    apiKeyHash ? { apiKeyHash, id: projectId as never } : "skip"
-  )
+  const space = useQuery(api.spaces.get, apiKeyHash ? { apiKeyHash, id: spaceId as never } : "skip")
 
-  const updateProject = useMutation(api.projects.update)
-  const archiveProject = useMutation(api.projects.archive)
-  const deleteProject = useMutation(api.projects.remove)
+  const updateSpace = useMutation(api.spaces.update)
+  const archiveSpace = useMutation(api.spaces.archive)
+  const deleteSpace = useMutation(api.spaces.remove)
 
   const [editName, setEditName] = useState("")
   const [editSlug, setEditSlug] = useState("")
@@ -107,11 +104,11 @@ function ProjectSettingsModal({
   const [slugError, setSlugError] = useState<string | null>(null)
   const [initialized, setInitialized] = useState(false)
 
-  // Init form values from project data
-  if (project && !initialized) {
-    setEditName(project.name)
-    setEditSlug((project.slug as string) ?? "")
-    setEditDescription((project.description as string) ?? "")
+  // Init form values from space data
+  if (space && !initialized) {
+    setEditName(space.name)
+    setEditSlug((space.slug as string) ?? "")
+    setEditDescription((space.description as string) ?? "")
     setInitialized(true)
   }
 
@@ -120,9 +117,9 @@ function ProjectSettingsModal({
     setSlugError(null)
     setSaving(true)
     try {
-      await updateProject({
+      await updateSpace({
         apiKeyHash,
-        id: projectId as never,
+        id: spaceId as never,
         name: editName.trim(),
         slug:
           editSlug
@@ -145,7 +142,7 @@ function ProjectSettingsModal({
     if (!apiKeyHash) return
     setSaving(true)
     try {
-      await archiveProject({ apiKeyHash, id: projectId as never })
+      await archiveSpace({ apiKeyHash, id: spaceId as never })
       onOpenChange(false)
       router.push("/dashboard")
     } finally {
@@ -157,7 +154,7 @@ function ProjectSettingsModal({
     if (!apiKeyHash) return
     setSaving(true)
     try {
-      await deleteProject({ apiKeyHash, id: projectId as never })
+      await deleteSpace({ apiKeyHash, id: spaceId as never })
       onOpenChange(false)
       router.push("/dashboard")
     } finally {
@@ -165,7 +162,7 @@ function ProjectSettingsModal({
     }
   }
 
-  if (!project) {
+  if (!space) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-3xl">
@@ -181,8 +178,8 @@ function ProjectSettingsModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl h-[640px] overflow-hidden p-0">
         <DialogHeader className="sr-only">
-          <DialogTitle>Project Settings</DialogTitle>
-          <DialogDescription>Manage project configuration</DialogDescription>
+          <DialogTitle>Space Settings</DialogTitle>
+          <DialogDescription>Manage space configuration</DialogDescription>
         </DialogHeader>
 
         <div className="flex h-full">
@@ -221,7 +218,7 @@ function ProjectSettingsModal({
                   <div>
                     <h3 className="text-lg font-semibold">General</h3>
                     <p className="text-sm text-muted-foreground">
-                      Project name, description, and lifecycle
+                      Space name, description, and lifecycle
                     </p>
                   </div>
 
@@ -287,28 +284,28 @@ function ProjectSettingsModal({
               )}
 
               {activeTab === "workflow" && (
-                <StatusEditor projectId={projectId} statuses={project.statuses ?? []} />
+                <StatusEditor spaceId={spaceId} statuses={space.statuses ?? []} />
               )}
 
               {activeTab === "labels" && (
-                <LabelEditor projectId={projectId} labels={project.labels ?? []} />
+                <LabelEditor spaceId={spaceId} labels={space.labels ?? []} />
               )}
 
               {activeTab === "members" && (
-                <MemberEditor projectId={projectId} members={project.members ?? []} />
+                <MemberEditor spaceId={spaceId} members={space.members ?? []} />
               )}
 
               {activeTab === "estimates" && (
                 <EstimateEditor
-                  projectId={projectId}
-                  estimateScale={project.estimateScale ?? { type: "points", values: [] }}
+                  spaceId={spaceId}
+                  estimateScale={space.estimateScale ?? { type: "points", values: [] }}
                 />
               )}
 
-              {activeTab === "versions" && <VersionEditor projectId={projectId} />}
+              {activeTab === "versions" && <VersionEditor spaceId={spaceId} />}
 
               {activeTab === "persona" && (
-                <PersonaEditor projectId={projectId} persona={project.persona} />
+                <PersonaEditor spaceId={spaceId} persona={space.persona} />
               )}
             </div>
 
@@ -323,7 +320,7 @@ function ProjectSettingsModal({
                   {confirmAction === "archive" ? (
                     <div className="space-y-3">
                       <p className="text-sm text-muted-foreground">
-                        Archive <span className="font-medium text-foreground">{project.name}</span>?
+                        Archive <span className="font-medium text-foreground">{space.name}</span>?
                         It will be hidden but can be restored later.
                       </p>
                       <div className="flex gap-2">
@@ -349,7 +346,7 @@ function ProjectSettingsModal({
                     <div className="space-y-3">
                       <p className="text-sm text-muted-foreground">
                         Permanently delete{" "}
-                        <span className="font-medium text-foreground">{project.name}</span> and all
+                        <span className="font-medium text-foreground">{space.name}</span> and all
                         its tasks, issues, and memories? This cannot be undone.
                       </p>
                       <div className="flex gap-2">
@@ -379,7 +376,7 @@ function ProjectSettingsModal({
                         onClick={() => setConfirmAction("delete")}
                       >
                         <Trash2 className="mr-1.5 size-3.5" />
-                        Delete Project
+                        Delete Space
                       </Button>
                       <Button
                         variant="outline"
@@ -387,7 +384,7 @@ function ProjectSettingsModal({
                         onClick={() => setConfirmAction("archive")}
                       >
                         <Archive className="mr-1.5 size-3.5" />
-                        Archive Project
+                        Archive Space
                       </Button>
                     </div>
                   )}

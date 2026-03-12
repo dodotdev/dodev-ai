@@ -6,13 +6,13 @@ import { getAuthContext } from "./auth/auth-context.js"
 import { api, getConvexClient } from "./convex-client.js"
 import { attachmentTools, handleAttachmentTool } from "./tools/attachments.js"
 import { commentTools, handleCommentTool } from "./tools/comments.js"
-import { configTools, handleConfigTool } from "./tools/config.js"
 import { contextTools, handleContextTool } from "./tools/context.js"
 import { cycleTools, handleCycleTool } from "./tools/cycles.js"
 import { handleIssueTool, issueTools } from "./tools/issues.js"
 import { handleLinkingTool, linkingTools } from "./tools/linking.js"
 import { handleMemoryTool, memoryTools } from "./tools/memories.js"
-import { handleProjectTool, projectTools } from "./tools/projects.js"
+import { handleSpaceConfigTool, spaceConfigTools } from "./tools/space-config.js"
+import { handleSpaceTool, spaceTools } from "./tools/spaces.js"
 import { handleTaskTool, taskTools } from "./tools/tasks.js"
 import { handleVersionTool, versionTools } from "./tools/versions.js"
 
@@ -23,9 +23,9 @@ const allTools = [
   ...taskTools,
   ...issueTools,
   ...memoryTools,
-  ...projectTools,
+  ...spaceTools,
   ...contextTools,
-  ...configTools,
+  ...spaceConfigTools,
   ...cycleTools,
   ...linkingTools,
   ...attachmentTools,
@@ -36,9 +36,9 @@ const allTools = [
 const taskToolNames = new Set(taskTools.map((t) => t.name))
 const issueToolNames = new Set(issueTools.map((t) => t.name))
 const memoryToolNames = new Set(memoryTools.map((t) => t.name))
-const projectToolNames = new Set(projectTools.map((t) => t.name))
+const spaceToolNames = new Set(spaceTools.map((t) => t.name))
 const contextToolNames = new Set(contextTools.map((t) => t.name))
-const configToolNames = new Set(configTools.map((t) => t.name))
+const spaceConfigToolNames = new Set(spaceConfigTools.map((t) => t.name))
 const cycleToolNames = new Set(cycleTools.map((t) => t.name))
 const linkingToolNames = new Set(linkingTools.map((t) => t.name))
 const attachmentToolNames = new Set(attachmentTools.map((t) => t.name))
@@ -63,7 +63,7 @@ function writeLog(
   try {
     const apiKeyHash = getApiKeyHash()
     const client = getConvexClient()
-    const projectId = (args.projectId as string) || undefined
+    const spaceId = (args.spaceId as string) || undefined
     client
       .mutation(api.mcpLogs.write, {
         apiKeyHash,
@@ -71,7 +71,7 @@ function writeLog(
         args: sanitizeArgs(args),
         status,
         durationMs,
-        projectId,
+        spaceId,
         errorCode,
         errorMessage,
       })
@@ -161,12 +161,12 @@ export function createServer(): Server {
         result = await handleIssueTool(name, toolArgs)
       } else if (memoryToolNames.has(name)) {
         result = await handleMemoryTool(name, toolArgs)
-      } else if (projectToolNames.has(name)) {
-        result = await handleProjectTool(name, toolArgs)
+      } else if (spaceToolNames.has(name)) {
+        result = await handleSpaceTool(name, toolArgs)
       } else if (contextToolNames.has(name)) {
         result = await handleContextTool(name, toolArgs)
-      } else if (configToolNames.has(name)) {
-        result = await handleConfigTool(name, toolArgs)
+      } else if (spaceConfigToolNames.has(name)) {
+        result = await handleSpaceConfigTool(name, toolArgs)
       } else if (cycleToolNames.has(name)) {
         result = await handleCycleTool(name, toolArgs)
       } else if (linkingToolNames.has(name)) {

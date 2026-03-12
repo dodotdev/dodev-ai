@@ -15,6 +15,7 @@ export const create = mutation({
       v.union(v.literal("critical"), v.literal("major"), v.literal("minor"), v.literal("trivial"))
     ),
     projectId: v.optional(v.id("projects")),
+    spaceId: v.optional(v.id("spaces")),
     dueDate: v.optional(v.number()),
     tags: v.optional(v.array(v.string())),
     statusId: v.optional(v.string()),
@@ -30,19 +31,30 @@ export const create = mutation({
     await checkQuota(ctx, user, "tasks")
 
     // Derive base status category from statusId if provided
+    // Prefer spaceId over projectId for status lookup
     let status: "pending" | "in_progress" | "completed" | "cancelled" = "pending"
+    let space = null
     let project = null
-    if (args.projectId) {
+    if (args.spaceId) {
+      space = await ctx.db.get(args.spaceId)
+      if (args.statusId && space) {
+        const ws = space.statuses.find((s) => s.id === args.statusId)
+        if (ws) status = ws.category
+      }
+    } else if (args.projectId) {
       project = await ctx.db.get(args.projectId)
       if (args.statusId && project) {
-        const ws = project.statuses.find((s) => s.id === args.statusId)
+        const ws = project.statuses?.find((s) => s.id === args.statusId)
         if (ws) status = ws.category
       }
     }
 
-    // Auto-increment shared per-project counter (fall back to global user counter for unscoped tasks)
+    // Auto-increment shared counter (space > project > global user)
     let nextNumber: number
-    if (project) {
+    if (space) {
+      nextNumber = (space.itemCounter ?? 0) + 1
+      await ctx.db.patch(args.spaceId!, { itemCounter: nextNumber })
+    } else if (project) {
       nextNumber = (project.itemCounter ?? 0) + 1
       await ctx.db.patch(args.projectId!, { itemCounter: nextNumber })
     } else {
@@ -54,6 +66,7 @@ export const create = mutation({
     const id = await ctx.db.insert("tasks", {
       userId: user._id,
       projectId: args.projectId,
+      spaceId: args.spaceId,
       number: nextNumber,
       title: args.title,
       description: args.description,
@@ -107,6 +120,7 @@ export const update = mutation({
     dueDate: v.optional(v.union(v.number(), v.null())),
     tags: v.optional(v.array(v.string())),
     projectId: v.optional(v.union(v.id("projects"), v.null())),
+    spaceId: v.optional(v.union(v.id("spaces"), v.null())),
     statusId: v.optional(v.union(v.string(), v.null())),
     labelIds: v.optional(v.union(v.array(v.string()), v.null())),
     assigneeId: v.optional(v.union(v.string(), v.null())),
@@ -127,18 +141,32 @@ export const update = mutation({
     if (args.description !== undefined) updates.description = args.description
 
     // When statusId changes, derive the base status category
+    // Prefer spaceId over projectId for status lookup
     if (args.statusId !== undefined) {
       if (args.statusId === null) {
         updates.statusId = undefined
       } else {
         updates.statusId = args.statusId
-        // Look up project to derive category
+        // Resolve space first, then project
+        const spaceId = args.spaceId !== undefined ? (args.spaceId ?? undefined) : task.spaceId
         const projectId =
           args.projectId !== undefined ? (args.projectId ?? undefined) : task.projectId
-        if (projectId) {
+        let derived = false
+        if (spaceId) {
+          const space = await ctx.db.get(spaceId)
+          if (space) {
+            const ws = space.statuses.find((s) => s.id === args.statusId)
+            if (ws) {
+              updates.status = ws.category
+              if (ws.category === "completed") updates.completedAt = Date.now()
+              derived = true
+            }
+          }
+        }
+        if (!derived && projectId) {
           const project = await ctx.db.get(projectId)
           if (project) {
-            const ws = project.statuses.find((s) => s.id === args.statusId)
+            const ws = project.statuses?.find((s) => s.id === args.statusId)
             if (ws) {
               updates.status = ws.category
               if (ws.category === "completed") updates.completedAt = Date.now()
@@ -159,6 +187,7 @@ export const update = mutation({
     if (args.dueDate !== undefined) updates.dueDate = args.dueDate ?? undefined
     if (args.tags !== undefined) updates.tags = args.tags
     if (args.projectId !== undefined) updates.projectId = args.projectId ?? undefined
+    if (args.spaceId !== undefined) updates.spaceId = args.spaceId ?? undefined
     if (args.labelIds !== undefined) updates.labelIds = args.labelIds ?? undefined
     if (args.assigneeId !== undefined) updates.assigneeId = args.assigneeId ?? undefined
     if (args.estimate !== undefined) updates.estimate = args.estimate ?? undefined
@@ -211,6 +240,7 @@ export const list = query({
   args: {
     apiKeyHash: v.string(),
     projectId: v.optional(v.id("projects")),
+    spaceId: v.optional(v.id("spaces")),
     globalOnly: v.optional(v.boolean()),
     status: v.optional(v.string()),
     statusId: v.optional(v.string()),
@@ -229,7 +259,8 @@ export const list = query({
         .withSearchIndex("search_title_description", (q) => {
           let search = q.search("title", args.search!)
           search = search.eq("userId", user._id)
-          if (args.projectId) search = search.eq("projectId", args.projectId)
+          if (args.spaceId) search = search.eq("spaceId", args.spaceId)
+          else if (args.projectId) search = search.eq("projectId", args.projectId)
           return search
         })
         .take(limit)
@@ -248,10 +279,27 @@ export const list = query({
       return results
     }
 
-    // Index-based query
+    // Index-based query — prefer spaceId indexes over projectId indexes
     let taskQuery
-    if (args.projectId && args.statusId) {
-      // Filter by specific workflow status (e.g. "Backlog", "In Progress", "In Review")
+    if (args.spaceId && args.statusId) {
+      taskQuery = ctx.db
+        .query("tasks")
+        .withIndex("by_user_space_statusId", (q) =>
+          q.eq("userId", user._id).eq("spaceId", args.spaceId!).eq("statusId", args.statusId!)
+        )
+    } else if (args.spaceId && args.status) {
+      taskQuery = ctx.db.query("tasks").withIndex("by_user_space_status", (q) =>
+        q
+          .eq("userId", user._id)
+          .eq("spaceId", args.spaceId!)
+          .eq("status", args.status as "pending" | "in_progress" | "completed" | "cancelled")
+      )
+    } else if (args.spaceId) {
+      taskQuery = ctx.db
+        .query("tasks")
+        .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.spaceId!))
+    } else if (args.projectId && args.statusId) {
+      // Legacy projectId path
       taskQuery = ctx.db
         .query("tasks")
         .withIndex("by_user_project_statusId", (q) =>

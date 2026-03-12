@@ -13,8 +13,8 @@ export type Severity = "critical" | "major" | "minor" | "trivial"
 /** Issue type categories */
 export type IssueType = "bug" | "feature" | "improvement" | "task"
 
-/** Lifecycle status of a project */
-export type ProjectLifecycle = "active" | "paused" | "completed" | "archived"
+/** Lifecycle status of a space */
+export type SpaceLifecycle = "active" | "paused" | "completed" | "archived"
 
 /** Subscription plan tiers */
 export type PlanTier = "free" | "pro" | "team"
@@ -37,14 +37,14 @@ export interface UserMemorySettings {
   embeddingApiKey?: string
 }
 
-/** Project-level memory settings */
-export interface ProjectMemorySettings {
+/** Space-level memory settings */
+export interface SpaceMemorySettings {
   autoCapture?: boolean
   defaultTags?: string[]
   memoryInstructions?: string
 }
 
-/** A custom workflow status within a project */
+/** A custom workflow status within a space */
 export interface WorkflowStatus {
   id: string
   name: string
@@ -54,14 +54,14 @@ export interface WorkflowStatus {
 }
 
 /** A colored label for categorizing tasks */
-export interface ProjectLabel {
+export interface SpaceLabel {
   id: string
   name: string
   color: string
 }
 
-/** A member within a project */
-export interface ProjectMember {
+/** A member within a space */
+export interface SpaceMember {
   id: string
   name: string
   role: string
@@ -77,18 +77,18 @@ export interface EstimateScale {
   values: string[]
 }
 
-/** AI persona configuration for a project */
-export interface ProjectPersona {
+/** AI persona configuration for a space */
+export interface SpacePersona {
   systemPrompt: string
 }
 
-/** Full project configuration (embedded on project document) */
-export interface ProjectConfig {
+/** Full space configuration (embedded on space document) */
+export interface SpaceConfig {
   statuses: WorkflowStatus[]
-  labels: ProjectLabel[]
-  members: ProjectMember[]
+  labels: SpaceLabel[]
+  members: SpaceMember[]
   estimateScale: EstimateScale
-  persona?: ProjectPersona
+  persona?: SpacePersona
 }
 
 /** Cycle status */
@@ -98,7 +98,7 @@ export type CycleStatus = "upcoming" | "active" | "completed"
 export interface Cycle {
   _id: string
   userId: string
-  projectId: string
+  spaceId: string
   name: string
   description?: string
   status: CycleStatus
@@ -112,7 +112,7 @@ export interface Cycle {
 export interface Task {
   _id: string
   userId: string
-  projectId?: string
+  spaceId?: string
   number?: number
   title: string
   description?: string
@@ -135,7 +135,7 @@ export interface Task {
 export interface Issue {
   _id: string
   userId: string
-  projectId?: string
+  spaceId?: string
   number?: number
   title: string
   description?: string
@@ -159,7 +159,7 @@ export interface Issue {
 export interface Memory {
   _id: string
   userId: string
-  projectId?: string
+  spaceId?: string
   content: string
   summary?: string
   tags: string[]
@@ -177,7 +177,7 @@ export interface Attachment {
   userId: string
   taskId?: string
   issueId?: string
-  projectId?: string
+  spaceId?: string
   storageId: string
   filename: string
   mimeType: string
@@ -194,7 +194,7 @@ export interface Comment {
   userId: string
   taskId?: string
   issueId?: string
-  projectId?: string
+  spaceId?: string
   parentId?: string
   body: string
   authorName?: string
@@ -203,32 +203,32 @@ export interface Comment {
   updatedAt: number
 }
 
-/** Project as returned from Convex */
-export interface Project {
+/** Space as returned from Convex */
+export interface Space {
   _id: string
   userId: string
   name: string
   slug: string
   description?: string
-  status: ProjectLifecycle
+  status: SpaceLifecycle
   taskCounter: number
   issueCounter: number
   metadata?: Record<string, unknown>
   statuses: WorkflowStatus[]
-  labels: ProjectLabel[]
-  members: ProjectMember[]
+  labels: SpaceLabel[]
+  members: SpaceMember[]
   estimateScale: EstimateScale
-  persona?: ProjectPersona
+  persona?: SpacePersona
   linkedPaths?: string[]
   linkedRepos?: string[]
-  memorySettings?: ProjectMemorySettings
+  memorySettings?: SpaceMemorySettings
   createdAt: number
   updatedAt: number
 }
 
 /** User settings */
 export interface UserSettings {
-  defaultProjectId?: string
+  defaultSpaceId?: string
   timezone?: string
 }
 
@@ -250,12 +250,12 @@ export interface User {
   updatedAt: number
 }
 
-/** Session state for active project tracking */
+/** Session state for active space tracking */
 export interface Session {
   _id: string
   userId: string
   agentId: string
-  activeProjectId?: string
+  activeSpaceId?: string
   lastActiveAt: number
 }
 
@@ -266,13 +266,13 @@ export interface Usage {
   period: string
   taskCount: number
   memoryCount: number
-  projectCount: number
+  spaceCount: number
   issueCount: number
   apiCalls: number
 }
 
-/** Project with stats (from list_projects with includeStats) */
-export interface ProjectWithStats extends Project {
+/** Space with stats (from list_spaces with includeStats) */
+export interface SpaceWithStats extends Space {
   stats: {
     totalTasks: number
     pendingTasks: number
@@ -284,7 +284,7 @@ export interface ProjectWithStats extends Project {
 
 /** Context response from get_context */
 export interface ContextResponse {
-  activeProject: Project | null
+  activeSpace: Space | null
   taskSummary: {
     pending: number
     inProgress: number
@@ -292,18 +292,18 @@ export interface ContextResponse {
   }
   recentMemories: Memory[]
   memories?: {
-    project: Memory[]
+    space: Memory[]
     global: Memory[]
   }
-  projects: Array<{ id: string; name: string }>
-  persona?: ProjectPersona
-  projectConfig?: ProjectConfig
+  spaces: Array<{ id: string; name: string }>
+  persona?: SpacePersona
+  spaceConfig?: SpaceConfig
   activeCycle?: Cycle
-  memorySettings?: ProjectMemorySettings
+  memorySettings?: SpaceMemorySettings
   workspace?: {
     detectedPath?: string
     detectedRepo?: string
-    resolvedProjectId?: string
+    resolvedSpaceId?: string
   }
 }
 

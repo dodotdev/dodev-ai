@@ -22,10 +22,12 @@ export const create = mutation({
 
     let taskId = args.taskId
     let issueId = args.issueId
-    // biome-ignore lint/suspicious/noExplicitAny: projectId comes from parent task/issue/comment lookup
+    // biome-ignore lint/suspicious/noExplicitAny: projectId/spaceId come from parent task/issue/comment lookup
     let projectId: any
+    // biome-ignore lint/suspicious/noExplicitAny: spaceId comes from parent task/issue/comment lookup
+    let spaceId: any
 
-    // If parentId is provided, inherit taskId/issueId/projectId from parent
+    // If parentId is provided, inherit taskId/issueId/projectId/spaceId from parent
     if (args.parentId) {
       const parent = await ctx.db.get(args.parentId)
       if (!parent || parent.userId !== user._id) {
@@ -34,6 +36,7 @@ export const create = mutation({
       taskId = parent.taskId
       issueId = parent.issueId
       projectId = parent.projectId
+      spaceId = (parent as any).spaceId
     }
 
     // Validate exactly one of taskId/issueId is present
@@ -44,7 +47,7 @@ export const create = mutation({
       throw new ConvexError("VALIDATION_ERROR: provide only one of taskId or issueId, not both")
     }
 
-    // Validate parent task/issue exists and belongs to user, derive projectId
+    // Validate parent task/issue exists and belongs to user, derive projectId/spaceId
     if (taskId) {
       const task = await ctx.db.get(taskId)
       if (!task || task.userId !== user._id) {
@@ -52,6 +55,7 @@ export const create = mutation({
       }
       if (!args.parentId) {
         projectId = task.projectId
+        spaceId = (task as any).spaceId
       }
     } else if (issueId) {
       const issue = await ctx.db.get(issueId)
@@ -60,6 +64,7 @@ export const create = mutation({
       }
       if (!args.parentId) {
         projectId = issue.projectId
+        spaceId = (issue as any).spaceId
       }
     }
 
@@ -69,6 +74,7 @@ export const create = mutation({
       taskId,
       issueId,
       projectId,
+      spaceId,
       parentId: args.parentId,
       body: args.body,
       authorName: args.authorName,

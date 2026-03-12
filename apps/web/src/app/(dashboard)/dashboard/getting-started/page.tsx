@@ -35,7 +35,7 @@ const CLIENT_TABS: { id: ClientTab; label: string }[] = [
 const ESSENTIAL_COMMANDS = [
   {
     command: "get_context",
-    description: "Load your project context at the start of each session",
+    description: "Load your space context at the start of each session",
   },
   {
     command: "create_task",
@@ -428,15 +428,15 @@ function AuthenticateStep() {
 }
 
 // ---------------------------------------------------------------------------
-// Step 3: Create Project
+// Step 3: Create Space
 // ---------------------------------------------------------------------------
 
-function CreateProjectStep() {
+function CreateSpaceStep() {
   return (
     <div>
       <p className="text-sm text-muted-foreground">
-        Once connected, tell your AI agent to create a project. Projects organize your tasks,
-        issues, and memories.
+        Once connected, tell your AI agent to create a space. Spaces organize your tasks, issues,
+        and memories.
       </p>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -451,13 +451,13 @@ function CreateProjectStep() {
           </p>
           <div className="mt-3 rounded-lg border border-emerald-200 bg-white px-4 py-3 dark:border-emerald-800 dark:bg-zinc-900">
             <p className="text-sm italic text-foreground">
-              &ldquo;Create a dodev project called My App&rdquo;
+              &ldquo;Create a dodev space called My App&rdquo;
             </p>
           </div>
           <p className="mt-2 text-[11px] text-muted-foreground">
             The agent will call{" "}
             <code className="rounded bg-zinc-100 px-1 py-0.5 font-mono dark:bg-zinc-800">
-              create_project
+              create_space
             </code>{" "}
             via MCP automatically.
           </p>
@@ -470,13 +470,13 @@ function CreateProjectStep() {
             <h3 className="text-sm font-medium">From Dashboard</h3>
           </div>
           <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-            Or use the Projects page to create and configure your first project with a UI.
+            Or use the Spaces page to create and configure your first space with a UI.
           </p>
           <Link
-            href="/dashboard/projects"
+            href="/dashboard/spaces"
             className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-medium text-white transition-colors hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600"
           >
-            Go to Projects
+            Go to Spaces
             <ExternalLink className="size-3" />
           </Link>
         </div>
@@ -576,8 +576,8 @@ export default function GettingStartedPage() {
           <AuthenticateStep />
         </Step>
 
-        <Step number={3} icon={FolderPlus} title="Create Your First Project">
-          <CreateProjectStep />
+        <Step number={3} icon={FolderPlus} title="Create Your First Space">
+          <CreateSpaceStep />
         </Step>
 
         <Step number={4} icon={Terminal} title="Start Building" isLast>

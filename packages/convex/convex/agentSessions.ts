@@ -53,9 +53,7 @@ export const connect = mutation({
     const LEGACY_STALE_MS = 5 * 60 * 1000 // 5 minutes
     const connectedForUser = await ctx.db
       .query("agentSessions")
-      .withIndex("by_user_status", (q) =>
-        q.eq("userId", user._id).eq("status", "connected")
-      )
+      .withIndex("by_user_status", (q) => q.eq("userId", user._id).eq("status", "connected"))
       .collect()
 
     for (const session of connectedForUser) {

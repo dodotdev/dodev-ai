@@ -12,7 +12,7 @@ interface McpLog {
   errorCode?: string
   errorMessage?: string
   durationMs: number
-  projectId?: string
+  spaceId?: string
   createdAt: number
 }
 
@@ -37,7 +37,7 @@ function toolCategory(tool: string): string {
   if (tool.includes("issue")) return "issue"
   if (tool.includes("memory") || tool === "add_memory" || tool === "search_memories")
     return "memory"
-  if (tool.includes("project") || tool.includes("archive_project")) return "project"
+  if (tool.includes("project") || tool.includes("space")) return "space"
   if (tool.includes("cycle")) return "cycle"
   if (tool.includes("context") || tool === "get_context" || tool === "get_setup_instructions")
     return "context"
@@ -49,7 +49,7 @@ const categoryColors: Record<string, string> = {
   task: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
   issue: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
   memory: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
-  project: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  space: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
   cycle: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
   context: "bg-gray-500/10 text-gray-600 dark:text-gray-400",
   linking: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",

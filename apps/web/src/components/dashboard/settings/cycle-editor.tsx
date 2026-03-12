@@ -33,7 +33,7 @@ interface Cycle {
 }
 
 interface CycleEditorProps {
-  projectId: string
+  spaceId: string
   cycles: Cycle[]
 }
 
@@ -64,7 +64,7 @@ function _statusColor(status: string): string {
   }
 }
 
-export function CycleEditor({ projectId, cycles }: CycleEditorProps) {
+export function CycleEditor({ spaceId, cycles }: CycleEditorProps) {
   const { apiKeyHash } = useAuth()
   const createCycle = useMutation(api.cycles.create)
   const updateCycle = useMutation(api.cycles.update)
@@ -116,7 +116,7 @@ export function CycleEditor({ projectId, cycles }: CycleEditorProps) {
     try {
       await createCycle({
         apiKeyHash,
-        projectId: projectId as never,
+        spaceId: spaceId as never,
         name: trimmedName,
         startDate: startTimestamp,
         endDate: endTimestamp,

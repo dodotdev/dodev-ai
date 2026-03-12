@@ -16,14 +16,14 @@ interface TeamLabel {
 }
 
 interface LabelEditorProps {
-  projectId: string
+  spaceId: string
   labels: TeamLabel[]
 }
 
-export function LabelEditor({ projectId, labels }: LabelEditorProps) {
+export function LabelEditor({ spaceId, labels }: LabelEditorProps) {
   const { apiKeyHash } = useAuth()
-  const addLabel = useMutation(api.projectConfig.addLabel)
-  const removeLabel = useMutation(api.projectConfig.removeLabel)
+  const addLabel = useMutation(api.spaceConfig.addLabel)
+  const removeLabel = useMutation(api.spaceConfig.removeLabel)
 
   const [newName, setNewName] = useState("")
   const [newColor, setNewColor] = useState("#3b82f6")
@@ -52,7 +52,7 @@ export function LabelEditor({ projectId, labels }: LabelEditorProps) {
     try {
       await addLabel({
         apiKeyHash,
-        projectId: projectId as never,
+        spaceId: spaceId as never,
         name: trimmedName,
         color: newColor,
       })
@@ -71,7 +71,7 @@ export function LabelEditor({ projectId, labels }: LabelEditorProps) {
     setRemovingId(labelId)
     setError(null)
     try {
-      await removeLabel({ apiKeyHash, projectId: projectId as never, labelId })
+      await removeLabel({ apiKeyHash, spaceId: spaceId as never, labelId })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove label")
     } finally {

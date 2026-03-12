@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { formatRelativeTime } from "@/lib/utils"
 
-interface ProjectItem {
+interface SpaceItem {
   _id: string
   name: string
   description?: string
@@ -35,36 +35,36 @@ const statusColors = {
   archived: "bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300",
 }
 
-interface ProjectCardsProps {
-  projects: ProjectItem[]
+interface SpaceCardsProps {
+  spaces: SpaceItem[]
   onArchive?: (id: string) => void
 }
 
-export function ProjectCards({ projects, onArchive }: ProjectCardsProps) {
-  if (projects.length === 0) {
+export function SpaceCards({ spaces, onArchive }: SpaceCardsProps) {
+  if (spaces.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <FolderOpen className="mb-3 size-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">No projects yet</p>
-        <p className="mt-1 text-xs text-muted-foreground">Create a project to organize your work</p>
+        <p className="text-sm text-muted-foreground">No spaces yet</p>
+        <p className="mt-1 text-xs text-muted-foreground">Create a space to organize your work</p>
       </div>
     )
   }
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {projects.map((project) => (
+      {spaces.map((space) => (
         <Link
-          key={project._id}
-          href={`/dashboard/projects/${project._id}`}
+          key={space._id}
+          href={`/dashboard/spaces/${space._id}`}
           className="group rounded-2xl border border-border bg-white p-5 transition-colors hover:bg-surface dark:bg-card dark:hover:bg-accent"
         >
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="font-semibold">{project.name}</h3>
-              {project.description && (
+              <h3 className="font-semibold">{space.name}</h3>
+              {space.description && (
                 <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-                  {project.description}
+                  {space.description}
                 </p>
               )}
             </div>
@@ -83,7 +83,7 @@ export function ProjectCards({ projects, onArchive }: ProjectCardsProps) {
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.preventDefault()
-                    onArchive?.(project._id)
+                    onArchive?.(space._id)
                   }}
                 >
                   Archive
@@ -93,28 +93,28 @@ export function ProjectCards({ projects, onArchive }: ProjectCardsProps) {
           </div>
 
           <div className="mt-3">
-            <Badge variant="secondary" className={statusColors[project.status]}>
-              {project.status}
+            <Badge variant="secondary" className={statusColors[space.status]}>
+              {space.status}
             </Badge>
           </div>
 
-          {project.stats && (
+          {space.stats && (
             <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <CheckSquare className="size-3" />
                 <span>
-                  {project.stats.completedTasks}/{project.stats.totalTasks} tasks
+                  {space.stats.completedTasks}/{space.stats.totalTasks} tasks
                 </span>
               </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Brain className="size-3" />
-                <span>{project.stats.memoryCount} memories</span>
+                <span>{space.stats.memoryCount} memories</span>
               </div>
             </div>
           )}
 
           <p className="mt-3 text-xs text-muted-foreground">
-            Updated {formatRelativeTime(project.updatedAt)}
+            Updated {formatRelativeTime(space.updatedAt)}
           </p>
         </Link>
       ))}

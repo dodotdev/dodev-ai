@@ -60,13 +60,13 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set())
-  const [newProjectOpen, setNewProjectOpen] = useState(false)
+  const [expandedSpaces, setExpandedSpaces] = useState<Set<string>>(new Set())
+  const [newSpaceOpen, setNewSpaceOpen] = useState(false)
   const { user, apiKeyHash } = useAuth()
 
-  const projects = useQuery(api.projects.list, apiKeyHash ? { apiKeyHash } : "skip")
+  const spaces = useQuery(api.spaces.list, apiKeyHash ? { apiKeyHash } : "skip")
 
-  const createProject = useMutation(api.projects.create)
+  const createSpace = useMutation(api.spaces.create)
 
   const userName = user?.name || user?.email?.split("@")[0] || "User"
   const userEmail = user?.email || ""
@@ -78,23 +78,23 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
     .toUpperCase()
     .slice(0, 2)
 
-  // Track which projects the user has manually collapsed
+  // Track which spaces the user has manually collapsed
   const [manuallyCollapsed, setManuallyCollapsed] = useState<Set<string>>(new Set())
 
-  // Auto-expand the project whose sub-page is currently active (unless manually collapsed)
-  const activeProjectId = projects?.find((p) => pathname.startsWith(`/dashboard/projects/${p._id}`))
+  // Auto-expand the space whose sub-page is currently active (unless manually collapsed)
+  const activeSpaceId = spaces?.find((s) => pathname.startsWith(`/dashboard/spaces/${s._id}`))
     ?._id as string | undefined
 
   if (
-    activeProjectId &&
-    !expandedProjects.has(activeProjectId) &&
-    !manuallyCollapsed.has(activeProjectId)
+    activeSpaceId &&
+    !expandedSpaces.has(activeSpaceId) &&
+    !manuallyCollapsed.has(activeSpaceId)
   ) {
-    setExpandedProjects((prev) => new Set(prev).add(activeProjectId))
+    setExpandedSpaces((prev) => new Set(prev).add(activeSpaceId))
   }
 
-  function toggleProject(id: string) {
-    setExpandedProjects((prev) => {
+  function toggleSpace(id: string) {
+    setExpandedSpaces((prev) => {
       const next = new Set(prev)
       if (next.has(id)) {
         next.delete(id)
@@ -176,46 +176,46 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
           </div>
         </div>
 
-        {/* Projects section */}
+        {/* Spaces section */}
         <div className="mt-5">
           <div className="mb-1 flex items-center justify-between px-3">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-              Projects
+              Spaces
             </p>
             <button
               type="button"
-              onClick={() => setNewProjectOpen(true)}
+              onClick={() => setNewSpaceOpen(true)}
               className="rounded p-0.5 text-muted-foreground/60 transition-colors hover:bg-white hover:text-foreground dark:hover:bg-accent"
-              title="New project"
+              title="New space"
             >
               <Plus className="size-3.5" />
             </button>
           </div>
 
           <div className="space-y-0.5">
-            {(projects ?? [])
-              .filter((p) => (p as { status: string }).status !== "archived")
-              .map((project) => {
-                const id = project._id as string
-                const isExpanded = expandedProjects.has(id)
-                const base = `/dashboard/projects/${id}`
-                const isProjectActive = pathname.startsWith(base)
+            {(spaces ?? [])
+              .filter((s) => (s as { status: string }).status !== "archived")
+              .map((space) => {
+                const id = space._id as string
+                const isExpanded = expandedSpaces.has(id)
+                const base = `/dashboard/spaces/${id}`
+                const isSpaceActive = pathname.startsWith(base)
 
                 return (
                   <div key={id}>
-                    {/* Project row */}
+                    {/* Space row */}
                     <button
                       type="button"
-                      onClick={() => toggleProject(id)}
+                      onClick={() => toggleSpace(id)}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none",
-                        isProjectActive
+                        isSpaceActive
                           ? "text-foreground"
                           : "text-muted-foreground hover:bg-white hover:text-foreground dark:hover:bg-accent"
                       )}
                     >
                       <FolderOpen className="size-4 shrink-0" />
-                      <span className="flex-1 truncate text-left">{project.name}</span>
+                      <span className="flex-1 truncate text-left">{space.name}</span>
                       {isExpanded ? (
                         <ChevronDown className="size-3.5 shrink-0 text-muted-foreground/50" />
                       ) : (
@@ -257,8 +257,8 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
                 )
               })}
 
-            {projects !== undefined && projects.length === 0 && (
-              <p className="px-3 py-2 text-xs text-muted-foreground">No projects yet</p>
+            {spaces !== undefined && spaces.length === 0 && (
+              <p className="px-3 py-2 text-xs text-muted-foreground">No spaces yet</p>
             )}
           </div>
         </div>
@@ -273,7 +273,7 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
             {userPlan === "free" ? (
               <>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  1 project &middot; 100 tasks &middot; 50 memories
+                  1 space &middot; 100 tasks &middot; 50 memories
                 </p>
                 <Link
                   href="/dashboard/settings"
@@ -366,13 +366,13 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
         )}
       </div>
 
-      {/* New Project Dialog */}
-      <NewProjectDialog
-        open={newProjectOpen}
-        onOpenChange={setNewProjectOpen}
+      {/* New Space Dialog */}
+      <NewSpaceDialog
+        open={newSpaceOpen}
+        onOpenChange={setNewSpaceOpen}
         onCreate={async (data) => {
           if (!apiKeyHash) return
-          const result = await createProject({
+          const result = await createSpace({
             apiKeyHash,
             name: data.name,
             slug: data.slug,
@@ -380,18 +380,18 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
           })
           if (result) {
             const id = (result as { _id: string })._id
-            setExpandedProjects((prev) => new Set(prev).add(id))
-            router.push(`/dashboard/projects/${id}`)
+            setExpandedSpaces((prev) => new Set(prev).add(id))
+            router.push(`/dashboard/spaces/${id}`)
             onNavigate?.()
           }
-          setNewProjectOpen(false)
+          setNewSpaceOpen(false)
         }}
       />
     </div>
   )
 }
 
-function NewProjectDialog({
+function NewSpaceDialog({
   open,
   onOpenChange,
   onCreate,
@@ -404,8 +404,8 @@ function NewProjectDialog({
   const [slug, setSlug] = useState("")
   const [description, setDescription] = useState("")
 
-  function deriveSlug(projectName: string): string {
-    const words = projectName.trim().split(/\s+/)
+  function deriveSlug(spaceName: string): string {
+    const words = spaceName.trim().split(/\s+/)
     if (words.length >= 2) {
       return words
         .map((w) => w[0])
@@ -447,28 +447,28 @@ function NewProjectDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="overflow-visible">
         <DialogHeader>
-          <DialogTitle>New Project</DialogTitle>
+          <DialogTitle>New Space</DialogTitle>
           <DialogDescription>
-            Every project gets its own memories, tasks, and issues.
+            Every space gets its own memories, tasks, and issues.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-[1fr_auto] gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="new-project-name">Name</Label>
+              <Label htmlFor="new-space-name">Name</Label>
               <Input
-                id="new-project-name"
+                id="new-space-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Project name"
+                placeholder="Space name"
                 autoFocus
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="new-project-slug">Identifier</Label>
+              <Label htmlFor="new-space-slug">Identifier</Label>
               <Input
-                id="new-project-slug"
+                id="new-space-slug"
                 value={slug}
                 onChange={(e) =>
                   setSlug(
@@ -492,12 +492,12 @@ function NewProjectDialog({
             </p>
           )}
           <div className="space-y-1.5">
-            <Label htmlFor="new-project-desc">Description</Label>
+            <Label htmlFor="new-space-desc">Description</Label>
             <Textarea
-              id="new-project-desc"
+              id="new-space-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What is this project about?"
+              placeholder="What is this space about?"
               rows={2}
             />
           </div>
@@ -505,7 +505,7 @@ function NewProjectDialog({
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Create Project</Button>
+            <Button type="submit">Create Space</Button>
           </div>
         </form>
       </DialogContent>

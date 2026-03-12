@@ -84,7 +84,7 @@ export default function IssuesPage() {
         <div>
           <h1 className="text-lg font-semibold tracking-tight">Issues</h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Global issues not scoped to any project
+            Global issues not scoped to any space
           </p>
         </div>
         <IssueForm onSubmit={handleCreate} />

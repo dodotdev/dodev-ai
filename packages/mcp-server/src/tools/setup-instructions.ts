@@ -1,27 +1,27 @@
-interface ProjectInfo {
-  projectName: string
-  projectSlug: string
-  projectId: string
+interface SpaceInfo {
+  spaceName: string
+  spaceSlug: string
+  spaceId: string
 }
 
 /**
  * Generate a CLAUDE.md section with dodev.ai usage instructions.
  * Pure helper — no Convex calls.
  */
-export function generateSetupInstructions(project?: ProjectInfo): string {
-  const projectSection = project
-    ? `### Project Context
-- The active dodev.ai project is **"${project.projectName}"** (slug: ${project.projectSlug}, ID: \`${project.projectId}\`).
-- Always scope tasks, issues, and memories to this project using the \`projectId\` parameter.`
-    : `### Project Context
-- No project is linked to this workspace yet. Create one with \`create_project\` and link it with \`link_project\`.`
+export function generateSetupInstructions(space?: SpaceInfo): string {
+  const spaceSection = space
+    ? `### Space Context
+- The active dodev.ai space is **"${space.spaceName}"** (slug: ${space.spaceSlug}, ID: \`${space.spaceId}\`).
+- Always scope tasks, issues, and memories to this space using the \`spaceId\` parameter.`
+    : `### Space Context
+- No space is linked to this workspace yet. Create one with \`create_space\` and link it with \`link_space\`.`
 
   return `## dodev.ai Usage (MANDATORY)
 
 This project has a connected dodev.ai MCP server. You MUST use it proactively:
 
 ### Session Start
-- **Always** call \`get_context\` at the beginning of every session to load the active project, pending tasks, recent memories, and project config.
+- **Always** call \`get_context\` at the beginning of every session to load the active space, pending tasks, recent memories, and space config.
 - **Always** call \`search_memories\` before starting any non-trivial task to check for relevant past decisions, gotchas, and preferences.
 
 ### During Work
@@ -31,9 +31,9 @@ This project has a connected dodev.ai MCP server. You MUST use it proactively:
 - **Update tasks/issues** as you work — mark them \`in_progress\` when starting. Use \`complete_task\` or \`close_issue\` when done.
 
 ### Workspace Linking
-- If \`get_context\` returns no active project, use \`link_project\` to associate this workspace (path and/or git remote) with a project. Once linked, the project auto-resolves on every future \`get_context\` call.
-- Use \`unlink_project\` to remove a workspace association.
-- Call \`get_setup_instructions\` to regenerate this CLAUDE.md section with up-to-date project context.
+- If \`get_context\` returns no active space, use \`link_space\` to associate this workspace (path and/or git remote) with a space. Once linked, the space auto-resolves on every future \`get_context\` call.
+- Use \`unlink_space\` to remove a workspace association.
+- Call \`get_setup_instructions\` to regenerate this CLAUDE.md section with up-to-date space context.
 
 ### Memory Best Practices
 - Use type: \`"fact"\` for codebase/infrastructure facts, \`"decision"\` for architectural choices, \`"preference"\` for user conventions, \`"learning"\` for gotchas and lessons learned.
@@ -42,19 +42,19 @@ This project has a connected dodev.ai MCP server. You MUST use it proactively:
 - Update existing memories rather than creating duplicates.
 - Use \`update_memory_settings\` to configure default tags, memory instructions, or embedding provider settings.
 
-### Cycles & Project Config
+### Cycles & Space Config
 - Use \`create_cycle\` / \`update_cycle\` to manage sprints and iterations.
-- Customize workflow with \`update_project_statuses\`, \`add_project_label\`, \`add_project_member\`, \`update_estimate_scale\`, and \`update_project_persona\`.
+- Customize workflow with \`update_space_statuses\`, \`add_space_label\`, \`add_space_member\`, \`update_estimate_scale\`, and \`update_space_persona\`.
 
 ### Available Tools Reference
 **Context:** \`get_context\`, \`get_setup_instructions\`
 **Tasks:** \`create_task\`, \`update_task\`, \`complete_task\`, \`list_tasks\`, \`get_task\`, \`delete_task\`
 **Issues:** \`create_issue\`, \`update_issue\`, \`close_issue\`, \`list_issues\`, \`get_issue\`, \`delete_issue\`
 **Memories:** \`add_memory\`, \`search_memories\`, \`list_memories\`, \`update_memory\`, \`delete_memory\`
-**Projects:** \`create_project\`, \`list_projects\`, \`get_project\`, \`update_project\`, \`archive_project\`, \`set_active_project\`
-**Linking:** \`link_project\`, \`unlink_project\`, \`update_memory_settings\`
+**Spaces:** \`create_space\`, \`list_spaces\`, \`get_space\`, \`update_space\`, \`archive_space\`, \`set_active_space\`
+**Linking:** \`link_space\`, \`unlink_space\`, \`update_memory_settings\`
 **Cycles:** \`create_cycle\`, \`list_cycles\`, \`get_cycle\`, \`update_cycle\`, \`delete_cycle\`
-**Config:** \`update_project_statuses\`, \`add_project_label\`, \`remove_project_label\`, \`add_project_member\`, \`remove_project_member\`, \`update_estimate_scale\`, \`update_project_persona\`
+**Config:** \`update_space_statuses\`, \`add_space_label\`, \`remove_space_label\`, \`add_space_member\`, \`remove_space_member\`, \`update_estimate_scale\`, \`update_space_persona\`
 
-${projectSection}`
+${spaceSection}`
 }

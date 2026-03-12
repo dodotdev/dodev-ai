@@ -31,7 +31,7 @@ export default function SettingsPage() {
   const currentUsage = {
     taskCount: usage?.taskCount ?? 0,
     memoryCount: usage?.memoryCount ?? 0,
-    projectCount: usage?.projectCount ?? 0,
+    spaceCount: usage?.projectCount ?? 0,
     apiCalls: usage?.apiCalls ?? 0,
   }
 
@@ -82,11 +82,7 @@ export default function SettingsPage() {
                 current={currentUsage.memoryCount}
                 limit={limits.memories}
               />
-              <UsageBar
-                label="Projects"
-                current={currentUsage.projectCount}
-                limit={limits.projects}
-              />
+              <UsageBar label="Spaces" current={currentUsage.spaceCount} limit={limits.spaces} />
             </div>
           </div>
         </>

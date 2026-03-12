@@ -9,7 +9,7 @@ interface StatsCardsProps {
     inProgressTasks: number
     completedTasks: number
     totalMemories: number
-    totalProjects: number
+    totalSpaces: number
   }
 }
 
@@ -50,8 +50,8 @@ const cards = [
     color: "text-purple-600",
   },
   {
-    key: "totalProjects",
-    label: "Projects",
+    key: "totalSpaces",
+    label: "Spaces",
     icon: FolderOpen,
     bg: "bg-orange-50 dark:bg-orange-500/10",
     color: "text-orange-600",

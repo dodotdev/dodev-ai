@@ -11,13 +11,13 @@ interface McpLog {
   status: "ok" | "error"
 }
 
-export default function ProjectActivityPage() {
+export default function SpaceActivityPage() {
   const { id } = useParams<{ id: string }>()
   const { apiKeyHash, isLoading: authLoading } = useAuth()
 
   const logs = useQuery(
     api.mcpLogs.list,
-    apiKeyHash ? { apiKeyHash, projectId: id, limit: 100 } : "skip"
+    apiKeyHash ? { apiKeyHash, spaceId: id, limit: 100 } : "skip"
   ) as McpLog[] | undefined
 
   if (authLoading || !apiKeyHash) {
@@ -36,7 +36,7 @@ export default function ProjectActivityPage() {
       <div>
         <h1 className="text-lg font-semibold tracking-tight">Activity</h1>
         <div className="mt-0.5 flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">MCP tool calls scoped to this project</p>
+          <p className="text-xs text-muted-foreground">MCP tool calls scoped to this space</p>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <RefreshCw className="size-3" />

@@ -6,11 +6,11 @@ export const cycleTools: Tool[] = [
   {
     name: "create_cycle",
     description:
-      "Create a new sprint/iteration cycle for a project. Cycles have date ranges and a lifecycle status.",
+      "Create a new sprint/iteration cycle for a space. Cycles have date ranges and a lifecycle status.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        projectId: { type: "string", description: "The project ID" },
+        spaceId: { type: "string", description: "The space ID" },
         name: { type: "string", description: "Cycle name (e.g. Sprint 1)" },
         description: { type: "string", description: "Cycle description or goals" },
         status: {
@@ -27,23 +27,23 @@ export const cycleTools: Tool[] = [
           description: "End date as Unix timestamp (milliseconds)",
         },
       },
-      required: ["projectId", "name", "startDate", "endDate"],
+      required: ["spaceId", "name", "startDate", "endDate"],
     },
   },
   {
     name: "list_cycles",
-    description: "List cycles for a project, optionally filtered by status.",
+    description: "List cycles for a space, optionally filtered by status.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        projectId: { type: "string", description: "The project ID" },
+        spaceId: { type: "string", description: "The space ID" },
         status: {
           type: "string",
           enum: ["upcoming", "active", "completed"],
           description: "Filter by cycle status",
         },
       },
-      required: ["projectId"],
+      required: ["spaceId"],
     },
   },
   {
@@ -104,7 +104,7 @@ export async function handleCycleTool(
     case "create_cycle":
       return await client.mutation(api.cycles.create, {
         apiKeyHash,
-        projectId: args.projectId as string,
+        spaceId: args.spaceId as string,
         name: args.name as string,
         description: args.description as string | undefined,
         status: args.status as "upcoming" | "active" | "completed" | undefined,
@@ -115,7 +115,7 @@ export async function handleCycleTool(
     case "list_cycles":
       return await client.query(api.cycles.list, {
         apiKeyHash,
-        projectId: args.projectId as string,
+        spaceId: args.spaceId as string,
         status: args.status as string | undefined,
       })
 

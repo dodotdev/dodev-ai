@@ -572,7 +572,7 @@ export function ItemDetailView({
                   {projectSlug && (
                     <div className="mt-3">
                       <div className="mb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
-                        Project
+                        Space
                       </div>
                       <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs font-medium text-muted-foreground dark:bg-zinc-800">
                         {projectSlug}

@@ -43,7 +43,7 @@ interface Status {
 }
 
 interface StatusEditorProps {
-  projectId: string
+  spaceId: string
   statuses: Status[]
 }
 
@@ -138,9 +138,9 @@ function SortableStatusRow({
   )
 }
 
-export function StatusEditor({ projectId, statuses: initialStatuses }: StatusEditorProps) {
+export function StatusEditor({ spaceId, statuses: initialStatuses }: StatusEditorProps) {
   const { apiKeyHash } = useAuth()
-  const updateStatuses = useMutation(api.projectConfig.updateStatuses)
+  const updateStatuses = useMutation(api.spaceConfig.updateStatuses)
 
   const [statuses, setStatuses] = useState<Status[]>(initialStatuses)
   const [isSaving, setIsSaving] = useState(false)
@@ -231,7 +231,7 @@ export function StatusEditor({ projectId, statuses: initialStatuses }: StatusEdi
     setIsSaving(true)
     setError(null)
     try {
-      await updateStatuses({ apiKeyHash, projectId: projectId as never, statuses })
+      await updateStatuses({ apiKeyHash, spaceId: spaceId as never, statuses })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save statuses")
     } finally {

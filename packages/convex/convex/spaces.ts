@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values"
+import type { Doc } from "./_generated/dataModel"
 import { mutation, query } from "./_generated/server"
 import { authenticateApiKey, checkQuota } from "./lib/auth"
 import { generateConfigId, incrementUsage } from "./lib/utils"
@@ -17,11 +18,11 @@ const DEFAULT_ESTIMATE_SCALE = {
   values: ["1", "2", "3", "5", "8", "13", "21"],
 }
 
-/** Derive a slug from a project name: take uppercase initials, or first word uppercase, max 5 chars */
+/** Derive a slug from a space name: take uppercase initials, or first word uppercase, max 5 chars */
 function deriveSlug(name: string): string {
   const words = name.trim().split(/\s+/)
   if (words.length >= 2) {
-    // Use initials: "My Project" -> "MP"
+    // Use initials: "My Space" -> "MS"
     return words
       .map((w) => w[0])
       .join("")
@@ -30,6 +31,15 @@ function deriveSlug(name: string): string {
   }
   // Single word: take first 3 chars uppercase
   return words[0].toUpperCase().slice(0, 5)
+}
+
+/** Normalize a repo URL: strip protocol, trailing .git, lowercase */
+function normalizeRepoUrl(url: string): string {
+  return url
+    .replace(/^https?:\/\//, "")
+    .replace(/^git@([^:]+):/, "$1/")
+    .replace(/\.git$/, "")
+    .toLowerCase()
 }
 
 export const create = mutation({
@@ -46,14 +56,14 @@ export const create = mutation({
 
     // Determine slug: use provided or derive from name
     let slug = (args.slug?.trim().toUpperCase() || deriveSlug(args.name)).replace(/[^A-Z0-9]/g, "")
-    if (!slug) slug = "PRJ"
+    if (!slug) slug = "SPC"
 
     // Ensure global uniqueness -- append a digit if taken
     let candidate = slug
     let suffix = 1
     while (true) {
       const existing = await ctx.db
-        .query("projects")
+        .query("spaces")
         .withIndex("by_slug", (q) => q.eq("slug", candidate))
         .first()
       if (!existing) break
@@ -63,7 +73,7 @@ export const create = mutation({
     slug = candidate
 
     const now = Date.now()
-    const id = await ctx.db.insert("projects", {
+    const id = await ctx.db.insert("spaces", {
       userId: user._id,
       name: args.name,
       slug,
@@ -103,10 +113,10 @@ export const list = query({
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
 
-    let projects
+    let spaces
     if (args.status) {
-      projects = await ctx.db
-        .query("projects")
+      spaces = await ctx.db
+        .query("spaces")
         .withIndex("by_user_status", (q) =>
           q
             .eq("userId", user._id)
@@ -114,8 +124,8 @@ export const list = query({
         )
         .collect()
     } else {
-      projects = await ctx.db
-        .query("projects")
+      spaces = await ctx.db
+        .query("spaces")
         .withIndex("by_user", (q) => q.eq("userId", user._id))
         .filter((q) => q.neq(q.field("status"), "archived"))
         .collect()
@@ -123,23 +133,19 @@ export const list = query({
 
     if (args.includeStats) {
       return await Promise.all(
-        projects.map(async (project) => {
+        spaces.map(async (space) => {
           const tasks = await ctx.db
             .query("tasks")
-            .withIndex("by_user_project", (q) =>
-              q.eq("userId", user._id).eq("projectId", project._id)
-            )
+            .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", space._id))
             .collect()
 
           const memories = await ctx.db
             .query("memories")
-            .withIndex("by_user_project", (q) =>
-              q.eq("userId", user._id).eq("projectId", project._id)
-            )
+            .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", space._id))
             .collect()
 
           return {
-            ...project,
+            ...space,
             stats: {
               totalTasks: tasks.length,
               pendingTasks: tasks.filter((t) => t.status === "pending").length,
@@ -152,29 +158,29 @@ export const list = query({
       )
     }
 
-    return projects
+    return spaces
   },
 })
 
 export const get = query({
   args: {
     apiKeyHash: v.string(),
-    id: v.id("projects"),
+    id: v.id("spaces"),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const project = await ctx.db.get(args.id)
-    if (!project || project.userId !== user._id) {
+    const space = await ctx.db.get(args.id)
+    if (!space || space.userId !== user._id) {
       return null
     }
-    return project
+    return space
   },
 })
 
 export const update = mutation({
   args: {
     apiKeyHash: v.string(),
-    id: v.id("projects"),
+    id: v.id("spaces"),
     name: v.optional(v.string()),
     slug: v.optional(v.string()),
     description: v.optional(v.string()),
@@ -190,8 +196,8 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const project = await ctx.db.get(args.id)
-    if (!project || project.userId !== user._id) {
+    const space = await ctx.db.get(args.id)
+    if (!space || space.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
 
@@ -209,7 +215,7 @@ export const update = mutation({
       if (!newSlug) throw new ConvexError("INVALID_SLUG")
       // Ensure global uniqueness
       const existing = await ctx.db
-        .query("projects")
+        .query("spaces")
         .withIndex("by_slug", (q) => q.eq("slug", newSlug))
         .first()
       if (existing && existing._id !== args.id) {
@@ -226,12 +232,12 @@ export const update = mutation({
 export const archive = mutation({
   args: {
     apiKeyHash: v.string(),
-    id: v.id("projects"),
+    id: v.id("spaces"),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const project = await ctx.db.get(args.id)
-    if (!project || project.userId !== user._id) {
+    const space = await ctx.db.get(args.id)
+    if (!space || space.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
 
@@ -246,37 +252,37 @@ export const archive = mutation({
 export const remove = mutation({
   args: {
     apiKeyHash: v.string(),
-    id: v.id("projects"),
+    id: v.id("spaces"),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const project = await ctx.db.get(args.id)
-    if (!project || project.userId !== user._id) {
+    const space = await ctx.db.get(args.id)
+    if (!space || space.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
 
-    // Delete all project data
+    // Delete all space data using spaceId-based indexes
     const tasks = await ctx.db
       .query("tasks")
-      .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.id))
+      .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.id))
       .collect()
     for (const task of tasks) await ctx.db.delete(task._id)
 
     const issues = await ctx.db
       .query("issues")
-      .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.id))
+      .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.id))
       .collect()
     for (const issue of issues) await ctx.db.delete(issue._id)
 
     const memories = await ctx.db
       .query("memories")
-      .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.id))
+      .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.id))
       .collect()
     for (const memory of memories) await ctx.db.delete(memory._id)
 
     const cycles = await ctx.db
       .query("cycles")
-      .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", args.id))
+      .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.id))
       .collect()
     for (const cycle of cycles) await ctx.db.delete(cycle._id)
 
@@ -285,35 +291,26 @@ export const remove = mutation({
   },
 })
 
-// --- Project linking for workspace auto-detection ---
+// --- Space linking for workspace auto-detection ---
 
-/** Normalize a repo URL: strip protocol, trailing .git, lowercase */
-function normalizeRepoUrl(url: string): string {
-  return url
-    .replace(/^https?:\/\//, "")
-    .replace(/^git@([^:]+):/, "$1/")
-    .replace(/\.git$/, "")
-    .toLowerCase()
-}
-
-export const linkProject = mutation({
+export const linkSpace = mutation({
   args: {
     apiKeyHash: v.string(),
-    projectId: v.id("projects"),
+    spaceId: v.id("spaces"),
     path: v.optional(v.string()),
     repo: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const project = await ctx.db.get(args.projectId)
-    if (!project || project.userId !== user._id) {
+    const space = await ctx.db.get(args.spaceId)
+    if (!space || space.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() }
 
     if (args.path) {
-      const paths = project.linkedPaths ?? []
+      const paths = space.linkedPaths ?? []
       if (!paths.includes(args.path)) {
         updates.linkedPaths = [...paths, args.path]
       }
@@ -321,48 +318,48 @@ export const linkProject = mutation({
 
     if (args.repo) {
       const normalized = normalizeRepoUrl(args.repo)
-      const repos = project.linkedRepos ?? []
+      const repos = space.linkedRepos ?? []
       if (!repos.includes(normalized)) {
         updates.linkedRepos = [...repos, normalized]
       }
     }
 
-    await ctx.db.patch(args.projectId, updates)
-    return await ctx.db.get(args.projectId)
+    await ctx.db.patch(args.spaceId, updates)
+    return await ctx.db.get(args.spaceId)
   },
 })
 
-export const unlinkProject = mutation({
+export const unlinkSpace = mutation({
   args: {
     apiKeyHash: v.string(),
-    projectId: v.id("projects"),
+    spaceId: v.id("spaces"),
     path: v.optional(v.string()),
     repo: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    const project = await ctx.db.get(args.projectId)
-    if (!project || project.userId !== user._id) {
+    const space = await ctx.db.get(args.spaceId)
+    if (!space || space.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
     }
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() }
 
     if (args.path) {
-      updates.linkedPaths = (project.linkedPaths ?? []).filter((p) => p !== args.path)
+      updates.linkedPaths = (space.linkedPaths ?? []).filter((p) => p !== args.path)
     }
 
     if (args.repo) {
       const normalized = normalizeRepoUrl(args.repo)
-      updates.linkedRepos = (project.linkedRepos ?? []).filter((r) => r !== normalized)
+      updates.linkedRepos = (space.linkedRepos ?? []).filter((r) => r !== normalized)
     }
 
-    await ctx.db.patch(args.projectId, updates)
-    return await ctx.db.get(args.projectId)
+    await ctx.db.patch(args.spaceId, updates)
+    return await ctx.db.get(args.spaceId)
   },
 })
 
-export const resolveProjectByWorkspace = query({
+export const resolveSpaceByWorkspace = query({
   args: {
     apiKeyHash: v.string(),
     repoUrl: v.optional(v.string()),
@@ -372,22 +369,22 @@ export const resolveProjectByWorkspace = query({
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
     if (!args.repoUrl && !args.workspacePath) return null
 
-    const projects = await ctx.db
-      .query("projects")
+    const spaces = await ctx.db
+      .query("spaces")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .filter((q) => q.neq(q.field("status"), "archived"))
       .collect()
 
     const normalizedRepo = args.repoUrl ? normalizeRepoUrl(args.repoUrl) : null
 
-    for (const project of projects) {
+    for (const space of spaces) {
       // Check repo match first (more specific)
-      if (normalizedRepo && project.linkedRepos?.includes(normalizedRepo)) {
-        return project
+      if (normalizedRepo && space.linkedRepos?.includes(normalizedRepo)) {
+        return space
       }
       // Check path match
-      if (args.workspacePath && project.linkedPaths?.includes(args.workspacePath)) {
-        return project
+      if (args.workspacePath && space.linkedPaths?.includes(args.workspacePath)) {
+        return space
       }
     }
 
@@ -398,7 +395,7 @@ export const resolveProjectByWorkspace = query({
 export const getContext = query({
   args: {
     apiKeyHash: v.string(),
-    projectId: v.optional(v.id("projects")),
+    spaceId: v.optional(v.id("spaces")),
     taskLimit: v.optional(v.number()),
     memoryLimit: v.optional(v.number()),
     workspacePath: v.optional(v.string()),
@@ -409,31 +406,31 @@ export const getContext = query({
     const taskLimit = args.taskLimit ?? 10
     const memoryLimit = args.memoryLimit ?? 5
 
-    // Resolve project: explicit > workspace detection > default
-    let activeProject = null
+    // Resolve space: explicit > workspace detection > default
+    let activeSpace: Doc<"spaces"> | null = null
     let workspaceInfo:
-      | { detectedPath?: string; detectedRepo?: string; resolvedProjectId?: string }
+      | { detectedPath?: string; detectedRepo?: string; resolvedSpaceId?: string }
       | undefined
 
-    if (args.projectId) {
-      activeProject = await ctx.db.get(args.projectId)
+    if (args.spaceId) {
+      activeSpace = await ctx.db.get(args.spaceId)
     } else if (args.repoUrl || args.workspacePath) {
       // Try workspace-based auto-detection
       const normalizedRepo = args.repoUrl ? normalizeRepoUrl(args.repoUrl) : null
 
-      const allProjects = await ctx.db
-        .query("projects")
+      const allSpaces = await ctx.db
+        .query("spaces")
         .withIndex("by_user", (q) => q.eq("userId", user._id))
         .filter((q) => q.neq(q.field("status"), "archived"))
         .collect()
 
-      for (const project of allProjects) {
-        if (normalizedRepo && project.linkedRepos?.includes(normalizedRepo)) {
-          activeProject = project
+      for (const space of allSpaces) {
+        if (normalizedRepo && space.linkedRepos?.includes(normalizedRepo)) {
+          activeSpace = space
           break
         }
-        if (args.workspacePath && project.linkedPaths?.includes(args.workspacePath)) {
-          activeProject = project
+        if (args.workspacePath && space.linkedPaths?.includes(args.workspacePath)) {
+          activeSpace = space
           break
         }
       }
@@ -441,21 +438,30 @@ export const getContext = query({
       workspaceInfo = {
         detectedPath: args.workspacePath,
         detectedRepo: args.repoUrl,
-        resolvedProjectId: activeProject?._id,
+        resolvedSpaceId: activeSpace?._id,
       }
     }
 
-    if (!activeProject && user.settings.defaultProjectId) {
-      activeProject = await ctx.db.get(user.settings.defaultProjectId)
+    // Support both new defaultSpaceId and legacy defaultProjectId during migration
+    if (!activeSpace && (user.settings as any).defaultSpaceId) {
+      activeSpace = (await ctx.db.get(
+        (user.settings as any).defaultSpaceId
+      )) as Doc<"spaces"> | null
     }
 
-    // Get pending tasks (scoped to project if active)
+    if (!activeSpace && user.settings.defaultProjectId) {
+      // Legacy fallback: defaultProjectId may point to a project, not a space.
+      // During migration this field might still be set but we cannot load it
+      // from the spaces table. Skip silently.
+    }
+
+    // Get pending tasks (scoped to space if active) using spaceId-based indexes
     let pendingTasks
-    if (activeProject) {
+    if (activeSpace) {
       pendingTasks = await ctx.db
         .query("tasks")
-        .withIndex("by_user_project_status", (q) =>
-          q.eq("userId", user._id).eq("projectId", activeProject!._id).eq("status", "pending")
+        .withIndex("by_user_space_status", (q) =>
+          q.eq("userId", user._id).eq("spaceId", activeSpace!._id).eq("status", "pending")
         )
         .order("desc")
         .take(taskLimit)
@@ -473,62 +479,62 @@ export const getContext = query({
       .withIndex("by_user_status", (q) => q.eq("userId", user._id).eq("status", "in_progress"))
       .collect()
 
-    // Get memories — project-scoped + global
+    // Get memories -- space-scoped + global
     const allUserMemories = await ctx.db
       .query("memories")
       .withIndex("by_user_created", (q) => q.eq("userId", user._id))
       .order("desc")
       .take(memoryLimit * 3)
 
-    let projectMemories = activeProject
-      ? allUserMemories.filter((m) => m.projectId === activeProject._id).slice(0, memoryLimit)
+    let spaceMemories = activeSpace
+      ? allUserMemories.filter((m) => (m as any).spaceId === activeSpace!._id).slice(0, memoryLimit)
       : []
 
-    // If project memories are sparse, also query directly
-    if (activeProject && projectMemories.length < memoryLimit) {
-      const directProjectMemories = await ctx.db
+    // If space memories are sparse, also query directly
+    if (activeSpace && spaceMemories.length < memoryLimit) {
+      const directSpaceMemories = await ctx.db
         .query("memories")
-        .withIndex("by_user_project", (q) =>
-          q.eq("userId", user._id).eq("projectId", activeProject!._id)
-        )
+        .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", activeSpace!._id))
         .order("desc")
         .take(memoryLimit)
       // Merge and deduplicate
-      const seen = new Set(projectMemories.map((m) => m._id))
-      for (const m of directProjectMemories) {
+      const seen = new Set(spaceMemories.map((m) => m._id))
+      for (const m of directSpaceMemories) {
         if (!seen.has(m._id)) {
-          projectMemories.push(m)
+          spaceMemories.push(m)
           seen.add(m._id)
         }
       }
-      projectMemories = projectMemories.slice(0, memoryLimit)
+      spaceMemories = spaceMemories.slice(0, memoryLimit)
     }
 
-    const globalMemories = allUserMemories.filter((m) => !m.projectId).slice(0, memoryLimit)
+    const globalMemories = allUserMemories
+      .filter((m) => !m.projectId && !(m as any).spaceId)
+      .slice(0, memoryLimit)
 
-    const recentMemories = activeProject
-      ? [...projectMemories, ...globalMemories].slice(0, memoryLimit * 2)
+    const recentMemories = activeSpace
+      ? [...spaceMemories, ...globalMemories].slice(0, memoryLimit * 2)
       : allUserMemories.slice(0, memoryLimit)
 
-    // Get all active projects
-    const projects = await ctx.db
-      .query("projects")
+    // Get all active spaces
+    const spaces = await ctx.db
+      .query("spaces")
       .withIndex("by_user_status", (q) => q.eq("userId", user._id).eq("status", "active"))
       .collect()
 
-    // Get active cycle for the project
+    // Get active cycle for the space
     let activeCycle = null
-    if (activeProject) {
+    if (activeSpace) {
       activeCycle = await ctx.db
         .query("cycles")
-        .withIndex("by_user_project_status", (q) =>
-          q.eq("userId", user._id).eq("projectId", activeProject!._id).eq("status", "active")
+        .withIndex("by_user_space_status", (q) =>
+          q.eq("userId", user._id).eq("spaceId", activeSpace!._id).eq("status", "active")
         )
         .first()
     }
 
     return {
-      activeProject,
+      activeSpace,
       taskSummary: {
         pending: pendingTasks.length,
         inProgress: inProgressTasks.length,
@@ -536,22 +542,22 @@ export const getContext = query({
       },
       recentMemories,
       memories: {
-        project: projectMemories,
+        space: spaceMemories,
         global: globalMemories,
       },
-      projects: projects.map((p) => ({ id: p._id, name: p.name })),
-      persona: activeProject?.persona,
-      projectConfig: activeProject
+      spaces: spaces.map((s) => ({ id: s._id, name: s.name })),
+      persona: activeSpace?.persona,
+      spaceConfig: activeSpace
         ? {
-            statuses: activeProject.statuses,
-            labels: activeProject.labels,
-            members: activeProject.members,
-            estimateScale: activeProject.estimateScale,
-            persona: activeProject.persona,
+            statuses: activeSpace.statuses,
+            labels: activeSpace.labels,
+            members: activeSpace.members,
+            estimateScale: activeSpace.estimateScale,
+            persona: activeSpace.persona,
           }
         : undefined,
       activeCycle,
-      memorySettings: activeProject?.memorySettings,
+      memorySettings: activeSpace?.memorySettings,
       workspace: workspaceInfo,
     }
   },

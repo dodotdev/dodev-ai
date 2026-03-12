@@ -1,9 +1,11 @@
 import { api } from "@dodev/convex/api"
-import { cookies } from "next/headers"
 import { Footer } from "@/components/marketing/footer"
 import { Navbar } from "@/components/marketing/navbar"
 import { getConvexClient } from "@/lib/convex"
 import { isCloud } from "@/lib/mode"
+
+// Prevent Full Route Cache — auth state must be checked on every request
+export const dynamic = "force-dynamic"
 
 async function getMarketingUser(): Promise<{
   email: string
@@ -14,11 +16,10 @@ async function getMarketingUser(): Promise<{
   if (!isCloud()) return null
 
   try {
-    // Only attempt WorkOS auth if we have a session cookie
-    const cookieStore = await cookies()
-    const hasSession = cookieStore.getAll().some((c) => c.name.startsWith("wos-session"))
-    if (!hasSession) return null
-
+    // Use withAuth() which reads session from the middleware-set x-workos-session
+    // header — NOT from cookies. This ensures consistency with the middleware's
+    // auth determination: if the middleware found the session invalid (expired,
+    // refresh failed), withAuth() also returns null.
     const { withAuth } = await import("@workos-inc/authkit-nextjs")
     const { user } = await withAuth()
     if (!user) return null
