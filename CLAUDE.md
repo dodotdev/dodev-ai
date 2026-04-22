@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **npm package**: `@dodev/mcp-server`
 - **Docker image**: `ghcr.io/dodotdev/dodev-ai:latest`
 - **License**: MIT
-- **Version**: 0.0.8
+- **Version**: 0.1.0
 
 Shared do.dev conventions are loaded via `.claude/CLAUDE.md` (symlinked to `do-coders`).
 

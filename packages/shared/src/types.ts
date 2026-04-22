@@ -99,6 +99,8 @@ export interface Cycle {
   _id: string
   userId: string
   spaceId: string
+  /** Optional: cycles can run at space level or inside a single project */
+  projectId?: string
   name: string
   description?: string
   status: CycleStatus
@@ -108,11 +110,43 @@ export interface Cycle {
   updatedAt: number
 }
 
+/**
+ * Project inside a space (v0.1.0+). Optional nested scope.
+ *
+ * Config inheritance model:
+ * - `statuses`, `labels`, `members`: copied from parent space at creation, then edited independently
+ * - `estimateScale`, `persona`: live-inherit — undefined means "use space's value"
+ */
+export interface Project {
+  _id: string
+  userId: string
+  spaceId: string
+  name: string
+  slug: string
+  description?: string
+  status: SpaceLifecycle
+  taskCounter: number
+  issueCounter: number
+  metadata?: Record<string, unknown>
+  statuses: WorkflowStatus[]
+  labels: SpaceLabel[]
+  members: SpaceMember[]
+  /** undefined = inherit from space */
+  estimateScale?: EstimateScale
+  /** undefined = inherit from space */
+  persona?: SpacePersona
+  linkedPaths?: string[]
+  linkedRepos?: string[]
+  createdAt: number
+  updatedAt: number
+}
+
 /** Task as returned from Convex */
 export interface Task {
   _id: string
   userId: string
   spaceId?: string
+  projectId?: string
   number?: number
   title: string
   description?: string
@@ -136,6 +170,7 @@ export interface Issue {
   _id: string
   userId: string
   spaceId?: string
+  projectId?: string
   number?: number
   title: string
   description?: string
@@ -160,6 +195,7 @@ export interface Memory {
   _id: string
   userId: string
   spaceId?: string
+  projectId?: string
   content: string
   summary?: string
   tags: string[]
@@ -178,6 +214,7 @@ export interface Attachment {
   taskId?: string
   issueId?: string
   spaceId?: string
+  projectId?: string
   storageId: string
   filename: string
   mimeType: string
@@ -195,6 +232,7 @@ export interface Comment {
   taskId?: string
   issueId?: string
   spaceId?: string
+  projectId?: string
   parentId?: string
   body: string
   authorName?: string
@@ -229,6 +267,8 @@ export interface Space {
 /** User settings */
 export interface UserSettings {
   defaultSpaceId?: string
+  /** Preferred project within the default space (v0.1.0+) */
+  defaultProjectId?: string
   timezone?: string
 }
 
@@ -250,12 +290,14 @@ export interface User {
   updatedAt: number
 }
 
-/** Session state for active space tracking */
+/** Session state for active space / project tracking */
 export interface Session {
   _id: string
   userId: string
   agentId: string
   activeSpaceId?: string
+  /** Active project within activeSpaceId (v0.1.0+). Always cleared when activeSpaceId changes. */
+  activeProjectId?: string
   lastActiveAt: number
 }
 
@@ -267,6 +309,8 @@ export interface Usage {
   taskCount: number
   memoryCount: number
   spaceCount: number
+  /** Total projects across all spaces (v0.1.0+) */
+  projectCount?: number
   issueCount: number
   apiCalls: number
 }
@@ -285,6 +329,8 @@ export interface SpaceWithStats extends Space {
 /** Context response from get_context */
 export interface ContextResponse {
   activeSpace: Space | null
+  /** Active project within activeSpace, if one is set (v0.1.0+) */
+  activeProject?: Project | null
   taskSummary: {
     pending: number
     inProgress: number
@@ -292,18 +338,30 @@ export interface ContextResponse {
   }
   recentMemories: Memory[]
   memories?: {
+    project?: Memory[]
     space: Memory[]
     global: Memory[]
   }
   spaces: Array<{ id: string; name: string }>
+  /** Projects inside activeSpace (v0.1.0+) */
+  projects?: Array<{ id: string; name: string; slug: string }>
   persona?: SpacePersona
   spaceConfig?: SpaceConfig
+  /** Effective config for the active scope (project if set, else space). v0.1.0+ */
+  configSource?: {
+    statuses: "project" | "space"
+    labels: "project" | "space"
+    members: "project" | "space"
+    estimateScale: "project" | "space"
+    persona: "project" | "space" | null
+  }
   activeCycle?: Cycle
   memorySettings?: SpaceMemorySettings
   workspace?: {
     detectedPath?: string
     detectedRepo?: string
     resolvedSpaceId?: string
+    resolvedProjectId?: string
   }
 }
 

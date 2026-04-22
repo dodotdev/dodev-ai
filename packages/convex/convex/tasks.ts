@@ -30,33 +30,40 @@ export const create = mutation({
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
     await checkQuota(ctx, user, "tasks")
 
-    // Derive base status category from statusId if provided
-    // Prefer spaceId over projectId for status lookup
-    let status: "pending" | "in_progress" | "completed" | "cancelled" = "pending"
+    // Resolve project + space. When projectId is set, derive spaceId from
+    // the project so callers don't have to duplicate it.
     let space = null
     let project = null
-    if (args.spaceId) {
-      space = await ctx.db.get(args.spaceId)
-      if (args.statusId && space) {
-        const ws = space.statuses.find((s) => s.id === args.statusId)
-        if (ws) status = ws.category
-      }
-    } else if (args.projectId) {
+    let resolvedSpaceId = args.spaceId
+    if (args.projectId) {
       project = await ctx.db.get(args.projectId)
-      if (args.statusId && project) {
-        const ws = project.statuses?.find((s) => s.id === args.statusId)
-        if (ws) status = ws.category
+      if (!project || project.userId !== user._id) {
+        throw new ConvexError("NOT_FOUND")
       }
+      resolvedSpaceId = project.spaceId
+      space = await ctx.db.get(project.spaceId)
+    } else if (args.spaceId) {
+      space = await ctx.db.get(args.spaceId)
     }
 
-    // Auto-increment shared counter (space > project > global user)
+    // Derive base status category from statusId if provided.
+    // Project's statuses win over space's (project is a snapshot, editable).
+    let status: "pending" | "in_progress" | "completed" | "cancelled" = "pending"
+    if (args.statusId) {
+      const ws =
+        project?.statuses?.find((s) => s.id === args.statusId) ??
+        space?.statuses.find((s) => s.id === args.statusId)
+      if (ws) status = ws.category
+    }
+
+    // Auto-increment counter: project > space > user.
     let nextNumber: number
-    if (space) {
+    if (project) {
+      nextNumber = (project.taskCounter ?? 0) + 1
+      await ctx.db.patch(project._id, { taskCounter: nextNumber })
+    } else if (space) {
       nextNumber = (space.itemCounter ?? 0) + 1
-      await ctx.db.patch(args.spaceId!, { itemCounter: nextNumber })
-    } else if (project) {
-      nextNumber = (project.itemCounter ?? 0) + 1
-      await ctx.db.patch(args.projectId!, { itemCounter: nextNumber })
+      await ctx.db.patch(space._id, { itemCounter: nextNumber })
     } else {
       nextNumber = (user.itemCounter ?? 0) + 1
       await ctx.db.patch(user._id, { itemCounter: nextNumber })
@@ -66,7 +73,7 @@ export const create = mutation({
     const id = await ctx.db.insert("tasks", {
       userId: user._id,
       projectId: args.projectId,
-      spaceId: args.spaceId,
+      spaceId: resolvedSpaceId,
       number: nextNumber,
       title: args.title,
       description: args.description,

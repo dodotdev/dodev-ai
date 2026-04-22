@@ -1,6 +1,6 @@
 {
   "name": "@dodev/mcp-server",
-  "version": "0.0.8",
+  "version": "0.1.0",
   "type": "module",
   "description": "dodev.ai MCP server — AI-native task and memory management",
   "license": "MIT",

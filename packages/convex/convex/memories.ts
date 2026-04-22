@@ -37,18 +37,19 @@ export const add = mutation({
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
     await checkQuota(ctx, user, "memories")
 
-    // Merge defaultTags from space (preferred) or project
+    // Merge defaultTags from the effective space's memorySettings. If a
+    // projectId was passed (without spaceId), resolve the project's parent
+    // space — memorySettings live at the space level only.
     let tags = args.tags ?? []
-    if (args.spaceId) {
-      const space = await ctx.db.get(args.spaceId)
+    let effectiveSpaceId = args.spaceId
+    if (!effectiveSpaceId && args.projectId) {
+      const project = await ctx.db.get(args.projectId)
+      effectiveSpaceId = project?.spaceId
+    }
+    if (effectiveSpaceId) {
+      const space = await ctx.db.get(effectiveSpaceId)
       if (space?.memorySettings?.defaultTags) {
         const defaultTags = space.memorySettings.defaultTags
-        tags = [...new Set([...tags, ...defaultTags])]
-      }
-    } else if (args.projectId) {
-      const project = await ctx.db.get(args.projectId)
-      if (project?.memorySettings?.defaultTags) {
-        const defaultTags = project.memorySettings.defaultTags
         tags = [...new Set([...tags, ...defaultTags])]
       }
     }
