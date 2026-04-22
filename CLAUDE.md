@@ -16,11 +16,11 @@ Shared do.dev conventions are loaded via `.claude/CLAUDE.md` (symlinked to `do-c
 
 ## dodev.ai Usage (MANDATORY)
 
-This project has a connected dodev.ai MCP server. You MUST use it proactively:
+This workspace has a connected dodev.ai MCP server. You MUST use it proactively:
 
 ### Session Start
-- **Always** call `get_context` at the beginning of every session to load the active project, pending tasks, recent memories, and project config.
-- **Always** call `search_memories` before starting any non-trivial task to check for relevant past decisions, gotchas, and preferences.
+- **Always** call `get_context` at the beginning of every session to load the active space and project (auto-resolved from workspace links), pending tasks, recent memories, effective config, and `configSource` breakdown.
+- **Always** call `search_memories` before starting any non-trivial task to check for relevant past decisions, gotchas, and preferences. Searches bubble up — a project-scoped search also sees parent-space and global memories.
 
 ### During Work
 - **Store memories** proactively via `add_memory` whenever you discover facts about the codebase, make architectural decisions, learn user preferences, encounter non-obvious behavior, or resolve tricky bugs. Write each memory so a future agent with no context can understand it.
@@ -34,9 +34,10 @@ This project has a connected dodev.ai MCP server. You MUST use it proactively:
 - Prefer many small focused memories over fewer large ones.
 - Update existing memories rather than creating duplicates.
 
-### Project Context
-- The active dodev.ai project is **"dodev"** (slug: DODEV, ID: `jd71k24g625k3dqk4xq71szmqd81qbdv`).
-- Always scope tasks, issues, and memories to this project using the `projectId` parameter.
+### Spaces and Projects (v0.1.0+)
+- The active dodev.ai space is **"dodev"** (slug: DODEV, ID: `jd71k24g625k3dqk4xq71szmqd81qbdv`).
+- Spaces contain optional nested **projects**. If a project is active, it narrows context automatically; items created with a `projectId` get slugs like `DODEV-API-42` and use per-project counters.
+- Pass `projectId` on `create_task`/`create_issue`/`add_memory` when the work belongs to a specific project. Omit it for space-level items.
 
 ## Architecture
 
@@ -48,8 +49,8 @@ AI Agents ──(MCP stdio)──> MCP Server ──(HTTPS)──> Convex Backen
 Web Dashboard (Next.js) ──(Convex React client)──────────┘
 ```
 
-- **MCP Server** (`packages/mcp-server`): Stateless TypeScript server exposing 31 tools across 7 categories. Currently supports stdio transport only. Streamable HTTP transport is planned but not yet implemented. Every tool call maps to a single Convex function.
-- **Convex Backend** (`packages/convex`): Schema (8 tables, 27+ indexes), queries, mutations, actions. Handles auth, quotas, full-text search, and scheduled tasks. Vector search schema is defined but not yet wired up.
+- **MCP Server** (`packages/mcp-server`): Stateless TypeScript server exposing 40+ tools across 8 categories (tasks, issues, memories, spaces, projects, context, cycles, space/project config). Supports both stdio and Streamable HTTP transports. Every tool call maps to a single Convex function.
+- **Convex Backend** (`packages/convex`): Schema (13+ tables) covering the hierarchy user → space → project (optional) → tasks/issues/memories/cycles/versions. Queries, mutations, actions handle auth, quotas, full-text search, vector search, and scheduled tasks.
 - **Web App** (`apps/web`): Next.js 15 App Router — landing page, dashboard layout. WorkOS AuthKit configured. Dashboard components are scaffolded but mostly stubs. Stripe billing not yet integrated.
 - **Shared Types** (`packages/shared`): 15 TypeScript interfaces, plan constants, validation limits, and default project config used by both MCP server and web app.
 
@@ -61,7 +62,7 @@ domcp-ai/
 ├── packages/
 │   ├── mcp-server/          # MCP server (npm-publishable)
 │   │   └── src/
-│   │       ├── tools/       # Tool implementations (7 files: tasks, issues, memories, projects, context, config, cycles)
+│   │       ├── tools/       # Tool implementations — tasks, issues, memories, spaces, projects, context, cycles, space-config, attachments, comments, linking, versions
 │   │       ├── auth/        # API key hashing (SHA-256)
 │   │       ├── server.ts    # MCP server setup and request handlers
 │   │       ├── index.ts     # Entry point (stdio transport)
@@ -69,25 +70,33 @@ domcp-ai/
 │   │       └── convex-client.ts  # Convex HTTP client wrapper
 │   ├── convex/              # Convex schema + functions
 │   │   └── convex/
-│   │       ├── schema.ts    # Database schema (8 tables, 27+ indexes)
-│   │       ├── tasks.ts     # Task CRUD (5 functions)
-│   │       ├── issues.ts    # Issue CRUD (5 functions)
-│   │       ├── memories.ts  # Memory CRUD + search (5 functions)
-│   │       ├── projects.ts  # Project CRUD + getContext (6 functions)
-│   │       ├── cycles.ts    # Cycle/sprint CRUD (5 functions)
-│   │       ├── projectConfig.ts  # Statuses, labels, members, estimates, persona (9 functions)
-│   │       ├── users.ts     # User creation/lookup (7 functions)
-│   │       ├── sessions.ts  # Active project tracking (2 functions)
-│   │       ├── usage.ts     # Quota tracking (1 function)
-│   │       ├── migrations.ts # Data migration helpers
-│   │       ├── http.ts      # HTTP router (Stripe webhook placeholder)
+│   │       ├── schema.ts    # Database schema (13+ tables: users, spaces, projects, tasks, issues, memories, cycles, versions, sessions, attachments, comments, usage, mcpLogs, ...)
+│   │       ├── tasks.ts     # Task CRUD
+│   │       ├── issues.ts    # Issue CRUD
+│   │       ├── memories.ts  # Memory CRUD + search (keyword, semantic, hybrid) with scope bubble-up
+│   │       ├── spaces.ts    # Space CRUD + getContext
+│   │       ├── spaceConfig.ts    # Space-level statuses, labels, members, estimates, persona
+│   │       ├── projects.ts       # Project CRUD + linking (v0.1.0+)
+│   │       ├── projectConfig.ts  # Project-level config overrides (v0.1.0+)
+│   │       ├── cycles.ts    # Cycle/sprint CRUD (space or project scoped)
+│   │       ├── versions.ts  # Release/changelog versions
+│   │       ├── users.ts     # User creation, lookup, settings (defaultSpace / defaultProject)
+│   │       ├── sessions.ts  # Active space/project tracking per agent
+│   │       ├── attachments.ts / attachmentsInternal.ts  # File uploads
+│   │       ├── comments.ts  # Thread comments on tasks/issues
+│   │       ├── usage.ts     # Quota tracking per period
+│   │       ├── mcpLogs.ts   # MCP tool-call logging
+│   │       ├── agentSessions.ts  # MCP transport sessions (HTTP)
+│   │       ├── oauthClients.ts   # MCP OAuth clients
+│   │       ├── migrations.ts     # Historical migrations (currently empty after v0.1.0 cleanup)
+│   │       ├── http.ts      # HTTP router (file-serving, webhooks)
 │   │       └── lib/
 │   │           ├── auth.ts  # API key auth + quota checks
 │   │           └── utils.ts # Usage increment, period helpers
 │   └── shared/              # Shared types and validators
 │       └── src/
-│           ├── types.ts     # 15 interfaces: Task, Issue, Memory, Project, Cycle, User, etc.
-│           ├── constants.ts # Plan limits, rate limits, validation limits, default statuses/estimates
+│           ├── types.ts     # Interfaces: Space, Project, Task, Issue, Memory, Cycle, User, ContextResponse, ...
+│           ├── constants.ts # Plan limits (incl. projectsPerSpace), rate limits, validation limits, default statuses/estimates
 │           └── validators.ts # Input validation helpers
 ├── docker/                  # Docker Compose for self-hosting
 ├── docs/                    # Design docs (architecture, schema, tool specs)
@@ -154,15 +163,19 @@ See `docs/CONVEX_SCHEMA.md` for complete schema and function signatures. See `do
 
 ## MCP Tools
 
-31 tools across 7 categories (34 planned after Phase 1) — see `docs/MCP_TOOLS.md` for full spec:
+See `docs/MCP_TOOLS.md` for full spec. Summary by category:
 
-- **Tasks** (6): `create_task`, `update_task`, `complete_task`, `list_tasks`, `get_task`, `delete_task`
-- **Issues** (6): `create_issue`, `update_issue`, `close_issue`, `list_issues`, `get_issue`, `delete_issue`
-- **Memories** (5): `add_memory`, `search_memories`, `list_memories`, `update_memory`, `delete_memory`
-- **Projects** (6 → 9 after Phase 1): `create_project`, `list_projects`, `get_project`, `update_project`, `archive_project`, `set_active_project`. Planned: `link_project`, `unlink_project`, `update_memory_settings`
-- **Config** (7): `update_project_statuses`, `add_project_label`, `remove_project_label`, `add_project_member`, `remove_project_member`, `update_estimate_scale`, `update_project_persona`
-- **Cycles** (5): `create_cycle`, `list_cycles`, `get_cycle`, `update_cycle`, `delete_cycle`
-- **Context** (1): `get_context` — session bootstrapper returning active project, pending tasks, recent memories, project config, and active cycle. Phase 1 will add workspace auto-detection (resolve project from git remote or workspace path), type-prioritized memory loading, and memory settings in the response.
+- **Tasks** (6): `create_task`, `update_task`, `complete_task`, `list_tasks`, `get_task`, `delete_task`. Accept `spaceId` and/or `projectId` (projectId wins when both are present).
+- **Issues** (6): `create_issue`, `update_issue`, `close_issue`, `list_issues`, `get_issue`, `delete_issue`. Same scoping.
+- **Memories** (5): `add_memory`, `search_memories`, `list_memories`, `update_memory`, `delete_memory`. Support project/space/global scopes and a `bubbleUp` flag (default: on).
+- **Spaces** (6): `create_space`, `list_spaces`, `get_space`, `update_space`, `archive_space`, `set_active_space`.
+- **Projects** (9, v0.1.0+): `create_project`, `list_projects`, `get_project`, `update_project`, `archive_project`, `delete_project`, `set_active_project`, `link_project`, `unlink_project`.
+- **Space Config** (mirror on `projectConfig`): `update_*_statuses`, `add/update/remove_*_label`, `add/update/remove_*_member`, `update_estimate_scale`, `update_persona`. Project config edits are independent snapshots for arrays; estimateScale/persona inherit from the space when unset.
+- **Cycles** (5): `create_cycle`, `list_cycles`, `get_cycle`, `update_cycle`, `delete_cycle`. spaceId or projectId scoping.
+- **Versions** (6): `create_version`, `list_versions`, `get_version`, `update_version`, `release_version`, `delete_version`.
+- **Context** (2): `get_context` (session bootstrapper with active project/space narrowing, effective config + configSource, memory bubble-up, workspace auto-detection), `get_setup_instructions`.
+- **Linking** (2): `link_space`, `unlink_space` for workspace path/repo auto-resolution.
+- **Attachments, Comments**: CRUD on file attachments and threaded comments for tasks/issues.
 
 Conventions: All tools return JSON. Timestamps are Unix ms. IDs are opaque Convex document IDs.
 

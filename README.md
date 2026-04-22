@@ -8,7 +8,7 @@
 [![GitHub Stars](https://img.shields.io/github/stars/dodotdev/dodev-ai)](https://github.com/dodotdev/dodev-ai)
 ![Status](https://img.shields.io/badge/status-in%20development-orange)
 
-dodev.ai gives AI agents persistent memory and task tracking across sessions and projects. Built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io), it works with Claude Code, Cursor, Windsurf, and any MCP-compatible client.
+dodev.ai gives AI agents persistent memory and task tracking across sessions, spaces, and projects. Built on the [Model Context Protocol (MCP)](https://modelcontextprotocol.io), it works with Claude Code, Cursor, Windsurf, and any MCP-compatible client.
 
 **Website:** [dodev.ai](https://dodev.ai)
 
@@ -20,27 +20,29 @@ AI agents are powerful but forgetful. Every new session starts from scratch — 
 
 - **Tasks** — Track tasks across sessions. An agent can pick up exactly where it left off.
 - **Issues** — Track bugs, features, and improvements with type and severity.
-- **Memories** — Store decisions, context, and learnings. "We chose Postgres because..." is never lost.
-- **Projects** — Organize work across multiple codebases with Linear-like config: custom statuses, labels, members, estimates, and sprint cycles.
+- **Memories** — Store decisions, context, and learnings. "We chose Postgres because..." is never lost. Searches bubble up by scope so a project query also sees space and global memories.
+- **Spaces + Projects (v0.1.0+)** — Organize under a two-tier hierarchy: a **space** represents a codebase, team, or initiative; nested **projects** (optional) carve a space into services/apps/workstreams. Linear-like config — custom statuses, labels, members, estimates, sprint cycles, and AI personas — travels with both tiers.
 
 ```
 You: "What's left to do on the auth system?"
-Agent: *checks dodev.ai* "3 pending tasks: implement refresh tokens,
-       add rate limiting to login, and write integration tests.
-       Memory note from last session: we decided to use httpOnly
-       cookies instead of localStorage for token storage."
+Agent: *checks dodev.ai* "3 pending tasks in DODEV-API: implement refresh
+       tokens, add rate limiting to login, and write integration tests.
+       Memory note from last session (space-level): we decided to use
+       httpOnly cookies instead of localStorage for token storage."
 ```
 
 ## Features
 
-- **35 MCP tools** across 8 categories (tasks, issues, memories, projects, config, cycles, context, linking)
-- **Linear-like project management** — custom workflow statuses, labels, team members, estimate scales, sprint cycles
-- **AI personas** — per-project system prompts that shape how agents interact with your project
+- **40+ MCP tools** across 10 categories: tasks, issues, memories, spaces, projects, cycles, versions, context, linking, attachments, comments, space/project config
+- **Two-tier hierarchy** — user → space → optional project; items scoped to a project carry `{SPACE}-{PROJECT}-{N}` slugs, space-level items use `{SPACE}-{N}`
+- **Memory scope bubbling** — project searches see space + global; space searches see all-project + global; strict mode available
+- **Config inheritance** — projects snapshot statuses/labels/members from the space at creation then edit independently; `estimateScale` and `persona` live-inherit until overridden
+- **AI personas** — per-space or per-project system prompts that shape how agents interact with your code
 - **Real-time sync** — Dashboard updates instantly when agents make changes (powered by Convex)
-- **Cross-agent** — Works with any MCP client (Claude Code, Cursor, Windsurf, custom agents)
-- **Context tool** — One call to get the full picture: active project, pending tasks, recent memories, config, and active cycle
+- **Cross-agent** — Works with any MCP client (Claude Code, Cursor, Windsurf, custom agents) over stdio or Streamable HTTP
+- **Context tool** — One call to get the full picture: active space + project, pending tasks, bubble-up memories, effective config + configSource breakdown, active cycle
 - **Self-hosted** — Run locally with Docker, bring your own Convex deployment
-- **Cloud option** — Or just connect to [dodev.ai](https://dodev.ai) for a managed experience (planned)
+- **Cloud option** — Or just connect to [dodev.ai](https://dodev.ai) for a managed experience
 
 ## Quick Start
 

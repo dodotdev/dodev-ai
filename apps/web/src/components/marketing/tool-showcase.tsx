@@ -83,6 +83,42 @@ const categories = [
     },
   },
   {
+    id: "projects",
+    label: "Projects",
+    tools: [
+      "create_project",
+      "list_projects",
+      "get_project",
+      "update_project",
+      "archive_project",
+      "delete_project",
+      "set_active_project",
+      "link_project",
+      "unlink_project",
+    ],
+    example: {
+      request: `{
+  "tool": "create_project",
+  "arguments": {
+    "spaceId": "k82b3m1...",
+    "name": "API Service",
+    "slug": "API"
+  }
+}`,
+      response: `{
+  "id": "jd72q...",
+  "spaceId": "k82b3m1...",
+  "name": "API Service",
+  "slug": "API",
+  "status": "active",
+  "taskCounter": 0,
+  "statuses": [/* snapshot from space */],
+  "labels": [/* snapshot from space */],
+  "members": [/* snapshot from space */]
+}`,
+    },
+  },
+  {
     id: "context",
     label: "Context",
     tools: ["get_context"],
@@ -92,19 +128,23 @@ const categories = [
   "arguments": {}
 }`,
       response: `{
-  "activeSpace": {
-    "name": "backend-api"
-  },
+  "activeSpace": { "name": "backend-api" },
+  "activeProject": { "name": "API Service", "slug": "API" },
   "taskSummary": {
     "pending": 5,
     "inProgress": 2,
     "topPending": [...]
   },
   "recentMemories": [...],
-  "spaces": [
-    { "id": "...", "name": "backend-api" },
-    { "id": "...", "name": "frontend" }
-  ]
+  "memories": { "project": [...], "space": [...], "global": [...] },
+  "spaces": [...],
+  "projects": [
+    { "id": "...", "name": "API Service", "slug": "API" }
+  ],
+  "configSource": {
+    "statuses": "project", "labels": "project",
+    "persona": "space", "estimateScale": "space"
+  }
 }`,
     },
   },
@@ -125,7 +165,7 @@ export function ToolShowcase() {
           className="text-center"
         >
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            18 tools.{" "}
+            40+ tools.{" "}
             <span className="bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
               One protocol.
             </span>

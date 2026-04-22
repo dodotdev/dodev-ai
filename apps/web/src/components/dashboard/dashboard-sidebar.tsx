@@ -12,6 +12,7 @@ import {
   ChevronUp,
   CreditCard,
   FolderOpen,
+  Layers,
   LayoutDashboard,
   LogOut,
   Plus,
@@ -42,6 +43,7 @@ const SUB_ITEMS = [
   { key: "tasks", label: "Tasks", icon: CheckSquare, href: "" },
   { key: "issues", label: "Issues", icon: AlertCircle, href: "/issues" },
   { key: "memories", label: "Memories", icon: Brain, href: "/memories" },
+  { key: "projects", label: "Projects", icon: Layers, href: "/projects" },
   { key: "activity", label: "Activity", icon: Activity, href: "/activity" },
 ]
 
