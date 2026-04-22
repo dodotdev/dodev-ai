@@ -90,6 +90,8 @@ export const search = query({
     projectId: v.optional(v.id("projects")),
     spaceId: v.optional(v.id("spaces")),
     globalOnly: v.optional(v.boolean()),
+    /** Include memories from narrower/broader scopes per the bubble-up rules. Default: true. */
+    bubbleUp: v.optional(v.boolean()),
     tags: v.optional(v.array(v.string())),
     limit: v.optional(v.number()),
     type: memoryTypeValidator,
@@ -97,36 +99,66 @@ export const search = query({
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
     const limit = Math.min(args.limit ?? 10, 50)
+    const bubbleUp = args.bubbleUp !== false
 
+    // Resolve effective scope. If a project is given, we search the project's
+    // parent space too when bubbleUp is enabled.
+    let effectiveSpaceId = args.spaceId
+    if (args.projectId && !effectiveSpaceId) {
+      const p = await ctx.db.get(args.projectId)
+      effectiveSpaceId = p?.spaceId
+    }
+
+    // Convex search filters only AND with q.eq, so we can only narrow to a
+    // single scope at search-time. We pick the broadest scope that's relevant
+    // and post-filter by the bubble-up rules.
     const results = await ctx.db
       .query("memories")
       .withSearchIndex("search_content", (q) => {
-        let search = q.search("content", args.query)
-        search = search.eq("userId", user._id)
-        if (args.spaceId) search = search.eq("spaceId", args.spaceId)
-        else if (args.projectId) search = search.eq("projectId", args.projectId)
+        let search = q.search("content", args.query).eq("userId", user._id)
+        // Only apply the space filter in search if we're NOT bubbling up,
+        // otherwise we'd miss global memories.
+        if (!bubbleUp && args.globalOnly) {
+          // can't express "no spaceId AND no projectId" in a search filter;
+          // post-filter instead.
+        } else if (!bubbleUp && args.projectId) {
+          search = search.eq("projectId", args.projectId)
+        } else if (!bubbleUp && effectiveSpaceId) {
+          search = search.eq("spaceId", effectiveSpaceId)
+        }
         return search
       })
-      .take(limit)
+      .take(limit * 3)
 
-    let filtered = results
+    // Apply scope filter on results
+    let filtered = results.filter((m) => {
+      if (args.globalOnly) return !m.projectId && !m.spaceId
+      if (args.projectId) {
+        if (!bubbleUp) return m.projectId === args.projectId
+        // project-scope with bubble-up: project + space (no project) + global
+        if (m.projectId === args.projectId) return true
+        if (m.spaceId === effectiveSpaceId && !m.projectId) return true
+        if (!m.projectId && !m.spaceId) return true
+        return false
+      }
+      if (effectiveSpaceId) {
+        if (!bubbleUp) return m.spaceId === effectiveSpaceId && !m.projectId
+        // space-scope with bubble-up: space + all its projects + global
+        if (m.spaceId === effectiveSpaceId) return true
+        if (!m.projectId && !m.spaceId) return true
+        return false
+      }
+      return true
+    })
 
-    // Global-only: exclude space-scoped and project-scoped memories
-    if (args.globalOnly) {
-      filtered = filtered.filter((m) => !m.projectId && !m.spaceId)
-    }
-
-    // Filter by tags if specified
     if (args.tags && args.tags.length > 0) {
       filtered = filtered.filter((m) => args.tags!.some((tag) => m.tags.includes(tag)))
     }
-
-    // Filter by type if specified
     if (args.type) {
       filtered = filtered.filter((m) => m.type === args.type)
     }
 
-    return filtered
+    return filtered.slice(0, limit)
   },
 })
 
@@ -136,6 +168,8 @@ export const listMemories = query({
     projectId: v.optional(v.id("projects")),
     spaceId: v.optional(v.id("spaces")),
     globalOnly: v.optional(v.boolean()),
+    /** Include memories from narrower/broader scopes per the bubble-up rules. Default: true. */
+    bubbleUp: v.optional(v.boolean()),
     tags: v.optional(v.array(v.string())),
     limit: v.optional(v.number()),
     type: memoryTypeValidator,
@@ -143,42 +177,59 @@ export const listMemories = query({
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
     const limit = Math.min(args.limit ?? 20, 100)
+    const bubbleUp = args.bubbleUp !== false
 
+    // Resolve the effective parent space when a project is passed.
+    let effectiveSpaceId = args.spaceId
+    if (args.projectId && !effectiveSpaceId) {
+      const p = await ctx.db.get(args.projectId)
+      effectiveSpaceId = p?.spaceId
+    }
+
+    // When bubble-up is on, always start from the broad user-scoped index so
+    // we can post-filter by the scope rules. When off, pick a scoped index.
     let memoryQuery
-    if (args.spaceId) {
+    if (bubbleUp) {
       memoryQuery = ctx.db
         .query("memories")
-        .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.spaceId!))
+        .withIndex("by_user_created", (q) => q.eq("userId", user._id))
     } else if (args.projectId) {
       memoryQuery = ctx.db
         .query("memories")
         .withIndex("by_user_project", (q) =>
           q.eq("userId", user._id).eq("projectId", args.projectId!)
         )
-    } else if (args.globalOnly) {
-      // Only return memories with no projectId and no spaceId (truly global)
-      // Use the by_user_created index and post-filter to exclude scoped memories,
-      // since no composite index covers both projectId=undefined AND spaceId=undefined.
+    } else if (args.spaceId) {
       memoryQuery = ctx.db
         .query("memories")
-        .withIndex("by_user_created", (q) => q.eq("userId", user._id))
+        .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.spaceId!))
     } else {
       memoryQuery = ctx.db
         .query("memories")
         .withIndex("by_user_created", (q) => q.eq("userId", user._id))
     }
 
-    // When globalOnly, we fetch more to account for post-filtering loss
-    const fetchLimit = args.globalOnly ? limit * 3 : limit
+    // Over-fetch when we plan to post-filter.
+    const fetchLimit = bubbleUp || args.globalOnly ? limit * 3 : limit
     const results = await memoryQuery.order("desc").take(fetchLimit)
 
-    let filtered = results
-
-    // Global-only: exclude space-scoped and project-scoped memories
-    if (args.globalOnly) {
-      filtered = filtered.filter((m) => !m.projectId && !m.spaceId)
-      filtered = filtered.slice(0, limit)
-    }
+    let filtered = results.filter((m) => {
+      if (args.globalOnly) return !m.projectId && !m.spaceId
+      if (args.projectId) {
+        if (!bubbleUp) return m.projectId === args.projectId
+        if (m.projectId === args.projectId) return true
+        if (m.spaceId === effectiveSpaceId && !m.projectId) return true
+        if (!m.projectId && !m.spaceId) return true
+        return false
+      }
+      if (effectiveSpaceId) {
+        if (!bubbleUp) return m.spaceId === effectiveSpaceId && !m.projectId
+        if (m.spaceId === effectiveSpaceId) return true
+        if (!m.projectId && !m.spaceId) return true
+        return false
+      }
+      return true
+    })
 
     if (args.tags && args.tags.length > 0) {
       filtered = filtered.filter((m) => args.tags!.some((tag) => m.tags.includes(tag)))
@@ -187,6 +238,8 @@ export const listMemories = query({
     if (args.type) {
       filtered = filtered.filter((m) => m.type === args.type)
     }
+
+    filtered = filtered.slice(0, limit)
 
     return filtered
   },
@@ -276,6 +329,16 @@ export const getMemoryInternal = internalQuery({
   },
 })
 
+/** Resolve a project to its parent spaceId. Used by hybridSearch bubble-up. */
+export const getProjectSpaceId = internalQuery({
+  args: { projectId: v.id("projects") },
+  handler: async (ctx, args) => {
+    const project = await ctx.db.get(args.projectId)
+    if (!project) return null
+    return { spaceId: project.spaceId }
+  },
+})
+
 export const updateEmbedding = internalMutation({
   args: {
     memoryId: v.id("memories"),
@@ -342,6 +405,15 @@ export const hybridSearch = action({
 
     const limit = Math.min(args.limit ?? 10, 50)
     const mode = args.mode ?? "hybrid"
+
+    // Resolve parent space when only projectId is passed — bubble-up needs it.
+    let resolvedSpaceId = args.spaceId
+    if (args.projectId && !resolvedSpaceId) {
+      const project = await ctx.runQuery(internal.memories.getProjectSpaceId, {
+        projectId: args.projectId,
+      })
+      resolvedSpaceId = project?.spaceId
+    }
 
     let keywordResults: Array<{
       _id: string
@@ -444,19 +516,27 @@ export const hybridSearch = action({
         if (fetched) doc = fetched as any
       }
       if (doc) {
-        // Filter by scope — vector results are only filtered by userId, so we
-        // must enforce spaceId/projectId here on all fetched documents.
-        // When globalScope is set, also include unscoped (global) memories.
-        if (args.spaceId) {
-          const docSpaceId = (doc as any).spaceId as string | undefined
-          const isScoped = docSpaceId === args.spaceId
-          const isGlobal = !docSpaceId && !(doc as any).projectId
-          if (!isScoped && !(args.globalScope && isGlobal)) continue
-        } else if (args.projectId) {
-          const docProjectId = (doc as any).projectId as string | undefined
-          const isScoped = docProjectId === args.projectId
-          const isGlobal = !docProjectId && !(doc as any).spaceId
-          if (!isScoped && !(args.globalScope && isGlobal)) continue
+        // Scope filter with bubble-up:
+        //   - projectId set: keep project + parent-space (no project) +
+        //     global. Broader scope is allowed because narrower queries
+        //     inherit outer context.
+        //   - spaceId set: keep space-level + any project within that space
+        //     + global.
+        //   - neither: leave everything as-is (globalScope is redundant).
+        // globalScope arg is kept for back-compat — bubble-up now covers its
+        // intent (always includes global when a scope is set).
+        const docSpaceId = (doc as { spaceId?: string }).spaceId
+        const docProjectId = (doc as { projectId?: string }).projectId
+        if (args.projectId) {
+          const isInProject = docProjectId === args.projectId
+          const isSpaceLevel =
+            !docProjectId && resolvedSpaceId !== undefined && docSpaceId === resolvedSpaceId
+          const isGlobal = !docProjectId && !docSpaceId
+          if (!(isInProject || isSpaceLevel || isGlobal)) continue
+        } else if (resolvedSpaceId) {
+          const isInSpace = docSpaceId === resolvedSpaceId
+          const isGlobal = !docProjectId && !docSpaceId
+          if (!(isInSpace || isGlobal)) continue
         }
 
         // Filter by tags if specified

@@ -396,6 +396,8 @@ export const getContext = query({
   args: {
     apiKeyHash: v.string(),
     spaceId: v.optional(v.id("spaces")),
+    projectId: v.optional(v.id("projects")),
+    agentId: v.optional(v.string()),
     taskLimit: v.optional(v.number()),
     memoryLimit: v.optional(v.number()),
     workspacePath: v.optional(v.string()),
@@ -406,32 +408,68 @@ export const getContext = query({
     const taskLimit = args.taskLimit ?? 10
     const memoryLimit = args.memoryLimit ?? 5
 
-    // Resolve space: explicit > workspace detection > default
+    // Resolve project + space. Resolution precedence:
+    //   explicit projectId -> explicit spaceId -> workspace path/repo (project
+    //   first, then space) -> session activeProjectId/activeSpaceId ->
+    //   user.settings.defaultProjectId -> user.settings.defaultSpaceId.
     let activeSpace: Doc<"spaces"> | null = null
+    let activeProject: Doc<"projects"> | null = null
     let workspaceInfo:
-      | { detectedPath?: string; detectedRepo?: string; resolvedSpaceId?: string }
+      | {
+          detectedPath?: string
+          detectedRepo?: string
+          resolvedSpaceId?: string
+          resolvedProjectId?: string
+        }
       | undefined
 
-    if (args.spaceId) {
+    if (args.projectId) {
+      activeProject = await ctx.db.get(args.projectId)
+      if (activeProject && activeProject.userId === user._id) {
+        activeSpace = await ctx.db.get(activeProject.spaceId)
+      } else {
+        activeProject = null
+      }
+    } else if (args.spaceId) {
       activeSpace = await ctx.db.get(args.spaceId)
     } else if (args.repoUrl || args.workspacePath) {
-      // Try workspace-based auto-detection
       const normalizedRepo = args.repoUrl ? normalizeRepoUrl(args.repoUrl) : null
 
-      const allSpaces = await ctx.db
-        .query("spaces")
+      // Try project-level link first (more specific).
+      const allProjects = await ctx.db
+        .query("projects")
         .withIndex("by_user", (q) => q.eq("userId", user._id))
         .filter((q) => q.neq(q.field("status"), "archived"))
         .collect()
-
-      for (const space of allSpaces) {
-        if (normalizedRepo && space.linkedRepos?.includes(normalizedRepo)) {
-          activeSpace = space
+      for (const p of allProjects) {
+        if (normalizedRepo && p.linkedRepos?.includes(normalizedRepo)) {
+          activeProject = p
           break
         }
-        if (args.workspacePath && space.linkedPaths?.includes(args.workspacePath)) {
-          activeSpace = space
+        if (args.workspacePath && p.linkedPaths?.includes(args.workspacePath)) {
+          activeProject = p
           break
+        }
+      }
+      if (activeProject) {
+        activeSpace = await ctx.db.get(activeProject.spaceId)
+      }
+
+      if (!activeSpace) {
+        const allSpaces = await ctx.db
+          .query("spaces")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .filter((q) => q.neq(q.field("status"), "archived"))
+          .collect()
+        for (const space of allSpaces) {
+          if (normalizedRepo && space.linkedRepos?.includes(normalizedRepo)) {
+            activeSpace = space
+            break
+          }
+          if (args.workspacePath && space.linkedPaths?.includes(args.workspacePath)) {
+            activeSpace = space
+            break
+          }
         }
       }
 
@@ -439,16 +477,47 @@ export const getContext = query({
         detectedPath: args.workspacePath,
         detectedRepo: args.repoUrl,
         resolvedSpaceId: activeSpace?._id,
+        resolvedProjectId: activeProject?._id,
       }
     }
 
+    // Session fallback (if an agentId is supplied)
+    if (!activeSpace && !activeProject && args.agentId) {
+      const session = await ctx.db
+        .query("sessions")
+        .withIndex("by_user_agent", (q) => q.eq("userId", user._id).eq("agentId", args.agentId!))
+        .unique()
+      if (session?.activeProjectId) {
+        activeProject = await ctx.db.get(session.activeProjectId)
+        if (activeProject) activeSpace = await ctx.db.get(activeProject.spaceId)
+      } else if (session?.activeSpaceId) {
+        activeSpace = await ctx.db.get(session.activeSpaceId)
+      }
+    }
+
+    // User default fallback
+    if (!activeSpace && !activeProject && user.settings.defaultProjectId) {
+      const p = await ctx.db.get(user.settings.defaultProjectId)
+      if (p && p.userId === user._id) {
+        activeProject = p
+        activeSpace = await ctx.db.get(p.spaceId)
+      }
+    }
     if (!activeSpace && user.settings.defaultSpaceId) {
       activeSpace = (await ctx.db.get(user.settings.defaultSpaceId)) as Doc<"spaces"> | null
     }
 
-    // Get pending tasks (scoped to space if active) using spaceId-based indexes
+    // Task loading — narrow to project if one is active, otherwise space-wide.
     let pendingTasks
-    if (activeSpace) {
+    if (activeProject) {
+      pendingTasks = await ctx.db
+        .query("tasks")
+        .withIndex("by_user_project_status", (q) =>
+          q.eq("userId", user._id).eq("projectId", activeProject!._id).eq("status", "pending")
+        )
+        .order("desc")
+        .take(taskLimit)
+    } else if (activeSpace) {
       pendingTasks = await ctx.db
         .query("tasks")
         .withIndex("by_user_space_status", (q) =>
@@ -464,58 +533,74 @@ export const getContext = query({
         .take(taskLimit)
     }
 
-    // Get in-progress tasks
     const inProgressTasks = await ctx.db
       .query("tasks")
       .withIndex("by_user_status", (q) => q.eq("userId", user._id).eq("status", "in_progress"))
       .collect()
 
-    // Get memories -- space-scoped + global
+    // Memory loading with scope bubbling:
+    //   - project scope: project + space + global
+    //   - space scope:   space + all its projects' memories + global
+    //   - none (global): global only
     const allUserMemories = await ctx.db
       .query("memories")
       .withIndex("by_user_created", (q) => q.eq("userId", user._id))
       .order("desc")
-      .take(memoryLimit * 3)
+      .take(memoryLimit * 6)
 
-    let spaceMemories = activeSpace
-      ? allUserMemories.filter((m) => m.spaceId === activeSpace!._id).slice(0, memoryLimit)
-      : []
-
-    // If space memories are sparse, also query directly
-    if (activeSpace && spaceMemories.length < memoryLimit) {
-      const directSpaceMemories = await ctx.db
-        .query("memories")
-        .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", activeSpace!._id))
-        .order("desc")
-        .take(memoryLimit)
-      // Merge and deduplicate
-      const seen = new Set(spaceMemories.map((m) => m._id))
-      for (const m of directSpaceMemories) {
-        if (!seen.has(m._id)) {
-          spaceMemories.push(m)
-          seen.add(m._id)
-        }
-      }
-      spaceMemories = spaceMemories.slice(0, memoryLimit)
+    let projectMemories: Doc<"memories">[] | undefined
+    let spaceMemories: Doc<"memories">[] = []
+    if (activeProject) {
+      projectMemories = allUserMemories
+        .filter((m) => m.projectId === activeProject!._id)
+        .slice(0, memoryLimit)
+      spaceMemories = allUserMemories
+        .filter((m) => m.spaceId === activeProject!.spaceId && !m.projectId)
+        .slice(0, memoryLimit)
+    } else if (activeSpace) {
+      // Include every memory whose spaceId matches (space-level + any project
+      // within that space).
+      spaceMemories = allUserMemories
+        .filter((m) => m.spaceId === activeSpace!._id)
+        .slice(0, memoryLimit)
     }
 
     const globalMemories = allUserMemories
       .filter((m) => !m.projectId && !m.spaceId)
       .slice(0, memoryLimit)
 
-    const recentMemories = activeSpace
-      ? [...spaceMemories, ...globalMemories].slice(0, memoryLimit * 2)
-      : allUserMemories.slice(0, memoryLimit)
+    const recentMemories = activeProject
+      ? [...(projectMemories ?? []), ...spaceMemories, ...globalMemories].slice(0, memoryLimit * 2)
+      : activeSpace
+        ? [...spaceMemories, ...globalMemories].slice(0, memoryLimit * 2)
+        : globalMemories
 
-    // Get all active spaces
+    // Get all active spaces and the active space's projects
     const spaces = await ctx.db
       .query("spaces")
       .withIndex("by_user_status", (q) => q.eq("userId", user._id).eq("status", "active"))
       .collect()
 
-    // Get active cycle for the space
+    const projects = activeSpace
+      ? await ctx.db
+          .query("projects")
+          .withIndex("by_user_space_status", (q) =>
+            q.eq("userId", user._id).eq("spaceId", activeSpace!._id).eq("status", "active")
+          )
+          .collect()
+      : []
+
+    // Active cycle: prefer project-scoped cycle, fall back to space-scoped.
     let activeCycle = null
-    if (activeSpace) {
+    if (activeProject) {
+      activeCycle = await ctx.db
+        .query("cycles")
+        .withIndex("by_user_project_status", (q) =>
+          q.eq("userId", user._id).eq("projectId", activeProject!._id).eq("status", "active")
+        )
+        .first()
+    }
+    if (!activeCycle && activeSpace) {
       activeCycle = await ctx.db
         .query("cycles")
         .withIndex("by_user_space_status", (q) =>
@@ -524,8 +609,35 @@ export const getContext = query({
         .first()
     }
 
+    // Effective config (merge: project overrides, else inherit from space).
+    const effectiveConfig = activeSpace
+      ? {
+          statuses: activeProject?.statuses ?? activeSpace.statuses,
+          labels: activeProject?.labels ?? activeSpace.labels,
+          members: activeProject?.members ?? activeSpace.members,
+          estimateScale: activeProject?.estimateScale ?? activeSpace.estimateScale,
+          persona: activeProject?.persona ?? activeSpace.persona,
+        }
+      : undefined
+
+    const configSource = activeSpace
+      ? {
+          statuses: (activeProject ? "project" : "space") as "project" | "space",
+          labels: (activeProject ? "project" : "space") as "project" | "space",
+          members: (activeProject ? "project" : "space") as "project" | "space",
+          estimateScale: (activeProject?.estimateScale ? "project" : "space") as
+            | "project"
+            | "space",
+          persona: (activeProject?.persona ? "project" : activeSpace.persona ? "space" : null) as
+            | "project"
+            | "space"
+            | null,
+        }
+      : undefined
+
     return {
       activeSpace,
+      activeProject,
       taskSummary: {
         pending: pendingTasks.length,
         inProgress: inProgressTasks.length,
@@ -533,20 +645,15 @@ export const getContext = query({
       },
       recentMemories,
       memories: {
+        ...(projectMemories ? { project: projectMemories } : {}),
         space: spaceMemories,
         global: globalMemories,
       },
       spaces: spaces.map((s) => ({ id: s._id, name: s.name })),
-      persona: activeSpace?.persona,
-      spaceConfig: activeSpace
-        ? {
-            statuses: activeSpace.statuses,
-            labels: activeSpace.labels,
-            members: activeSpace.members,
-            estimateScale: activeSpace.estimateScale,
-            persona: activeSpace.persona,
-          }
-        : undefined,
+      projects: projects.map((p) => ({ id: p._id, name: p.name, slug: p.slug })),
+      persona: effectiveConfig?.persona,
+      spaceConfig: effectiveConfig,
+      configSource,
       activeCycle,
       memorySettings: activeSpace?.memorySettings,
       workspace: workspaceInfo,

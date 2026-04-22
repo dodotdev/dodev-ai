@@ -1,4 +1,4 @@
-import { v } from "convex/values"
+import { ConvexError, v } from "convex/values"
 import { mutation, query } from "./_generated/server"
 import { authenticateApiKey } from "./lib/auth"
 
@@ -255,6 +255,45 @@ export const setDefaultSpace = mutation({
       settings: {
         ...user.settings,
         defaultSpaceId: args.spaceId,
+        // Clear default project when default space changes; cross-space
+        // defaults don't make sense.
+        defaultProjectId: undefined,
+      },
+      updatedAt: Date.now(),
+    })
+    return await ctx.db.get(user._id)
+  },
+})
+
+/**
+ * Set (or clear) the user's default project. Passing null clears it. When
+ * setting a project, `defaultSpaceId` is auto-aligned to the project's
+ * parent space.
+ */
+export const setDefaultProject = mutation({
+  args: {
+    apiKeyHash: v.string(),
+    projectId: v.union(v.id("projects"), v.null()),
+  },
+  handler: async (ctx, args) => {
+    const user = await authenticateApiKey(ctx, args.apiKeyHash)
+
+    if (args.projectId === null) {
+      const { defaultProjectId: _removed, ...rest } = user.settings
+      await ctx.db.patch(user._id, { settings: rest, updatedAt: Date.now() })
+      return await ctx.db.get(user._id)
+    }
+
+    const project = await ctx.db.get(args.projectId)
+    if (!project || project.userId !== user._id) {
+      throw new ConvexError("NOT_FOUND")
+    }
+
+    await ctx.db.patch(user._id, {
+      settings: {
+        ...user.settings,
+        defaultSpaceId: project.spaceId,
+        defaultProjectId: args.projectId,
       },
       updatedAt: Date.now(),
     })
