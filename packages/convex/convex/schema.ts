@@ -34,7 +34,7 @@ export default defineSchema({
     welcomeEmailSentAt: v.optional(v.number()),
 
     // Billing
-    plan: v.union(v.literal("free"), v.literal("pro"), v.literal("team")),
+    plan: v.union(v.literal("free"), v.literal("pro"), v.literal("team"), v.literal("enterprise")),
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
 

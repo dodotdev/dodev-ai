@@ -17,7 +17,7 @@ export type IssueType = "bug" | "feature" | "improvement" | "task"
 export type SpaceLifecycle = "active" | "paused" | "completed" | "archived"
 
 /** Subscription plan tiers */
-export type PlanTier = "free" | "pro" | "team"
+export type PlanTier = "free" | "pro" | "team" | "enterprise"
 
 /** Source of a memory (which AI agent created it) */
 export type MemorySource = string

@@ -2,6 +2,156 @@ import type { Id } from "./_generated/dataModel"
 import { internalMutation } from "./_generated/server"
 
 /**
+ * Phase 1a of Projects-inside-Spaces (v0.1.0): purge the legacy `projects`
+ * drain table and clear every legacy `projectId` reference on child rows
+ * BEFORE the schema swap in Phase 1b.
+ *
+ * After `migrateProjectsToSpaces` already copied everything into `spaces`,
+ * the legacy `projects` table and legacy `projectId` fields are dead weight.
+ * We must clear them so the upcoming schema change (which repurposes
+ * `projects` as a nested-under-space entity with a new shape) succeeds.
+ *
+ * Run via:
+ *   npx convex run --component convex migrations:purgeLegacyProjects
+ *
+ * Idempotent: safe to run multiple times.
+ */
+export const purgeLegacyProjects = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    let tasksCleared = 0
+    let issuesCleared = 0
+    let memoriesCleared = 0
+    let cyclesCleared = 0
+    let versionsCleared = 0
+    let attachmentsCleared = 0
+    let commentsCleared = 0
+    let mcpLogsCleared = 0
+    let sessionsCleared = 0
+    let usersCleared = 0
+    let usageCleared = 0
+
+    // Clear legacy projectId on tasks
+    for (const row of await ctx.db.query("tasks").collect()) {
+      if (row.projectId !== undefined) {
+        await ctx.db.patch(row._id, { projectId: undefined })
+        tasksCleared++
+      }
+    }
+
+    // Clear legacy projectId on issues
+    for (const row of await ctx.db.query("issues").collect()) {
+      if (row.projectId !== undefined) {
+        await ctx.db.patch(row._id, { projectId: undefined })
+        issuesCleared++
+      }
+    }
+
+    // Clear legacy projectId on memories
+    for (const row of await ctx.db.query("memories").collect()) {
+      if (row.projectId !== undefined) {
+        await ctx.db.patch(row._id, { projectId: undefined })
+        memoriesCleared++
+      }
+    }
+
+    // Clear legacy projectId on cycles
+    for (const row of await ctx.db.query("cycles").collect()) {
+      if (row.projectId !== undefined) {
+        await ctx.db.patch(row._id, { projectId: undefined })
+        cyclesCleared++
+      }
+    }
+
+    // Clear legacy projectId on versions
+    for (const row of await ctx.db.query("versions").collect()) {
+      if (row.projectId !== undefined) {
+        await ctx.db.patch(row._id, { projectId: undefined })
+        versionsCleared++
+      }
+    }
+
+    // Clear legacy projectId on attachments
+    for (const row of await ctx.db.query("attachments").collect()) {
+      if (row.projectId !== undefined) {
+        await ctx.db.patch(row._id, { projectId: undefined })
+        attachmentsCleared++
+      }
+    }
+
+    // Clear legacy projectId on comments
+    for (const row of await ctx.db.query("comments").collect()) {
+      if (row.projectId !== undefined) {
+        await ctx.db.patch(row._id, { projectId: undefined })
+        commentsCleared++
+      }
+    }
+
+    // Clear legacy projectId on mcpLogs
+    for (const row of await ctx.db.query("mcpLogs").collect()) {
+      if (row.projectId !== undefined) {
+        await ctx.db.patch(row._id, { projectId: undefined })
+        mcpLogsCleared++
+      }
+    }
+
+    // Clear legacy activeProjectId on sessions
+    for (const row of await ctx.db.query("sessions").collect()) {
+      if (row.activeProjectId !== undefined) {
+        await ctx.db.patch(row._id, { activeProjectId: undefined })
+        sessionsCleared++
+      }
+    }
+
+    // Clear legacy defaultProjectId on users and collapse projectCount on usage
+    for (const row of await ctx.db.query("users").collect()) {
+      if (row.settings?.defaultProjectId !== undefined) {
+        const { defaultProjectId: _legacy, ...rest } = row.settings
+        await ctx.db.patch(row._id, { settings: rest })
+        usersCleared++
+      }
+    }
+
+    // Migrate usage.projectCount -> usage.spaceCount. projectCount is still
+    // required by the schema (Phase 1b removes it); zero it out for now so
+    // it contributes nothing and can be safely dropped when the field becomes
+    // optional in the next deploy.
+    for (const row of await ctx.db.query("usage").collect()) {
+      const legacyProjectCount = row.projectCount
+      if (legacyProjectCount !== 0 || row.spaceCount === undefined) {
+        const nextSpaceCount = row.spaceCount ?? legacyProjectCount
+        await ctx.db.patch(row._id, {
+          spaceCount: nextSpaceCount,
+          projectCount: 0,
+        })
+        usageCleared++
+      }
+    }
+
+    // Delete all rows in legacy projects table (they've been mirrored to spaces)
+    const legacyProjects = await ctx.db.query("projects").collect()
+    for (const row of legacyProjects) {
+      await ctx.db.delete(row._id as Id<"projects">)
+    }
+
+    return {
+      tasksCleared,
+      issuesCleared,
+      memoriesCleared,
+      cyclesCleared,
+      versionsCleared,
+      attachmentsCleared,
+      commentsCleared,
+      mcpLogsCleared,
+      sessionsCleared,
+      usersCleared,
+      usageCleared,
+      projectsDeleted: legacyProjects.length,
+    }
+  },
+})
+
+/**
  * Renumber all tasks and issues per project using a single shared counter.
  * Items are sorted by creation date and numbered sequentially.
  * After renumbering, the project's itemCounter is set to the final count.

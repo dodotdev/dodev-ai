@@ -6,23 +6,47 @@ export const API_KEY_PREFIX = "dodev_sk_"
 /** API key length (excluding prefix) */
 export const API_KEY_LENGTH = 32
 
-/** Plan limits for free tier */
+/** Plan limits per tier. `projectsPerSpace` is introduced in v0.1.0. */
 export const PLAN_LIMITS: Record<
   PlanTier,
-  { tasks: number; memories: number; spaces: number; issues: number; attachments: number }
+  {
+    tasks: number
+    memories: number
+    spaces: number
+    projectsPerSpace: number
+    issues: number
+    attachments: number
+  }
 > = {
-  free: { tasks: 100, memories: 50, spaces: 1, issues: 200, attachments: 50 },
+  free: {
+    tasks: 100,
+    memories: 50,
+    spaces: 1,
+    projectsPerSpace: 3,
+    issues: 200,
+    attachments: 50,
+  },
   pro: {
     tasks: Infinity,
     memories: Infinity,
-    spaces: Infinity,
+    spaces: 3,
+    projectsPerSpace: 10,
     issues: Infinity,
     attachments: Infinity,
   },
   team: {
     tasks: Infinity,
     memories: Infinity,
+    spaces: 5,
+    projectsPerSpace: 10,
+    issues: Infinity,
+    attachments: Infinity,
+  },
+  enterprise: {
+    tasks: Infinity,
+    memories: Infinity,
     spaces: Infinity,
+    projectsPerSpace: Infinity,
     issues: Infinity,
     attachments: Infinity,
   },
@@ -33,6 +57,7 @@ export const RATE_LIMITS: Record<PlanTier, { windowMs: number; maxRequests: numb
   free: { windowMs: 60_000, maxRequests: 60 },
   pro: { windowMs: 60_000, maxRequests: 600 },
   team: { windowMs: 60_000, maxRequests: 2000 },
+  enterprise: { windowMs: 60_000, maxRequests: 10_000 },
 }
 
 /** Validation limits */
