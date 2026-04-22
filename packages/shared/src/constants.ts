@@ -39,11 +39,11 @@ export const RATE_LIMITS: Record<PlanTier, { windowMs: number; maxRequests: numb
 export const VALIDATION = {
   /** Maximum length for task titles */
   MAX_TITLE_LENGTH: 200,
-  /** Maximum length for task/project descriptions */
+  /** Maximum length for task/space descriptions */
   MAX_DESCRIPTION_LENGTH: 5000,
   /** Maximum length for memory content */
   MAX_MEMORY_CONTENT_LENGTH: 10_000,
-  /** Maximum length for project names */
+  /** Maximum length for space names */
   MAX_SPACE_NAME_LENGTH: 100,
   /** Maximum number of tags per item */
   MAX_TAGS: 20,
@@ -65,7 +65,7 @@ export const VALIDATION = {
   MAX_ATTACHMENT_FILENAME: 255,
 } as const
 
-/** Default workflow statuses for new projects */
+/** Default workflow statuses for new spaces */
 export const DEFAULT_STATUSES: {
   name: string
   category: StatusCategory
@@ -80,7 +80,7 @@ export const DEFAULT_STATUSES: {
   { name: "Cancelled", category: "cancelled", color: "#ef4444", position: 5 },
 ]
 
-/** Default estimate scale for new projects */
+/** Default estimate scale for new spaces */
 export const DEFAULT_ESTIMATE_SCALE: EstimateScale = {
   type: "points",
   values: ["1", "2", "3", "5", "8", "13", "21"],

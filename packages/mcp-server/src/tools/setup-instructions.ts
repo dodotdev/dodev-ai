@@ -18,7 +18,7 @@ export function generateSetupInstructions(space?: SpaceInfo): string {
 
   return `## dodev.ai Usage (MANDATORY)
 
-This project has a connected dodev.ai MCP server. You MUST use it proactively:
+This workspace has a connected dodev.ai MCP server. You MUST use it proactively:
 
 ### Session Start
 - **Always** call \`get_context\` at the beginning of every session to load the active space, pending tasks, recent memories, and space config.

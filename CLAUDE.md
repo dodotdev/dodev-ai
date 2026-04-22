@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **npm package**: `@dodev/mcp-server`
 - **Docker image**: `ghcr.io/dodotdev/dodev-ai:latest`
 - **License**: MIT
-- **Version**: 0.0.6
+- **Version**: 0.0.8
 
 Shared do.dev conventions are loaded via `.claude/CLAUDE.md` (symlinked to `do-coders`).
 
@@ -108,7 +108,7 @@ pnpm typecheck                  # TypeScript strict mode check
 
 # Development servers
 pnpm dev:all                    # Start web + Convex together
-pnpm dev:web                    # Start web app only (port 5031)
+pnpm dev:web                    # Start web app only (port 3041)
 pnpm dev:convex                 # Start Convex dev server
 pnpm dev:mcp                    # Start MCP server in stdio dev mode
 

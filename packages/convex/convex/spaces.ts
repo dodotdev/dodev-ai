@@ -442,17 +442,8 @@ export const getContext = query({
       }
     }
 
-    // Support both new defaultSpaceId and legacy defaultProjectId during migration
-    if (!activeSpace && (user.settings as any).defaultSpaceId) {
-      activeSpace = (await ctx.db.get(
-        (user.settings as any).defaultSpaceId
-      )) as Doc<"spaces"> | null
-    }
-
-    if (!activeSpace && user.settings.defaultProjectId) {
-      // Legacy fallback: defaultProjectId may point to a project, not a space.
-      // During migration this field might still be set but we cannot load it
-      // from the spaces table. Skip silently.
+    if (!activeSpace && user.settings.defaultSpaceId) {
+      activeSpace = (await ctx.db.get(user.settings.defaultSpaceId)) as Doc<"spaces"> | null
     }
 
     // Get pending tasks (scoped to space if active) using spaceId-based indexes
@@ -487,7 +478,7 @@ export const getContext = query({
       .take(memoryLimit * 3)
 
     let spaceMemories = activeSpace
-      ? allUserMemories.filter((m) => (m as any).spaceId === activeSpace!._id).slice(0, memoryLimit)
+      ? allUserMemories.filter((m) => m.spaceId === activeSpace!._id).slice(0, memoryLimit)
       : []
 
     // If space memories are sparse, also query directly
@@ -509,7 +500,7 @@ export const getContext = query({
     }
 
     const globalMemories = allUserMemories
-      .filter((m) => !m.projectId && !(m as any).spaceId)
+      .filter((m) => !m.projectId && !m.spaceId)
       .slice(0, memoryLimit)
 
     const recentMemories = activeSpace

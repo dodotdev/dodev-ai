@@ -166,28 +166,28 @@ export async function sendWelcomeEmail(email: string, name?: string): Promise<vo
                 </tr>
               </table>
 
-              <!-- Step 3: Create a project -->
+              <!-- Step 3: Create a space -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
                 <tr>
                   <td width="32" valign="top" style="padding-top:2px;">
                     <div style="width:24px;height:24px;border-radius:50%;background-color:#059669;color:#ffffff;font-size:13px;font-weight:700;line-height:24px;text-align:center;">3</div>
                   </td>
                   <td style="padding-left:12px;">
-                    <p style="margin:0 0 4px;font-size:14px;font-weight:600;color:#18181b;">Create your first project</p>
+                    <p style="margin:0 0 4px;font-size:14px;font-weight:600;color:#18181b;">Create your first space</p>
                     <p style="margin:0 0 8px;font-size:14px;line-height:1.5;color:#52525b;">
-                      Once connected, ask your AI agent to create a project for you:
+                      Once connected, ask your AI agent to create a space for you:
                     </p>
                     <table width="100%" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="background-color:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;">
                           <p style="margin:0;font-size:14px;font-style:italic;color:#166534;">
-                            &ldquo;Create a dodev project called My Project&rdquo;
+                            &ldquo;Create a dodev space called My Space&rdquo;
                           </p>
                         </td>
                       </tr>
                     </table>
                     <p style="margin:8px 0 0;font-size:13px;line-height:1.5;color:#71717a;">
-                      The agent will call <code style="background-color:#f4f4f5;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:12px;">create_project</code> via MCP. From there you can track tasks, store memories, manage issues, and more &mdash; all through your AI agent.
+                      The agent will call <code style="background-color:#f4f4f5;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:12px;">create_space</code> via MCP. From there you can track tasks, store memories, manage issues, and more &mdash; all through your AI agent.
                     </p>
                   </td>
                 </tr>

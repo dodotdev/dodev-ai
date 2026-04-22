@@ -318,14 +318,10 @@ export const list = query({
         .withIndex("by_user_project", (q) =>
           q.eq("userId", user._id).eq("projectId", args.projectId!)
         )
-    } else if (args.globalOnly && args.status) {
-      taskQuery = ctx.db
-        .query("tasks")
-        .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", undefined))
     } else if (args.globalOnly) {
-      taskQuery = ctx.db
-        .query("tasks")
-        .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", undefined))
+      // Use by_user index and post-filter to exclude both projectId and spaceId,
+      // since no composite index covers both projectId=undefined AND spaceId=undefined.
+      taskQuery = ctx.db.query("tasks").withIndex("by_user", (q) => q.eq("userId", user._id))
     } else if (args.status) {
       taskQuery = ctx.db
         .query("tasks")
@@ -338,11 +334,18 @@ export const list = query({
       taskQuery = ctx.db.query("tasks").withIndex("by_user", (q) => q.eq("userId", user._id))
     }
 
-    let results = await taskQuery.order("desc").take(limit)
+    // When globalOnly, fetch more to account for post-filtering loss
+    const fetchLimit = args.globalOnly ? limit * 3 : limit
+    let results = await taskQuery.order("desc").take(fetchLimit)
 
-    // Post-filter status for globalOnly + status combo (no compound index)
-    if (args.globalOnly && args.status) {
-      results = results.filter((t) => t.status === args.status)
+    // Post-filter for globalOnly: exclude both project-scoped and space-scoped tasks
+    if (args.globalOnly) {
+      results = results.filter((t) => !t.projectId && !t.spaceId)
+      results = results.slice(0, limit)
+      // Also apply status filter if specified (since we used by_user index, not by_user_status)
+      if (args.status) {
+        results = results.filter((t) => t.status === args.status)
+      }
     }
 
     if (args.summary) {

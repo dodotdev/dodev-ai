@@ -302,7 +302,7 @@ interface ContextLine {
 
 const contextLines: ContextLine[] = [
   {
-    label: "Project",
+    label: "Space",
     value: "payments-api",
     icon: Layers,
     color: "text-emerald-400",
@@ -418,23 +418,23 @@ const featureBlocks: FeatureBlock[] = [
     bullets: [
       "Four memory types: facts, decisions, preferences, learnings",
       "Tag-based organization and full-text search",
-      "Memories scoped per project, recalled per session",
+      "Memories scoped per space, recalled per session",
       "Semantic search coming soon for intelligent recall",
     ],
     visual: <MemoryListVisual />,
   },
   {
-    badge: "Project Context",
+    badge: "Space Context",
     badgeColor: "border-cyan-500/30 bg-cyan-500/5 text-cyan-400",
     headline: "Full context,",
     headlineAccent: "every session.",
     description:
-      "One tool call at the start of every session loads pending tasks, open issues, relevant memories, project config, active cycle, and your custom AI persona. Zero manual setup.",
+      "One tool call at the start of every session loads pending tasks, open issues, relevant memories, space config, active cycle, and your custom AI persona. Zero manual setup.",
     bullets: [
-      "Active project, cycle, and config in a single call",
+      "Active space, cycle, and config in a single call",
       "Pending tasks and open issues loaded automatically",
       "Recent memories surface relevant past decisions",
-      "Custom AI persona shapes agent behavior per project",
+      "Custom AI persona shapes agent behavior per space",
     ],
     visual: <ContextVisual />,
   },
@@ -464,7 +464,7 @@ export function Features() {
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
             Everything your AI agents need to manage work across sessions -- tasks, issues,
-            memories, projects, cycles, and config -- all through the Model Context Protocol.
+            memories, spaces, cycles, and config -- all through the Model Context Protocol.
           </p>
         </motion.div>
 

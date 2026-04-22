@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values"
+import type { Id } from "./_generated/dataModel"
 import { mutation, query } from "./_generated/server"
 import { authenticateApiKey } from "./lib/auth"
 
@@ -22,10 +23,8 @@ export const create = mutation({
 
     let taskId = args.taskId
     let issueId = args.issueId
-    // biome-ignore lint/suspicious/noExplicitAny: projectId/spaceId come from parent task/issue/comment lookup
-    let projectId: any
-    // biome-ignore lint/suspicious/noExplicitAny: spaceId comes from parent task/issue/comment lookup
-    let spaceId: any
+    let projectId: Id<"projects"> | undefined
+    let spaceId: Id<"spaces"> | undefined
 
     // If parentId is provided, inherit taskId/issueId/projectId/spaceId from parent
     if (args.parentId) {
@@ -36,7 +35,7 @@ export const create = mutation({
       taskId = parent.taskId
       issueId = parent.issueId
       projectId = parent.projectId
-      spaceId = (parent as any).spaceId
+      spaceId = parent.spaceId
     }
 
     // Validate exactly one of taskId/issueId is present
@@ -55,7 +54,7 @@ export const create = mutation({
       }
       if (!args.parentId) {
         projectId = task.projectId
-        spaceId = (task as any).spaceId
+        spaceId = task.spaceId
       }
     } else if (issueId) {
       const issue = await ctx.db.get(issueId)
@@ -64,7 +63,7 @@ export const create = mutation({
       }
       if (!args.parentId) {
         projectId = issue.projectId
-        spaceId = (issue as any).spaceId
+        spaceId = issue.spaceId
       }
     }
 

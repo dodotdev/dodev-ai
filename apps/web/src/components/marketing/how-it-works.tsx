@@ -128,7 +128,7 @@ function BuildVisual() {
   const lines = [
     { color: "text-zinc-500", text: "$ claude" },
     { color: "text-zinc-400", text: '> "What did we decide about the auth strategy?"' },
-    { color: "text-emerald-400", text: "  Found 3 memories for project backend-api" },
+    { color: "text-emerald-400", text: "  Found 3 memories for space backend-api" },
     {
       color: "text-emerald-400",
       text: "  JWT with RS256, 24h expiry, refresh tokens via httpOnly cookies",

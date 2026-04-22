@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values"
 import { internal } from "./_generated/api"
+import type { Id } from "./_generated/dataModel"
 import { action, internalMutation, internalQuery } from "./_generated/server"
 import { incrementUsage } from "./lib/utils"
 
@@ -79,7 +80,7 @@ export const internalGetTaskParent = internalQuery({
     if (!task || task.userId !== args.userId) return null
     return {
       projectId: task.projectId as string | undefined,
-      spaceId: (task as any).spaceId as string | undefined,
+      spaceId: task.spaceId as string | undefined,
     }
   },
 })
@@ -95,7 +96,7 @@ export const internalGetIssueParent = internalQuery({
     if (!issue || issue.userId !== args.userId) return null
     return {
       projectId: issue.projectId as string | undefined,
-      spaceId: (issue as any).spaceId as string | undefined,
+      spaceId: issue.spaceId as string | undefined,
     }
   },
 })
@@ -123,7 +124,7 @@ export const uploadFromBase64 = action({
     // 1. Authenticate
     const user = (await ctx.runQuery(internal.memories.authenticateForSearch, {
       apiKeyHash: args.apiKeyHash,
-    })) as { _id: any; plan: string } | null
+    })) as { _id: Id<"users">; plan: string } | null
     if (!user) throw new ConvexError("UNAUTHORIZED")
 
     // 2. Validate exactly one parent is provided
@@ -139,7 +140,7 @@ export const uploadFromBase64 = action({
     let spaceId: string | undefined
     if (args.taskId) {
       const task = (await ctx.runQuery(internal.attachmentsInternal.internalGetTaskParent, {
-        id: args.taskId as any,
+        id: args.taskId as unknown as Id<"tasks">,
         userId: user._id,
       })) as { projectId: string | undefined; spaceId: string | undefined } | null
       if (!task) throw new ConvexError("NOT_FOUND")
@@ -147,7 +148,7 @@ export const uploadFromBase64 = action({
       spaceId = task.spaceId
     } else if (args.issueId) {
       const issue = (await ctx.runQuery(internal.attachmentsInternal.internalGetIssueParent, {
-        id: args.issueId as any,
+        id: args.issueId as unknown as Id<"issues">,
         userId: user._id,
       })) as { projectId: string | undefined; spaceId: string | undefined } | null
       if (!issue) throw new ConvexError("NOT_FOUND")
@@ -182,13 +183,15 @@ export const uploadFromBase64 = action({
     const { storageId } = (await uploadResponse.json()) as { storageId: string }
 
     // 6. Save the attachment record
+    // Casts required: Convex actions receive/pass untyped data across the
+    // runQuery/runMutation boundary — string IDs must be cast to Id<T>.
     const result = (await ctx.runMutation(internal.attachmentsInternal.internalSave, {
       userId: user._id,
-      storageId: storageId as any,
-      taskId: args.taskId as any,
-      issueId: args.issueId as any,
-      projectId: projectId as any,
-      spaceId: spaceId as any,
+      storageId: storageId as unknown as Id<"_storage">,
+      taskId: args.taskId as unknown as Id<"tasks"> | undefined,
+      issueId: args.issueId as unknown as Id<"issues"> | undefined,
+      projectId: projectId as unknown as Id<"projects"> | undefined,
+      spaceId: spaceId as unknown as Id<"spaces"> | undefined,
       filename: args.filename,
       mimeType: args.mimeType,
       size: args.size,

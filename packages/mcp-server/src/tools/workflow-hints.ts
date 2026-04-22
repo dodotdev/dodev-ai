@@ -6,7 +6,7 @@ interface WorkflowStatus {
 
 /**
  * Build a workflow hint for a task or issue based on its current status
- * and the project's configured statuses.
+ * and the space's configured statuses.
  *
  * Returns actionable instructions with actual status IDs so the agent
  * can call update_task/update_issue directly.
@@ -49,9 +49,7 @@ export function buildWorkflowHint(
     }
   } else if (currentStatusId === inReview?.id) {
     // Item is In Review — no action needed from the agent, the user will move to Done
-    lines.push(
-      `This ${itemType} is in review. The project owner will move it to Done after review.`
-    )
+    lines.push(`This ${itemType} is in review. The space owner will move it to Done after review.`)
   } else if (resolvedCategory === "completed") {
     // Already done
     lines.push(`This ${itemType} is already completed.`)
@@ -119,7 +117,7 @@ export function buildContextWorkflowHint(statuses: WorkflowStatus[]): string {
 
   lines.push(
     "- Always add a comment (create_comment) documenting what you did, decisions made, and any blockers.",
-    "- The project owner will review and move items to Done."
+    "- The space owner will review and move items to Done."
   )
 
   return lines.join("\n")

@@ -24,7 +24,7 @@ export async function authenticateApiKey(
 
 /**
  * Checks plan quotas before creating resources.
- * Free plan: 1 project, 100 tasks, 50 memories.
+ * Free plan: 1 space, 100 tasks, 50 memories.
  * Paid plans: unlimited.
  */
 export async function checkQuota(

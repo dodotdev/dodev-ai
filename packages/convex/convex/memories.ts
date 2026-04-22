@@ -110,9 +110,9 @@ export const search = query({
 
     let filtered = results
 
-    // Global-only: exclude project-scoped memories
+    // Global-only: exclude space-scoped and project-scoped memories
     if (args.globalOnly) {
-      filtered = filtered.filter((m) => !m.projectId)
+      filtered = filtered.filter((m) => !m.projectId && !m.spaceId)
     }
 
     // Filter by tags if specified
@@ -155,19 +155,29 @@ export const listMemories = query({
           q.eq("userId", user._id).eq("projectId", args.projectId!)
         )
     } else if (args.globalOnly) {
-      // Only return memories with no projectId
+      // Only return memories with no projectId and no spaceId (truly global)
+      // Use the by_user_created index and post-filter to exclude scoped memories,
+      // since no composite index covers both projectId=undefined AND spaceId=undefined.
       memoryQuery = ctx.db
         .query("memories")
-        .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", undefined))
+        .withIndex("by_user_created", (q) => q.eq("userId", user._id))
     } else {
       memoryQuery = ctx.db
         .query("memories")
         .withIndex("by_user_created", (q) => q.eq("userId", user._id))
     }
 
-    const results = await memoryQuery.order("desc").take(limit)
+    // When globalOnly, we fetch more to account for post-filtering loss
+    const fetchLimit = args.globalOnly ? limit * 3 : limit
+    const results = await memoryQuery.order("desc").take(fetchLimit)
 
     let filtered = results
+
+    // Global-only: exclude space-scoped and project-scoped memories
+    if (args.globalOnly) {
+      filtered = filtered.filter((m) => !m.projectId && !m.spaceId)
+      filtered = filtered.slice(0, limit)
+    }
 
     if (args.tags && args.tags.length > 0) {
       filtered = filtered.filter((m) => args.tags!.some((tag) => m.tags.includes(tag)))
@@ -379,30 +389,19 @@ export const hybridSearch = action({
       }
     }
 
-    // Run vector search — prefer spaceId over projectId
+    // Run vector search — always filter by userId to prevent cross-user leaks.
+    // Convex vector search only supports q.eq() and q.or() (no AND), so we
+    // cannot combine userId + spaceId in a single filter expression. We filter
+    // by userId here, then apply spaceId/projectId filtering after fetching
+    // full documents in the merge phase below.
     if (mode === "semantic" || mode === "hybrid") {
       const queryEmbedding = await generateEmbedding(args.query)
       if (queryEmbedding) {
         vectorResults = await ctx.vectorSearch("memories", "by_embedding", {
           vector: queryEmbedding,
-          limit,
-          filter: (q) => {
-            let f = q.eq("userId", user._id)
-            if (args.spaceId) f = q.eq("spaceId", args.spaceId)
-            else if (args.projectId) f = q.eq("projectId", args.projectId)
-            return f
-          },
+          limit: Math.min(limit * 3, 150),
+          filter: (q) => q.eq("userId", user._id),
         })
-
-        // If globalScope, also search global memories
-        if (args.globalScope && (args.spaceId || args.projectId)) {
-          const globalVector = await ctx.vectorSearch("memories", "by_embedding", {
-            vector: queryEmbedding,
-            limit,
-            filter: (q) => q.eq("userId", user._id),
-          })
-          vectorResults = [...vectorResults, ...globalVector]
-        }
       }
     }
 
@@ -444,6 +443,21 @@ export const hybridSearch = action({
         if (fetched) doc = fetched as any
       }
       if (doc) {
+        // Filter by scope — vector results are only filtered by userId, so we
+        // must enforce spaceId/projectId here on all fetched documents.
+        // When globalScope is set, also include unscoped (global) memories.
+        if (args.spaceId) {
+          const docSpaceId = (doc as any).spaceId as string | undefined
+          const isScoped = docSpaceId === args.spaceId
+          const isGlobal = !docSpaceId && !(doc as any).projectId
+          if (!isScoped && !(args.globalScope && isGlobal)) continue
+        } else if (args.projectId) {
+          const docProjectId = (doc as any).projectId as string | undefined
+          const isScoped = docProjectId === args.projectId
+          const isGlobal = !docProjectId && !(doc as any).spaceId
+          if (!isScoped && !(args.globalScope && isGlobal)) continue
+        }
+
         // Filter by tags if specified
         if (args.tags && args.tags.length > 0) {
           if (!args.tags.some((tag) => doc!.tags.includes(tag))) continue

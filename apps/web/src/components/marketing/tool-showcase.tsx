@@ -55,19 +55,19 @@ const categories = [
     },
   },
   {
-    id: "projects",
-    label: "Projects",
+    id: "spaces",
+    label: "Spaces",
     tools: [
-      "create_project",
-      "list_projects",
-      "get_project",
-      "update_project",
-      "archive_project",
-      "set_active_project",
+      "create_space",
+      "list_spaces",
+      "get_space",
+      "update_space",
+      "archive_space",
+      "set_active_space",
     ],
     example: {
       request: `{
-  "tool": "create_project",
+  "tool": "create_space",
   "arguments": {
     "name": "backend-api",
     "description": "REST API service"
@@ -92,7 +92,7 @@ const categories = [
   "arguments": {}
 }`,
       response: `{
-  "activeProject": {
+  "activeSpace": {
     "name": "backend-api"
   },
   "taskSummary": {
@@ -101,7 +101,7 @@ const categories = [
     "topPending": [...]
   },
   "recentMemories": [...],
-  "projects": [
+  "spaces": [
     { "id": "...", "name": "backend-api" },
     { "id": "...", "name": "frontend" }
   ]

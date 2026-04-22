@@ -168,7 +168,7 @@ export const migrateProjectsToSpaces = internalMutation({
       if (task.projectId && idMap.has(task.projectId)) {
         await ctx.db.patch(task._id, {
           spaceId: idMap.get(task.projectId)!,
-        } as any)
+        })
         tasksUpdated++
       }
     }
@@ -182,7 +182,7 @@ export const migrateProjectsToSpaces = internalMutation({
       if (issue.projectId && idMap.has(issue.projectId)) {
         await ctx.db.patch(issue._id, {
           spaceId: idMap.get(issue.projectId)!,
-        } as any)
+        })
         issuesUpdated++
       }
     }
@@ -196,7 +196,7 @@ export const migrateProjectsToSpaces = internalMutation({
       if (memory.projectId && idMap.has(memory.projectId)) {
         await ctx.db.patch(memory._id, {
           spaceId: idMap.get(memory.projectId)!,
-        } as any)
+        })
         memoriesUpdated++
       }
     }
@@ -210,7 +210,7 @@ export const migrateProjectsToSpaces = internalMutation({
       if (cycle.projectId && idMap.has(cycle.projectId)) {
         await ctx.db.patch(cycle._id, {
           spaceId: idMap.get(cycle.projectId)!,
-        } as any)
+        })
         cyclesUpdated++
       }
     }
@@ -224,7 +224,7 @@ export const migrateProjectsToSpaces = internalMutation({
       if (version.projectId && idMap.has(version.projectId)) {
         await ctx.db.patch(version._id, {
           spaceId: idMap.get(version.projectId)!,
-        } as any)
+        })
         versionsUpdated++
       }
     }
@@ -238,7 +238,7 @@ export const migrateProjectsToSpaces = internalMutation({
       if (attachment.projectId && idMap.has(attachment.projectId)) {
         await ctx.db.patch(attachment._id, {
           spaceId: idMap.get(attachment.projectId)!,
-        } as any)
+        })
         attachmentsUpdated++
       }
     }
@@ -252,7 +252,7 @@ export const migrateProjectsToSpaces = internalMutation({
       if (comment.projectId && idMap.has(comment.projectId)) {
         await ctx.db.patch(comment._id, {
           spaceId: idMap.get(comment.projectId)!,
-        } as any)
+        })
         commentsUpdated++
       }
     }
@@ -266,7 +266,7 @@ export const migrateProjectsToSpaces = internalMutation({
       if (session.activeProjectId && idMap.has(session.activeProjectId)) {
         await ctx.db.patch(session._id, {
           activeSpaceId: idMap.get(session.activeProjectId)!,
-        } as any)
+        })
         sessionsUpdated++
       }
     }
@@ -283,7 +283,7 @@ export const migrateProjectsToSpaces = internalMutation({
             ...user.settings,
             defaultSpaceId: idMap.get(user.settings.defaultProjectId)!,
           },
-        } as any)
+        })
         usersUpdated++
       }
     }

@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values"
+import type { Id } from "./_generated/dataModel"
 import { mutation, query } from "./_generated/server"
 import { authenticateApiKey, checkQuota } from "./lib/auth"
 import { incrementUsage } from "./lib/utils"
@@ -44,24 +45,22 @@ export const save = mutation({
     }
 
     // Validate parent exists and belongs to user, extract projectId/spaceId
-    // biome-ignore lint/suspicious/noExplicitAny: projectId comes from parent task/issue lookup
-    let projectId: any
-    // biome-ignore lint/suspicious/noExplicitAny: spaceId comes from parent task/issue lookup
-    let spaceId: any
+    let projectId: Id<"projects"> | undefined
+    let spaceId: Id<"spaces"> | undefined
     if (args.taskId) {
       const task = await ctx.db.get(args.taskId)
       if (!task || task.userId !== user._id) {
         throw new ConvexError("NOT_FOUND")
       }
       projectId = task.projectId
-      spaceId = (task as any).spaceId
+      spaceId = task.spaceId
     } else if (args.issueId) {
       const issue = await ctx.db.get(args.issueId)
       if (!issue || issue.userId !== user._id) {
         throw new ConvexError("NOT_FOUND")
       }
       projectId = issue.projectId
-      spaceId = (issue as any).spaceId
+      spaceId = issue.spaceId
     }
 
     await checkQuota(ctx, user, "attachments")

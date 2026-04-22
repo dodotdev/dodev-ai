@@ -244,24 +244,6 @@ export const regenerateApiKey = mutation({
   },
 })
 
-export const setDefaultProject = mutation({
-  args: {
-    apiKeyHash: v.string(),
-    projectId: v.id("projects"),
-  },
-  handler: async (ctx, args) => {
-    const user = await authenticateApiKey(ctx, args.apiKeyHash)
-    await ctx.db.patch(user._id, {
-      settings: {
-        ...user.settings,
-        defaultProjectId: args.projectId,
-      },
-      updatedAt: Date.now(),
-    })
-    return await ctx.db.get(user._id)
-  },
-})
-
 export const setDefaultSpace = mutation({
   args: {
     apiKeyHash: v.string(),
@@ -273,7 +255,7 @@ export const setDefaultSpace = mutation({
       settings: {
         ...user.settings,
         defaultSpaceId: args.spaceId,
-      } as any,
+      },
       updatedAt: Date.now(),
     })
     return await ctx.db.get(user._id)

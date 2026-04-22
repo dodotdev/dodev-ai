@@ -24,7 +24,7 @@ const terminalSequence: TerminalLine[] = [
   {
     id: 1,
     type: "success",
-    text: 'Loaded project "payments-api"',
+    text: 'Loaded space "payments-api"',
     delay: 800,
   },
   {

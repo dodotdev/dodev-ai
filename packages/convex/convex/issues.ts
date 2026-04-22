@@ -273,7 +273,7 @@ export const list = query({
         .filter((i) => !args.type || i.type === args.type)
         .filter((i) => !args.severity || i.severity === args.severity)
       if (args.globalOnly) {
-        filtered = filtered.filter((i) => !i.projectId)
+        filtered = filtered.filter((i) => !i.projectId && !i.spaceId)
       }
 
       if (args.summary) {
@@ -332,9 +332,9 @@ export const list = query({
           q.eq("userId", user._id).eq("projectId", args.projectId!)
         )
     } else if (args.globalOnly) {
-      issueQuery = ctx.db
-        .query("issues")
-        .withIndex("by_user_project", (q) => q.eq("userId", user._id).eq("projectId", undefined))
+      // Use by_user index and post-filter to exclude both projectId and spaceId,
+      // since no composite index covers both projectId=undefined AND spaceId=undefined.
+      issueQuery = ctx.db.query("issues").withIndex("by_user", (q) => q.eq("userId", user._id))
     } else if (args.status) {
       issueQuery = ctx.db
         .query("issues")
@@ -347,11 +347,18 @@ export const list = query({
       issueQuery = ctx.db.query("issues").withIndex("by_user", (q) => q.eq("userId", user._id))
     }
 
-    let results = await issueQuery.order("desc").take(limit)
+    // When globalOnly, fetch more to account for post-filtering loss
+    const fetchLimit = args.globalOnly ? limit * 3 : limit
+    let results = await issueQuery.order("desc").take(fetchLimit)
 
-    // Post-filter for globalOnly + status combo and type/severity
-    if (args.globalOnly && args.status) {
-      results = results.filter((i) => i.status === args.status)
+    // Post-filter for globalOnly: exclude both project-scoped and space-scoped issues
+    if (args.globalOnly) {
+      results = results.filter((i) => !i.projectId && !i.spaceId)
+      results = results.slice(0, limit)
+      // Also apply status filter if specified (since we used by_user index, not by_user_status)
+      if (args.status) {
+        results = results.filter((i) => i.status === args.status)
+      }
     }
 
     const filtered = results

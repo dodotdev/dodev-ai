@@ -7,7 +7,7 @@ const painPoints = [
   "Forgets decisions made last session",
   "Repeats the same mistakes",
   "No continuity between conversations",
-  "Loses project context on restart",
+  "Loses context on restart",
   "Starts from zero every single time",
 ]
 

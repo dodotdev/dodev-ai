@@ -96,7 +96,7 @@ export const memoryTools: Tool[] = [
   {
     name: "list_memories",
     description:
-      "List recent memories in chronological order. Use this to review what's been stored recently, audit memory quality, or browse memories by project or tag. For finding specific information, prefer search_memories instead.",
+      "List recent memories in chronological order. Use this to review what's been stored recently, audit memory quality, or browse memories by space or tag. For finding specific information, prefer search_memories instead.",
     inputSchema: {
       type: "object" as const,
       properties: {

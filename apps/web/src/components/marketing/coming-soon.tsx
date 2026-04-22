@@ -43,7 +43,7 @@ const roadmapItems: RoadmapItem[] = [
   {
     title: "Team Collaboration",
     description:
-      "Share projects, memories, and context across your entire team of AI agents. Collective intelligence.",
+      "Share spaces, memories, and context across your entire team of AI agents. Collective intelligence.",
     icon: Users,
     accentColor: "text-rose-400",
     iconBg: "bg-rose-500/10 border-rose-500/20",

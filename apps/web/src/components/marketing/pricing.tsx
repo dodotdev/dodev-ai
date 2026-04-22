@@ -29,7 +29,7 @@ const plans: Plan[] = [
     period: "/month",
     description: "Get started with generous free limits",
     features: [
-      "1 project",
+      "1 space",
       "1 agent connection",
       "100 tasks & issues",
       "30 memories",
@@ -46,9 +46,9 @@ const plans: Plan[] = [
     name: "Personal",
     price: "$10",
     period: "/month",
-    description: "More projects and capacity for solo builders",
+    description: "More spaces and capacity for solo builders",
     features: [
-      "3 projects",
+      "3 spaces",
       "Up to 3 agents",
       "500 tasks & issues",
       "200 memories",
@@ -67,7 +67,7 @@ const plans: Plan[] = [
     period: "/month",
     description: "Unlimited everything for serious builders",
     features: [
-      "Unlimited projects",
+      "Unlimited spaces",
       "Up to 10 agents",
       "Unlimited tasks & issues",
       "Unlimited memories",

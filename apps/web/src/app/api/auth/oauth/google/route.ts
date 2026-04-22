@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const stateData = JSON.stringify({ returnPathname: returnTo })
     const state = Buffer.from(stateData).toString("base64url")
 
-    const redirectUri = (process.env.WORKOS_REDIRECT_URI || "http://localhost:5031/callback").trim()
+    const redirectUri = (process.env.WORKOS_REDIRECT_URI || "http://localhost:3041/callback").trim()
 
     const authorizationUrl = workos.userManagement.getAuthorizationUrl({
       clientId: process.env.WORKOS_CLIENT_ID!,

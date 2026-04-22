@@ -384,12 +384,12 @@ function SignInContent() {
               {
                 icon: Brain,
                 title: "Memories your AI recalls",
-                desc: "Store decisions, patterns, and learnings across projects.",
+                desc: "Store decisions, patterns, and learnings across spaces.",
               },
               {
                 icon: FolderOpen,
-                title: "Project-scoped context",
-                desc: "Organize everything by project with smart filtering.",
+                title: "Space-scoped context",
+                desc: "Organize everything by space with smart filtering.",
               },
               {
                 icon: Sparkles,

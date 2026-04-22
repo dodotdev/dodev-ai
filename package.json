@@ -10,8 +10,8 @@
   "homepage": "https://dodev.ai",
   "license": "MIT",
   "scripts": {
-    "dev:all": "lsof -ti:5031 | xargs kill -9 2>/dev/null || true; lsof -ti:3100 | xargs kill -9 2>/dev/null || true; pkill -f 'convex dev' 2>/dev/null || true; turbo run dev dev:cloud --ui=tui --concurrency=20 --filter=@dodev/web --filter=@dodev/convex --filter=@dodev/mcp-server",
-    "dev:web": "lsof -ti:5031 | xargs kill -9 2>/dev/null || true; turbo run dev --ui=tui --concurrency=20 --filter=@dodev/web",
+    "dev:all": "lsof -ti:3041 | xargs kill -9 2>/dev/null || true; lsof -ti:3100 | xargs kill -9 2>/dev/null || true; pkill -f 'convex dev' 2>/dev/null || true; turbo run dev dev:cloud --ui=tui --concurrency=20 --filter=@dodev/web --filter=@dodev/convex --filter=@dodev/mcp-server",
+    "dev:web": "lsof -ti:3041 | xargs kill -9 2>/dev/null || true; turbo run dev --ui=tui --concurrency=20 --filter=@dodev/web",
     "dev:convex": "pkill -f 'convex dev' 2>/dev/null || true; pnpm --filter @dodev/convex dev",
     "dev:mcp": "pnpm --filter @dodev/mcp-server dev:stdio",
     "dev:cloud": "pnpm --filter @dodev/mcp-server dev:cloud",

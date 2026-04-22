@@ -47,7 +47,7 @@ export const contextTools: Tool[] = [
   {
     name: "get_setup_instructions",
     description:
-      "Get CLAUDE.md instructions for configuring AI agents to use dodev.ai proactively. Returns a markdown section you should add to the project's CLAUDE.md file. If a space is linked or specified, the instructions include space-specific context (name, slug, ID). Call this after setting up dodev.ai in a new space, or when you need to add/update dodev.ai instructions in CLAUDE.md.",
+      "Get CLAUDE.md instructions for configuring AI agents to use dodev.ai proactively. Returns a markdown section you should add to the workspace's CLAUDE.md file. If a space is linked or specified, the instructions include space-specific context (name, slug, ID). Call this after setting up dodev.ai in a new space, or when you need to add/update dodev.ai instructions in CLAUDE.md.",
     inputSchema: {
       type: "object" as const,
       properties: {

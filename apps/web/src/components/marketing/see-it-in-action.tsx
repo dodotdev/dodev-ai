@@ -56,7 +56,7 @@ const sessions: Session[] = [
     messages: [
       {
         role: "user",
-        text: "What's on my plate for the payments project?",
+        text: "What's on my plate for the payments space?",
       },
       {
         role: "ai",
