@@ -22,7 +22,16 @@ export const taskTools: Tool[] = [
           enum: ["critical", "major", "minor", "trivial"],
           description: "Severity level (optional for tasks)",
         },
-        spaceId: { type: "string", description: "Associate with a specific space" },
+        spaceId: {
+          type: "string",
+          description:
+            "Associate with a specific space. Auto-derived from projectId when provided.",
+        },
+        projectId: {
+          type: "string",
+          description:
+            "Associate with a specific project inside a space (v0.1.0+). When set, the task uses per-project numbering ({SPACE}-{PROJECT}-{N}) and inherits statusId/labelIds/assigneeId choices from the project's config.",
+        },
         dueDate: {
           type: "number",
           description: "Due date as Unix timestamp (milliseconds)",
@@ -156,6 +165,11 @@ export const taskTools: Tool[] = [
       type: "object" as const,
       properties: {
         spaceId: { type: "string", description: "Filter by space" },
+        projectId: {
+          type: "string",
+          description:
+            "Filter by project inside a space (v0.1.0+). When set together with spaceId, projectId wins.",
+        },
         status: {
           type: "string",
           enum: ["pending", "in_progress", "completed", "cancelled"],
@@ -232,6 +246,7 @@ export async function handleTaskTool(
         priority: args.priority as "low" | "medium" | "high" | "urgent" | undefined,
         severity: args.severity as "critical" | "major" | "minor" | "trivial" | undefined,
         spaceId: args.spaceId as string | undefined,
+        projectId: args.projectId as string | undefined,
         dueDate: args.dueDate as number | undefined,
         tags: args.tags as string[] | undefined,
         statusId: args.statusId as string | undefined,
@@ -275,6 +290,7 @@ export async function handleTaskTool(
       const tasks = await client.query(api.tasks.list, {
         apiKeyHash,
         spaceId: args.spaceId as string | undefined,
+        projectId: args.projectId as string | undefined,
         status: args.status as string | undefined,
         statusId: args.statusId as string | undefined,
         priority: args.priority as string | undefined,

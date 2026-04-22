@@ -24,7 +24,7 @@ export const contextTools: Tool[] = [
   {
     name: "get_context",
     description:
-      "CALL THIS FIRST at the start of every session. Returns everything you need to get oriented: active space (auto-detected from workspace if linked), pending tasks, recent memories (space-scoped + global), space list, space config (workflow statuses, labels, members, estimate scale), AI persona instructions, active cycle, and memory settings. This is your primary way to load context from previous sessions — it includes the most relevant stored memories so you can pick up where you or another agent left off. If this is your first session and no space exists, one will be auto-created from the current workspace.",
+      "CALL THIS FIRST at the start of every session. Returns everything you need to get oriented: active space + project (auto-detected from workspace if linked), pending tasks, recent memories (project + space + global via bubble-up), space and project lists, effective config (statuses, labels, members, estimateScale, persona — project overrides inherited from space), AI persona, active cycle, memory settings, and a configSource breakdown showing where each config field came from. This is your primary way to load context from previous sessions. If this is your first session and no space exists, one will be auto-created from the current workspace.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -32,6 +32,11 @@ export const contextTools: Tool[] = [
           type: "string",
           description:
             "Get context for a specific space. If omitted, auto-detects from the current workspace (if linked) or falls back to the default space.",
+        },
+        projectId: {
+          type: "string",
+          description:
+            "Get context narrowed to a specific project inside a space (v0.1.0+). When set, tasks/memories/cycles narrow to the project. Auto-resolved from workspace linking when omitted.",
         },
         taskLimit: {
           type: "number",
@@ -76,6 +81,8 @@ export async function handleContextTool(
       const context = (await client.query(api.spaces.getContext, {
         apiKeyHash,
         spaceId: args.spaceId as string | undefined,
+        projectId: args.projectId as string | undefined,
+        agentId: process.env.DODEV_AGENT_ID ?? "default",
         taskLimit: args.taskLimit as number | undefined,
         memoryLimit: args.memoryLimit as number | undefined,
         workspacePath: workspace?.workspacePath,
@@ -129,6 +136,7 @@ export async function handleContextTool(
           const newContext = (await client.query(api.spaces.getContext, {
             apiKeyHash,
             spaceId: newSpace._id,
+            agentId: process.env.DODEV_AGENT_ID ?? "default",
             taskLimit: args.taskLimit as number | undefined,
             memoryLimit: args.memoryLimit as number | undefined,
             workspacePath: workspace?.workspacePath,

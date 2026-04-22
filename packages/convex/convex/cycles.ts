@@ -20,18 +20,17 @@ export const create = mutation({
       throw new ConvexError("VALIDATION_ERROR: either spaceId or projectId is required")
     }
 
-    // Validate space if provided (takes priority)
-    if (args.spaceId) {
-      const space = await ctx.db.get(args.spaceId)
-      if (!space || space.userId !== user._id) {
-        throw new ConvexError("NOT_FOUND")
-      }
-    }
-
-    // Validate project if provided
+    // When projectId is set, the project's parent space is authoritative.
+    let resolvedSpaceId = args.spaceId
     if (args.projectId) {
       const project = await ctx.db.get(args.projectId)
       if (!project || project.userId !== user._id) {
+        throw new ConvexError("NOT_FOUND")
+      }
+      resolvedSpaceId = project.spaceId
+    } else if (args.spaceId) {
+      const space = await ctx.db.get(args.spaceId)
+      if (!space || space.userId !== user._id) {
         throw new ConvexError("NOT_FOUND")
       }
     }
@@ -44,7 +43,7 @@ export const create = mutation({
     const id = await ctx.db.insert("cycles", {
       userId: user._id,
       projectId: args.projectId,
-      spaceId: args.spaceId,
+      spaceId: resolvedSpaceId,
       name: args.name,
       description: args.description,
       status: args.status ?? "upcoming",
@@ -68,27 +67,7 @@ export const list = query({
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
 
-    // Space-based query path (preferred)
-    if (args.spaceId) {
-      if (args.status) {
-        return await ctx.db
-          .query("cycles")
-          .withIndex("by_user_space_status", (q) =>
-            q
-              .eq("userId", user._id)
-              .eq("spaceId", args.spaceId!)
-              .eq("status", args.status as "upcoming" | "active" | "completed")
-          )
-          .collect()
-      }
-
-      return await ctx.db
-        .query("cycles")
-        .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.spaceId!))
-        .collect()
-    }
-
-    // Legacy project-based query path
+    // Narrower scope wins: projectId > spaceId.
     if (args.projectId) {
       if (args.status) {
         return await ctx.db
@@ -101,12 +80,29 @@ export const list = query({
           )
           .collect()
       }
-
       return await ctx.db
         .query("cycles")
         .withIndex("by_user_project", (q) =>
           q.eq("userId", user._id).eq("projectId", args.projectId!)
         )
+        .collect()
+    }
+
+    if (args.spaceId) {
+      if (args.status) {
+        return await ctx.db
+          .query("cycles")
+          .withIndex("by_user_space_status", (q) =>
+            q
+              .eq("userId", user._id)
+              .eq("spaceId", args.spaceId!)
+              .eq("status", args.status as "upcoming" | "active" | "completed")
+          )
+          .collect()
+      }
+      return await ctx.db
+        .query("cycles")
+        .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.spaceId!))
         .collect()
     }
 

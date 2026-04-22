@@ -26,6 +26,11 @@ export const memoryTools: Tool[] = [
           description:
             "Associate with a specific space. Omit for user-global memories (preferences, cross-space knowledge).",
         },
+        projectId: {
+          type: "string",
+          description:
+            "Associate with a specific project inside a space (v0.1.0+). Search at any scope sees narrower AND broader memories via bubble-up (project search includes space + global; space search includes all-projects + global).",
+        },
         source: {
           type: "string",
           description:
@@ -61,7 +66,17 @@ export const memoryTools: Tool[] = [
         spaceId: {
           type: "string",
           description:
-            "Scope search to a specific space. Both space-scoped and global memories are searched by default.",
+            "Scope search to a specific space. Bubble-up (default: on) includes memories at any scope within that space plus global. Set bubbleUp: false for strict scope.",
+        },
+        projectId: {
+          type: "string",
+          description:
+            "Scope search to a specific project (v0.1.0+). When set together with spaceId, projectId wins. With bubble-up on (default), the search sees project + parent-space + global memories.",
+        },
+        bubbleUp: {
+          type: "boolean",
+          description:
+            "Include memories from broader/narrower scopes per the bubble-up rules. Default: true. Set to false for a strict scope-only search.",
         },
         tags: {
           type: "array",
@@ -96,13 +111,22 @@ export const memoryTools: Tool[] = [
   {
     name: "list_memories",
     description:
-      "List recent memories in chronological order. Use this to review what's been stored recently, audit memory quality, or browse memories by space or tag. For finding specific information, prefer search_memories instead.",
+      "List recent memories in chronological order. Use this to review what's been stored recently, audit memory quality, or browse memories by space, project, or tag. For finding specific information, prefer search_memories instead.",
     inputSchema: {
       type: "object" as const,
       properties: {
         spaceId: {
           type: "string",
           description: "Filter to memories in a specific space. Omit to list all memories.",
+        },
+        projectId: {
+          type: "string",
+          description: "Filter to memories in a specific project (v0.1.0+). Wins over spaceId.",
+        },
+        bubbleUp: {
+          type: "boolean",
+          description:
+            "Include memories from broader/narrower scopes per the bubble-up rules. Default: true.",
         },
         tags: {
           type: "array",
@@ -184,6 +208,7 @@ export async function handleMemoryTool(
         content: args.content as string,
         tags: args.tags as string[] | undefined,
         spaceId: args.spaceId as string | undefined,
+        projectId: args.projectId as string | undefined,
         source: args.source as string | undefined,
         type: args.type as string | undefined,
         importance: args.importance as number | undefined,
@@ -198,6 +223,7 @@ export async function handleMemoryTool(
           apiKeyHash,
           query: args.query as string,
           spaceId: args.spaceId as string | undefined,
+          projectId: args.projectId as string | undefined,
           tags: args.tags as string[] | undefined,
           limit: args.limit as number | undefined,
           type: args.type as string | undefined,
@@ -211,6 +237,8 @@ export async function handleMemoryTool(
         apiKeyHash,
         query: args.query as string,
         spaceId: args.spaceId as string | undefined,
+        projectId: args.projectId as string | undefined,
+        bubbleUp: args.bubbleUp as boolean | undefined,
         tags: args.tags as string[] | undefined,
         limit: args.limit as number | undefined,
         type: args.type as string | undefined,
@@ -221,6 +249,8 @@ export async function handleMemoryTool(
       return await client.query(api.memories.listMemories, {
         apiKeyHash,
         spaceId: args.spaceId as string | undefined,
+        projectId: args.projectId as string | undefined,
+        bubbleUp: args.bubbleUp as boolean | undefined,
         tags: args.tags as string[] | undefined,
         limit: args.limit as number | undefined,
         type: args.type as string | undefined,

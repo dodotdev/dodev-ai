@@ -286,27 +286,9 @@ export const list = query({
       return results
     }
 
-    // Index-based query — prefer spaceId indexes over projectId indexes
+    // Index-based query — narrower scope wins (projectId > spaceId > user).
     let taskQuery
-    if (args.spaceId && args.statusId) {
-      taskQuery = ctx.db
-        .query("tasks")
-        .withIndex("by_user_space_statusId", (q) =>
-          q.eq("userId", user._id).eq("spaceId", args.spaceId!).eq("statusId", args.statusId!)
-        )
-    } else if (args.spaceId && args.status) {
-      taskQuery = ctx.db.query("tasks").withIndex("by_user_space_status", (q) =>
-        q
-          .eq("userId", user._id)
-          .eq("spaceId", args.spaceId!)
-          .eq("status", args.status as "pending" | "in_progress" | "completed" | "cancelled")
-      )
-    } else if (args.spaceId) {
-      taskQuery = ctx.db
-        .query("tasks")
-        .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.spaceId!))
-    } else if (args.projectId && args.statusId) {
-      // Legacy projectId path
+    if (args.projectId && args.statusId) {
       taskQuery = ctx.db
         .query("tasks")
         .withIndex("by_user_project_statusId", (q) =>
@@ -325,6 +307,23 @@ export const list = query({
         .withIndex("by_user_project", (q) =>
           q.eq("userId", user._id).eq("projectId", args.projectId!)
         )
+    } else if (args.spaceId && args.statusId) {
+      taskQuery = ctx.db
+        .query("tasks")
+        .withIndex("by_user_space_statusId", (q) =>
+          q.eq("userId", user._id).eq("spaceId", args.spaceId!).eq("statusId", args.statusId!)
+        )
+    } else if (args.spaceId && args.status) {
+      taskQuery = ctx.db.query("tasks").withIndex("by_user_space_status", (q) =>
+        q
+          .eq("userId", user._id)
+          .eq("spaceId", args.spaceId!)
+          .eq("status", args.status as "pending" | "in_progress" | "completed" | "cancelled")
+      )
+    } else if (args.spaceId) {
+      taskQuery = ctx.db
+        .query("tasks")
+        .withIndex("by_user_space", (q) => q.eq("userId", user._id).eq("spaceId", args.spaceId!))
     } else if (args.globalOnly) {
       // Use by_user index and post-filter to exclude both projectId and spaceId,
       // since no composite index covers both projectId=undefined AND spaceId=undefined.

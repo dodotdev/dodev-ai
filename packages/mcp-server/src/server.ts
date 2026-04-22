@@ -11,6 +11,7 @@ import { cycleTools, handleCycleTool } from "./tools/cycles.js"
 import { handleIssueTool, issueTools } from "./tools/issues.js"
 import { handleLinkingTool, linkingTools } from "./tools/linking.js"
 import { handleMemoryTool, memoryTools } from "./tools/memories.js"
+import { handleProjectTool, projectTools } from "./tools/projects.js"
 import { handleSpaceConfigTool, spaceConfigTools } from "./tools/space-config.js"
 import { handleSpaceTool, spaceTools } from "./tools/spaces.js"
 import { handleTaskTool, taskTools } from "./tools/tasks.js"
@@ -24,6 +25,7 @@ const allTools = [
   ...issueTools,
   ...memoryTools,
   ...spaceTools,
+  ...projectTools,
   ...contextTools,
   ...spaceConfigTools,
   ...cycleTools,
@@ -37,6 +39,7 @@ const taskToolNames = new Set(taskTools.map((t) => t.name))
 const issueToolNames = new Set(issueTools.map((t) => t.name))
 const memoryToolNames = new Set(memoryTools.map((t) => t.name))
 const spaceToolNames = new Set(spaceTools.map((t) => t.name))
+const projectToolNames = new Set(projectTools.map((t) => t.name))
 const contextToolNames = new Set(contextTools.map((t) => t.name))
 const spaceConfigToolNames = new Set(spaceConfigTools.map((t) => t.name))
 const cycleToolNames = new Set(cycleTools.map((t) => t.name))
@@ -64,6 +67,7 @@ function writeLog(
     const apiKeyHash = getApiKeyHash()
     const client = getConvexClient()
     const spaceId = (args.spaceId as string) || undefined
+    const projectId = (args.projectId as string) || undefined
     client
       .mutation(api.mcpLogs.write, {
         apiKeyHash,
@@ -72,6 +76,7 @@ function writeLog(
         status,
         durationMs,
         spaceId,
+        projectId,
         errorCode,
         errorMessage,
       })
@@ -163,6 +168,8 @@ export function createServer(): Server {
         result = await handleMemoryTool(name, toolArgs)
       } else if (spaceToolNames.has(name)) {
         result = await handleSpaceTool(name, toolArgs)
+      } else if (projectToolNames.has(name)) {
+        result = await handleProjectTool(name, toolArgs)
       } else if (contextToolNames.has(name)) {
         result = await handleContextTool(name, toolArgs)
       } else if (spaceConfigToolNames.has(name)) {
