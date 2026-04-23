@@ -203,7 +203,6 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
                   key={space._id as string}
                   spaceId={space._id as string}
                   spaceName={space.name}
-                  spaceSlug={(space as { slug?: string }).slug}
                   isExpanded={expandedSpaces.has(space._id as string)}
                   onToggle={() => toggleSpace(space._id as string)}
                   pathname={pathname}
@@ -441,8 +440,7 @@ function NewSpaceDialog({
           {previewSlug && (
             <p className="text-xs text-muted-foreground">
               Items will be numbered{" "}
-              <span className="font-mono font-medium text-foreground">{previewSlug}-1</span>,{" "}
-              <span className="font-mono font-medium text-foreground">{previewSlug}-2</span>, ...
+              <span className="font-mono font-medium text-foreground">{previewSlug}-[0]</span>
             </p>
           )}
           <div className="space-y-1.5">
@@ -474,7 +472,6 @@ function NewSpaceDialog({
 function SpaceBranch({
   spaceId,
   spaceName,
-  spaceSlug,
   isExpanded,
   onToggle,
   pathname,
@@ -482,28 +479,16 @@ function SpaceBranch({
 }: {
   spaceId: string
   spaceName: string
-  spaceSlug?: string
   isExpanded: boolean
   onToggle: () => void
   pathname: string
   onNavigate?: () => void
 }) {
-  const { apiKeyHash } = useAuth()
   const base = `/dashboard/spaces/${spaceId}`
   const isSpaceActive = pathname.startsWith(base)
 
-  // Only query projects when the space is expanded — Convex dedups shared
-  // queries across SpaceBranch instances automatically.
-  const projects = useQuery(
-    api.projects.list,
-    isExpanded && apiKeyHash ? { apiKeyHash, spaceId: spaceId as never } : "skip"
-  )
-
-  const activeProjects = (projects ?? []).filter((p) => p.status !== "archived")
-
   return (
     <div>
-      {/* Space row */}
       <button
         type="button"
         onClick={onToggle}
@@ -525,7 +510,6 @@ function SpaceBranch({
 
       {isExpanded && (
         <div className="ml-[22px] space-y-1 border-l border-border py-1 pl-3">
-          {/* Sub-items */}
           {SUB_ITEMS.map((sub) => {
             const Icon = sub.icon
             const href = `${base}${sub.href}`
@@ -549,40 +533,6 @@ function SpaceBranch({
               </Link>
             )
           })}
-
-          {/* Nested projects for this space. Each project links to its
-              settings page for now (project detail views land in a later PR).
-              When there are no projects, render nothing — the "Projects"
-              sub-item above leads to the list view. */}
-          {activeProjects.length > 0 && (
-            <div className="mt-1 border-t border-border/60 pt-1">
-              <p className="mb-1 px-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
-                Projects
-              </p>
-              {activeProjects.map((p) => {
-                const href = `${base}/projects/${p._id}/settings`
-                const projectBase = `${base}/projects/${p._id}`
-                const active = pathname.startsWith(projectBase)
-                return (
-                  <Link
-                    key={p._id as string}
-                    href={href}
-                    onClick={onNavigate}
-                    className={cn(
-                      "flex items-center gap-2.5 rounded-md px-2.5 py-1 text-[12.5px] transition-colors",
-                      active
-                        ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                        : "text-muted-foreground hover:bg-white hover:text-foreground dark:hover:bg-accent"
-                    )}
-                    title={`${spaceSlug ?? ""}-${p.slug}`}
-                  >
-                    <Layers className="size-3 shrink-0 opacity-60" />
-                    <span className="truncate">{p.name}</span>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
         </div>
       )}
     </div>

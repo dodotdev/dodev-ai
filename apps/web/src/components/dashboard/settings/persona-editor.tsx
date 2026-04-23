@@ -11,18 +11,14 @@ import { Textarea } from "@/components/ui/textarea"
 
 const MAX_PROMPT_LENGTH = 10_000
 
-import type { ConfigScope } from "./status-editor"
-
 interface PersonaEditorProps {
-  scope: ConfigScope
+  spaceId: string
   persona?: { systemPrompt: string }
-  inheritedFromSpace?: boolean
 }
 
-export function PersonaEditor({ scope, persona, inheritedFromSpace }: PersonaEditorProps) {
+export function PersonaEditor({ spaceId, persona }: PersonaEditorProps) {
   const { apiKeyHash } = useAuth()
-  const updateSpacePersona = useMutation(api.spaceConfig.updatePersona)
-  const updateProjectPersona = useMutation(api.projectConfig.updatePersona)
+  const updatePersona = useMutation(api.spaceConfig.updatePersona)
 
   const [systemPrompt, setSystemPrompt] = useState(persona?.systemPrompt ?? "")
   const [isSaving, setIsSaving] = useState(false)
@@ -52,19 +48,7 @@ export function PersonaEditor({ scope, persona, inheritedFromSpace }: PersonaEdi
     setError(null)
     setSuccessMessage(null)
     try {
-      if (scope.kind === "space") {
-        await updateSpacePersona({
-          apiKeyHash,
-          spaceId: scope.spaceId as never,
-          systemPrompt: trimmed,
-        })
-      } else {
-        await updateProjectPersona({
-          apiKeyHash,
-          projectId: scope.projectId as never,
-          systemPrompt: trimmed,
-        })
-      }
+      await updatePersona({ apiKeyHash, spaceId: spaceId as never, systemPrompt: trimmed })
       setSuccessMessage("Persona saved.")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save persona")
@@ -80,25 +64,9 @@ export function PersonaEditor({ scope, persona, inheritedFromSpace }: PersonaEdi
     setError(null)
     setSuccessMessage(null)
     try {
-      if (scope.kind === "space") {
-        await updateSpacePersona({
-          apiKeyHash,
-          spaceId: scope.spaceId as never,
-          systemPrompt: null,
-        })
-      } else {
-        await updateProjectPersona({
-          apiKeyHash,
-          projectId: scope.projectId as never,
-          systemPrompt: null,
-        })
-      }
+      await updatePersona({ apiKeyHash, spaceId: spaceId as never, systemPrompt: null })
       setSystemPrompt("")
-      setSuccessMessage(
-        scope.kind === "project"
-          ? "Override cleared — now inheriting from space."
-          : "Persona cleared."
-      )
+      setSuccessMessage("Persona cleared.")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to clear persona")
     } finally {
@@ -114,11 +82,8 @@ export function PersonaEditor({ scope, persona, inheritedFromSpace }: PersonaEdi
       </div>
 
       <p className="text-sm text-muted-foreground">
-        {scope.kind === "project"
-          ? inheritedFromSpace
-            ? "This project inherits its persona from the parent space. Typing and saving here creates a project-level override."
-            : "This project has its own persona override. Clear it to resume inheriting from the parent space."
-          : "Define a system prompt to customize how the AI agent behaves when working in this space. This prompt is injected into every tool call context."}
+        Define a system prompt to customize how the AI agent behaves when working in this space.
+        This prompt is injected into every tool call context.
       </p>
 
       {error && <p className="text-sm text-destructive">{error}</p>}

@@ -15,19 +15,15 @@ interface TeamLabel {
   color: string
 }
 
-import type { ConfigScope } from "./status-editor"
-
 interface LabelEditorProps {
-  scope: ConfigScope
+  spaceId: string
   labels: TeamLabel[]
 }
 
-export function LabelEditor({ scope, labels }: LabelEditorProps) {
+export function LabelEditor({ spaceId, labels }: LabelEditorProps) {
   const { apiKeyHash } = useAuth()
-  const addSpaceLabel = useMutation(api.spaceConfig.addLabel)
-  const removeSpaceLabel = useMutation(api.spaceConfig.removeLabel)
-  const addProjectLabel = useMutation(api.projectConfig.addLabel)
-  const removeProjectLabel = useMutation(api.projectConfig.removeLabel)
+  const addLabel = useMutation(api.spaceConfig.addLabel)
+  const removeLabel = useMutation(api.spaceConfig.removeLabel)
 
   const [newName, setNewName] = useState("")
   const [newColor, setNewColor] = useState("#3b82f6")
@@ -54,21 +50,12 @@ export function LabelEditor({ scope, labels }: LabelEditorProps) {
     setIsAdding(true)
     setError(null)
     try {
-      if (scope.kind === "space") {
-        await addSpaceLabel({
-          apiKeyHash,
-          spaceId: scope.spaceId as never,
-          name: trimmedName,
-          color: newColor,
-        })
-      } else {
-        await addProjectLabel({
-          apiKeyHash,
-          projectId: scope.projectId as never,
-          name: trimmedName,
-          color: newColor,
-        })
-      }
+      await addLabel({
+        apiKeyHash,
+        spaceId: spaceId as never,
+        name: trimmedName,
+        color: newColor,
+      })
       setNewName("")
       setNewColor("#3b82f6")
     } catch (err) {
@@ -84,19 +71,7 @@ export function LabelEditor({ scope, labels }: LabelEditorProps) {
     setRemovingId(labelId)
     setError(null)
     try {
-      if (scope.kind === "space") {
-        await removeSpaceLabel({
-          apiKeyHash,
-          spaceId: scope.spaceId as never,
-          labelId,
-        })
-      } else {
-        await removeProjectLabel({
-          apiKeyHash,
-          projectId: scope.projectId as never,
-          labelId,
-        })
-      }
+      await removeLabel({ apiKeyHash, spaceId: spaceId as never, labelId })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove label")
     } finally {

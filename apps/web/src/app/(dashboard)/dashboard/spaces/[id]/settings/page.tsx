@@ -214,13 +214,8 @@ export default function SpaceSettingsPage() {
                   <p className="text-xs text-muted-foreground">
                     Tasks and issues display as{" "}
                     <span className="font-mono font-medium text-foreground">
-                      {editSlug.toUpperCase()}-1
+                      {editSlug.toUpperCase()}-[0]
                     </span>
-                    ,{" "}
-                    <span className="font-mono font-medium text-foreground">
-                      {editSlug.toUpperCase()}-2
-                    </span>
-                    , ...
                   </p>
                 )}
                 <div className="space-y-1.5">
@@ -335,7 +330,7 @@ export default function SpaceSettingsPage() {
                   with one of four base categories: Pending, In Progress, Completed, or Cancelled.
                 </p>
               </div>
-              <StatusEditor scope={{ kind: "space", spaceId }} statuses={space.statuses ?? []} />
+              <StatusEditor spaceId={spaceId} statuses={space.statuses ?? []} />
             </section>
           )}
 
@@ -344,11 +339,10 @@ export default function SpaceSettingsPage() {
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">Labels</h3>
                 <p className="text-sm text-muted-foreground">
-                  Color-coded tags. New projects snapshot this list at creation; edits here do not
-                  affect existing projects.
+                  Color-coded tags for tasks and issues in this space.
                 </p>
               </div>
-              <LabelEditor scope={{ kind: "space", spaceId }} labels={space.labels ?? []} />
+              <LabelEditor spaceId={spaceId} labels={space.labels ?? []} />
             </section>
           )}
 
@@ -357,10 +351,10 @@ export default function SpaceSettingsPage() {
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">Members</h3>
                 <p className="text-sm text-muted-foreground">
-                  People you can assign work to. New projects snapshot this list at creation.
+                  People you can assign work to in this space.
                 </p>
               </div>
-              <MemberEditor scope={{ kind: "space", spaceId }} members={space.members ?? []} />
+              <MemberEditor spaceId={spaceId} members={space.members ?? []} />
             </section>
           )}
 
@@ -370,12 +364,13 @@ export default function SpaceSettingsPage() {
                 <div>
                   <h3 className="text-lg font-semibold">Projects</h3>
                   <p className="text-sm text-muted-foreground">
-                    Optional nested scopes inside {space.name}. Each project maintains its own copy
-                    of statuses, labels, and members; estimates and persona live-inherit from this
-                    space unless overridden.
+                    Optional filter scopes inside {space.name}. Tasks, issues, and memories tagged
+                    to a project remain numbered at the space level — they just carry a{" "}
+                    <code>projectId</code> you can filter by. All workflow config is inherited from
+                    this space.
                   </p>
                 </div>
-                <NewProjectDialog spaceId={spaceId} spaceSlug={space.slug} />
+                <NewProjectDialog spaceId={spaceId} onCreated="stay" />
               </div>
 
               {projects === undefined ? (
@@ -387,8 +382,9 @@ export default function SpaceSettingsPage() {
                   <Layers className="mb-3 size-8 text-muted-foreground/60" />
                   <p className="text-sm font-medium">No projects yet</p>
                   <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-                    Use projects when a single space has multiple distinct codebases, services, or
-                    workstreams. Items without a project stay at the space level.
+                    Use projects to segregate items within the space. Nothing else about the space
+                    changes — projects share the space&apos;s statuses, labels, members, estimates,
+                    and persona.
                   </p>
                 </div>
               ) : (
@@ -396,9 +392,6 @@ export default function SpaceSettingsPage() {
                   {projects
                     .filter((p) => p.status !== "archived")
                     .map((p) => {
-                      const overrides: string[] = []
-                      if (p.estimateScale) overrides.push("estimates")
-                      if (p.persona) overrides.push("persona")
                       return (
                         <li key={p._id as string}>
                           <Link
@@ -408,7 +401,7 @@ export default function SpaceSettingsPage() {
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
                                 <span className="font-mono text-xs text-muted-foreground">
-                                  {space.slug}-{p.slug}
+                                  {p.slug}
                                 </span>
                                 <span className="truncate font-medium">{p.name}</span>
                                 {p.status !== "active" && (
@@ -417,21 +410,11 @@ export default function SpaceSettingsPage() {
                                   </span>
                                 )}
                               </div>
-                              <p className="mt-1 text-xs text-muted-foreground">
-                                {p.statuses.length} statuses · {p.labels.length} labels ·{" "}
-                                {p.members.length} members · {p.taskCounter ?? 0} tasks ·{" "}
-                                {p.issueCounter ?? 0} issues
-                                {overrides.length > 0 ? (
-                                  <>
-                                    {" · "}
-                                    <span className="text-foreground">
-                                      {overrides.join(" + ")} overridden
-                                    </span>
-                                  </>
-                                ) : (
-                                  " · inheriting estimates + persona"
-                                )}
-                              </p>
+                              {p.description ? (
+                                <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
+                                  {p.description}
+                                </p>
+                              ) : null}
                             </div>
                             <div className="flex shrink-0 items-center gap-1">
                               <button
@@ -471,9 +454,7 @@ export default function SpaceSettingsPage() {
                           key={p._id as string}
                           className="flex items-center gap-2 px-2 py-1.5 text-sm text-muted-foreground"
                         >
-                          <span className="font-mono text-xs">
-                            {space.slug}-{p.slug}
-                          </span>
+                          <span className="font-mono text-xs">{p.slug}</span>
                           <span>{p.name}</span>
                         </li>
                       ))}
@@ -488,11 +469,11 @@ export default function SpaceSettingsPage() {
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">Estimates</h3>
                 <p className="text-sm text-muted-foreground">
-                  Effort-sizing scale. Projects inherit this unless they override.
+                  Effort-sizing scale for tasks and issues in this space.
                 </p>
               </div>
               <EstimateEditor
-                scope={{ kind: "space", spaceId }}
+                spaceId={spaceId}
                 estimateScale={space.estimateScale ?? { type: "points", values: [] }}
               />
             </section>
@@ -522,7 +503,7 @@ export default function SpaceSettingsPage() {
                   . Projects inherit this unless they override.
                 </p>
               </div>
-              <PersonaEditor scope={{ kind: "space", spaceId }} persona={space.persona} />
+              <PersonaEditor spaceId={spaceId} persona={space.persona} />
             </section>
           )}
         </div>

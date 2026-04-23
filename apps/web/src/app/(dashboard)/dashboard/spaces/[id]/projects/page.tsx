@@ -43,11 +43,12 @@ export default function SpaceProjectsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Nested scopes inside {space?.name ?? "this space"}. Items created with a project use
-            per-project numbering ({space?.slug}-PROJECT-N).
+            Filter scopes inside {space?.name ?? "this space"}. Tasks, issues, and memories tagged
+            to a project stay numbered at the space level — they just carry a <code>projectId</code>{" "}
+            you can filter by.
           </p>
         </div>
-        <NewProjectDialog spaceId={id} spaceSlug={space?.slug} />
+        <NewProjectDialog spaceId={id} />
       </div>
 
       {activeProjects.length === 0 && archivedProjects.length === 0 ? (
@@ -59,7 +60,7 @@ export default function SpaceProjectsPage() {
             services, or workstreams. Items without a project stay at the space level.
           </p>
           <div className="mt-4">
-            <NewProjectDialog spaceId={id} spaceSlug={space?.slug} />
+            <NewProjectDialog spaceId={id} />
           </div>
         </div>
       ) : (
@@ -79,9 +80,7 @@ export default function SpaceProjectsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-muted-foreground">
-                          {space?.slug}-{p.slug}
-                        </span>
+                        <span className="font-mono text-xs text-muted-foreground">{p.slug}</span>
                         <span className="text-xs text-muted-foreground">•</span>
                         <span className="text-xs text-muted-foreground">{p.status}</span>
                       </div>
@@ -106,10 +105,6 @@ export default function SpaceProjectsPage() {
                       <Archive className="size-4" />
                     </Button>
                   </div>
-                  <div className="mt-3 flex gap-3 text-xs text-muted-foreground">
-                    <span>{p.taskCounter ?? 0} tasks</span>
-                    <span>{p.issueCounter ?? 0} issues</span>
-                  </div>
                 </li>
               ))}
             </ul>
@@ -127,9 +122,7 @@ export default function SpaceProjectsPage() {
                     className="flex items-center justify-between rounded border bg-muted/30 px-3 py-2"
                   >
                     <div>
-                      <span className="font-mono text-xs text-muted-foreground">
-                        {space?.slug}-{p.slug}
-                      </span>
+                      <span className="font-mono text-xs text-muted-foreground">{p.slug}</span>
                       <span className="ml-2 text-sm">{p.name}</span>
                     </div>
                   </li>

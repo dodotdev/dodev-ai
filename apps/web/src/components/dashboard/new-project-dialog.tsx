@@ -22,7 +22,6 @@ import { Textarea } from "@/components/ui/textarea"
 
 interface NewProjectDialogProps {
   spaceId: string
-  spaceSlug: string | undefined
   /**
    * Where to navigate after a successful create. Defaults to the new project's
    * settings page. Set to `"stay"` to remain on the current page.
@@ -38,7 +37,6 @@ interface NewProjectDialogProps {
  */
 export function NewProjectDialog({
   spaceId,
-  spaceSlug,
   onCreated = "settings",
   trigger,
 }: NewProjectDialogProps) {
@@ -104,8 +102,9 @@ export function NewProjectDialog({
           <DialogHeader>
             <DialogTitle>Create project</DialogTitle>
             <DialogDescription>
-              Projects snapshot the space&apos;s statuses, labels, and members at creation.
-              estimateScale and persona inherit from the space until you override them.
+              Projects are filter scopes inside a space. Tasks, issues, and memories tagged to a
+              project stay numbered at the space level — they just carry a <code>projectId</code>{" "}
+              you can filter by.
             </DialogDescription>
           </DialogHeader>
 
@@ -132,8 +131,7 @@ export function NewProjectDialog({
                 maxLength={8}
               />
               <p className="text-xs text-muted-foreground">
-                Item slugs will be {spaceSlug ?? "SPACE"}-{form.slug || "PROJECT"}-N. Auto-derived
-                from name if left blank. Unique within the space.
+                Auto-derived from the name if left blank. Unique within the space.
               </p>
             </div>
             <div className="space-y-2">
