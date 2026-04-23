@@ -111,6 +111,20 @@ export const DEFAULT_ESTIMATE_SCALE: EstimateScale = {
   values: ["1", "2", "3", "5", "8", "13", "21"],
 }
 
+/**
+ * Default label set seeded on new spaces (and snapshotted into new projects).
+ * Users can delete or rename freely — these are a starting template, not
+ * re-seeded on subsequent loads.
+ */
+export const DEFAULT_LABELS: { name: string; color: string }[] = [
+  { name: "bug", color: "#ef4444" },
+  { name: "feature", color: "#10b981" },
+  { name: "improvement", color: "#3b82f6" },
+  { name: "tech-debt", color: "#f59e0b" },
+  { name: "urgent", color: "#ec4899" },
+  { name: "question", color: "#8b5cf6" },
+]
+
 /** Configuration limits */
 export const CONFIG_LIMITS = {
   MAX_STATUSES: 20,

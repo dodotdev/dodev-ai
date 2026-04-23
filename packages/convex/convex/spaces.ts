@@ -13,6 +13,15 @@ const DEFAULT_STATUSES = [
   { name: "Cancelled", category: "cancelled" as const, color: "#ef4444", position: 5 },
 ]
 
+const DEFAULT_LABELS = [
+  { name: "bug", color: "#ef4444" },
+  { name: "feature", color: "#10b981" },
+  { name: "improvement", color: "#3b82f6" },
+  { name: "tech-debt", color: "#f59e0b" },
+  { name: "urgent", color: "#ec4899" },
+  { name: "question", color: "#8b5cf6" },
+]
+
 const DEFAULT_ESTIMATE_SCALE = {
   type: "points" as const,
   values: ["1", "2", "3", "5", "8", "13", "21"],
@@ -85,7 +94,10 @@ export const create = mutation({
         ...s,
         id: generateConfigId("st"),
       })),
-      labels: [],
+      labels: DEFAULT_LABELS.map((l) => ({
+        ...l,
+        id: generateConfigId("lb"),
+      })),
       members: [
         {
           id: generateConfigId("mb"),
