@@ -166,10 +166,14 @@ export const update = mutation({
             }
           }
         }
+        // Fallback: when updating a task that has only a projectId, resolve
+        // the space via the project and look up there. Projects don't carry
+        // their own statuses.
         if (!derived && projectId) {
           const project = await ctx.db.get(projectId)
           if (project) {
-            const ws = project.statuses?.find((s) => s.id === args.statusId)
+            const parentSpace = await ctx.db.get(project.spaceId)
+            const ws = parentSpace?.statuses.find((s) => s.id === args.statusId)
             if (ws) {
               updates.status = ws.category
               if (ws.category === "completed") updates.completedAt = Date.now()

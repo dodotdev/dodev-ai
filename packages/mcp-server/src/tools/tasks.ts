@@ -30,7 +30,7 @@ export const taskTools: Tool[] = [
         projectId: {
           type: "string",
           description:
-            "Associate with a specific project inside a space (v0.1.0+). When set, the task uses per-project numbering ({SPACE}-{PROJECT}-{N}) and inherits statusId/labelIds/assigneeId choices from the project's config.",
+            "Tag the task with a project (filter scope) inside the space. Task still gets a {SPACE}-{N} slug from the space counter; projectId is just a filter field. statusId/labelIds/assigneeId always reference the space's config.",
         },
         dueDate: {
           type: "number",

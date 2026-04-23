@@ -111,11 +111,9 @@ export interface Cycle {
 }
 
 /**
- * Project inside a space (v0.1.0+). Optional nested scope.
- *
- * Config inheritance model:
- * - `statuses`, `labels`, `members`: copied from parent space at creation, then edited independently
- * - `estimateScale`, `persona`: live-inherit — undefined means "use space's value"
+ * Project inside a space — a filter scope for segregating items within a
+ * space. Tasks, issues, and memories tagged with a `projectId` keep
+ * {SPACE}-{N} slugs and inherit all workflow config from the parent space.
  */
 export interface Project {
   _id: string
@@ -125,16 +123,7 @@ export interface Project {
   slug: string
   description?: string
   status: SpaceLifecycle
-  taskCounter: number
-  issueCounter: number
   metadata?: Record<string, unknown>
-  statuses: WorkflowStatus[]
-  labels: SpaceLabel[]
-  members: SpaceMember[]
-  /** undefined = inherit from space */
-  estimateScale?: EstimateScale
-  /** undefined = inherit from space */
-  persona?: SpacePersona
   linkedPaths?: string[]
   linkedRepos?: string[]
   createdAt: number
@@ -329,8 +318,18 @@ export interface SpaceWithStats extends Space {
 /** Context response from get_context */
 export interface ContextResponse {
   activeSpace: Space | null
-  /** Active project within activeSpace, if one is set (v0.1.0+) */
-  activeProject?: Project | null
+  /**
+   * Minimal active-project reference (filter scope). Workflow config still
+   * comes from activeSpace — projects don't have their own statuses/labels/
+   * members/estimates/persona.
+   */
+  activeProject?: {
+    _id: string
+    name: string
+    slug: string
+    description?: string
+    status: SpaceLifecycle
+  } | null
   taskSummary: {
     pending: number
     inProgress: number
@@ -343,18 +342,10 @@ export interface ContextResponse {
     global: Memory[]
   }
   spaces: Array<{ id: string; name: string }>
-  /** Projects inside activeSpace (v0.1.0+) */
+  /** Projects inside activeSpace */
   projects?: Array<{ id: string; name: string; slug: string }>
   persona?: SpacePersona
   spaceConfig?: SpaceConfig
-  /** Effective config for the active scope (project if set, else space). v0.1.0+ */
-  configSource?: {
-    statuses: "project" | "space"
-    labels: "project" | "space"
-    members: "project" | "space"
-    estimateScale: "project" | "space"
-    persona: "project" | "space" | null
-  }
   activeCycle?: Cycle
   memorySettings?: SpaceMemorySettings
   workspace?: {

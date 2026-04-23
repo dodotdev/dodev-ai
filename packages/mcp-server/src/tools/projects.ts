@@ -6,7 +6,7 @@ export const projectTools: Tool[] = [
   {
     name: "create_project",
     description:
-      "Create a new project inside a space (v0.1.0+). Projects are optional nested scopes under a space — use them when a single space has multiple distinct codebases, services, or workstreams. On creation, the project snapshots the parent space's statuses, labels, and members (you can edit them independently afterward). estimateScale and persona live-inherit from the space until you set them on the project. Item slugs inside a project follow {SPACE}-{PROJECT}-{N}.",
+      "Create a project inside a space. Projects are filter scopes — use them to segregate tasks, issues, and memories within a space. Projects do NOT have their own statuses, labels, members, estimates, or persona; all workflow config comes from the parent space. Items tagged with a projectId still use {SPACE}-{N} slugs (space-level counter).",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -15,7 +15,7 @@ export const projectTools: Tool[] = [
         slug: {
           type: "string",
           description:
-            'Short uppercase identifier for item slugs (e.g. "API"). Auto-derived from name if omitted; auto-suffixed on collision within the space. Max 8 chars.',
+            'Short uppercase identifier for filtering (e.g. "API"). Auto-derived from name if omitted; auto-suffixed on collision within the space. Max 8 chars.',
         },
         description: { type: "string", description: "Project description" },
         metadata: {
@@ -45,7 +45,7 @@ export const projectTools: Tool[] = [
   {
     name: "get_project",
     description:
-      "Get detailed info about a single project, including its (snapshot) statuses/labels/members and any estimateScale/persona overrides.",
+      "Get details about a single project: name, slug, description, status, linked paths/repos. Workflow config (statuses, labels, members, estimates, persona) lives on the parent space — fetch it via get_space.",
     inputSchema: {
       type: "object" as const,
       properties: {

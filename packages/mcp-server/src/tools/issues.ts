@@ -36,7 +36,7 @@ export const issueTools: Tool[] = [
         projectId: {
           type: "string",
           description:
-            "Associate with a specific project inside a space (v0.1.0+). When set, the issue uses per-project numbering ({SPACE}-{PROJECT}-{N}) and inherits statusId/labelIds/assigneeId choices from the project's config.",
+            "Tag the issue with a project (filter scope) inside the space. Issue still gets a {SPACE}-{N} slug from the space counter; projectId is just a filter field. statusId/labelIds/assigneeId always reference the space's config.",
         },
         dueDate: {
           type: "number",

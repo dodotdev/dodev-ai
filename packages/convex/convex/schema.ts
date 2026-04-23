@@ -154,19 +154,13 @@ export default defineSchema({
     .index("by_slug", ["slug"]),
 
   // ---------------------------------------------------------------------------
-  // projects (v0.1.0+) — filter scopes inside a space
+  // projects — filter scopes inside a space
   //
-  // Projects are just a filter field you can hang on tasks/issues/memories/
-  // cycles. No workflow config of their own — statuses, labels, members,
-  // estimates, persona all come from the parent space. Tasks in a project
-  // still carry {SPACE}-{N} slugs (space-level counter); projectId is just a
-  // tag you can filter by.
-  //
-  // The optional fields below (statuses/labels/members/estimateScale/persona/
-  // taskCounter/issueCounter) are historical from an earlier attempt at
-  // project-level config and are scheduled for schema removal after the
-  // `purgeProjectConfig` migration clears them. Don't write to them from new
-  // code.
+  // Projects are just a tag you can hang on tasks/issues/memories/cycles to
+  // segregate items within a space. No workflow config of their own —
+  // statuses, labels, members, estimates, persona all come from the parent
+  // space. Items tagged to a project still carry {SPACE}-{N} slugs from the
+  // space counter; projectId is just a filter field.
   // ---------------------------------------------------------------------------
   projects: defineTable({
     userId: v.id("users"),
@@ -182,57 +176,7 @@ export default defineSchema({
     ),
     metadata: v.optional(v.any()),
 
-    // LEGACY — scheduled for removal; drain via purgeProjectConfig migration.
-    taskCounter: v.optional(v.number()),
-    issueCounter: v.optional(v.number()),
-    statuses: v.optional(
-      v.array(
-        v.object({
-          id: v.string(),
-          name: v.string(),
-          category: v.union(
-            v.literal("pending"),
-            v.literal("in_progress"),
-            v.literal("completed"),
-            v.literal("cancelled")
-          ),
-          color: v.string(),
-          position: v.number(),
-        })
-      )
-    ),
-    labels: v.optional(
-      v.array(
-        v.object({
-          id: v.string(),
-          name: v.string(),
-          color: v.string(),
-        })
-      )
-    ),
-    members: v.optional(
-      v.array(
-        v.object({
-          id: v.string(),
-          name: v.string(),
-          role: v.string(),
-          avatarUrl: v.optional(v.string()),
-        })
-      )
-    ),
-    estimateScale: v.optional(
-      v.object({
-        type: v.union(v.literal("points"), v.literal("tshirt"), v.literal("hours")),
-        values: v.array(v.string()),
-      })
-    ),
-    persona: v.optional(
-      v.object({
-        systemPrompt: v.string(),
-      })
-    ),
-
-    // Workspace linking (project-level, optional)
+    // Workspace linking (optional)
     linkedPaths: v.optional(v.array(v.string())),
     linkedRepos: v.optional(v.array(v.string())),
 
