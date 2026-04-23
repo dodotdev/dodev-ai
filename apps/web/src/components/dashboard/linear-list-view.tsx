@@ -56,6 +56,7 @@ export interface ListItem {
   cycleId?: string
   changelog?: boolean
   versionId?: string
+  projectId?: string
   createdAt: number
   updatedAt: number
   issueId?: string

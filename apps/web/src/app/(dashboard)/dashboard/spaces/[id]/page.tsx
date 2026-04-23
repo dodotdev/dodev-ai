@@ -3,10 +3,11 @@
 import { api } from "@dodev/convex/api"
 import { useMutation, useQuery } from "convex/react"
 import { Loader2, Plus } from "lucide-react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
 import { ItemDetailView } from "@/components/dashboard/item-detail-view"
 import { LinearListView, type ListItem } from "@/components/dashboard/linear-list-view"
+import { ProjectFilter } from "@/components/dashboard/project-filter"
 import { SlideView } from "@/components/dashboard/slide-view"
 import { SpaceHeader } from "@/components/dashboard/space-header"
 import { TaskForm } from "@/components/dashboard/task-form"
@@ -15,14 +16,34 @@ import { useUploadAttachments } from "@/hooks/use-upload-attachments"
 
 export default function SpaceTasksPage() {
   const { id } = useParams<{ id: string }>()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const { apiKeyHash, isLoading: authLoading } = useAuth()
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
+
+  // Project filter — stored in URL so refreshes preserve it and deep links work.
+  const filterProjectId = searchParams.get("project") ?? ""
+
+  function setFilterProjectId(next: string) {
+    const params = new URLSearchParams(Array.from(searchParams.entries()))
+    if (next) params.set("project", next)
+    else params.delete("project")
+    const qs = params.toString()
+    router.replace(qs ? `?${qs}` : "?", { scroll: false })
+  }
 
   const space = useQuery(api.spaces.get, apiKeyHash ? { apiKeyHash, id: id as never } : "skip")
 
   const tasks = useQuery(
     api.tasks.list,
-    apiKeyHash ? { apiKeyHash, spaceId: id as never, limit: 100 } : "skip"
+    apiKeyHash
+      ? {
+          apiKeyHash,
+          spaceId: id as never,
+          ...(filterProjectId ? { projectId: filterProjectId as never } : {}),
+          limit: 100,
+        }
+      : "skip"
   )
 
   const projects = useQuery(
@@ -169,6 +190,7 @@ export default function SpaceTasksPage() {
       cycleId: raw.cycleId as string | undefined,
       changelog: raw.changelog as boolean | undefined,
       versionId: raw.versionId as string | undefined,
+      projectId: raw.projectId as string | undefined,
       createdAt: (raw.createdAt ?? raw._creationTime) as number,
       updatedAt: (raw.updatedAt ?? raw._creationTime) as number,
       issueId: spaceSlug && taskNumber ? `${spaceSlug}-${taskNumber}` : undefined,
@@ -199,29 +221,41 @@ export default function SpaceTasksPage() {
       <SpaceHeader
         title="Tasks"
         actions={
-          <TaskForm
-            onSubmit={handleCreate}
-            projectConfig={{
-              statuses: spaceStatuses,
-              labels: spaceLabels,
-              members: spaceMembers,
-              estimateScale: space?.estimateScale,
-            }}
-            projects={(projects ?? []).map((p) => ({
-              _id: p._id as string,
-              name: p.name,
-              slug: p.slug,
-            }))}
-            trigger={
-              <button
-                type="button"
-                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                title="New task"
-              >
-                <Plus className="size-4" />
-              </button>
-            }
-          />
+          <>
+            <ProjectFilter
+              projects={(projects ?? []).map((p) => ({
+                _id: p._id as string,
+                name: p.name,
+                slug: p.slug,
+              }))}
+              value={filterProjectId}
+              onChange={setFilterProjectId}
+            />
+            <TaskForm
+              onSubmit={handleCreate}
+              projectConfig={{
+                statuses: spaceStatuses,
+                labels: spaceLabels,
+                members: spaceMembers,
+                estimateScale: space?.estimateScale,
+              }}
+              projects={(projects ?? []).map((p) => ({
+                _id: p._id as string,
+                name: p.name,
+                slug: p.slug,
+              }))}
+              defaultProjectId={filterProjectId || undefined}
+              trigger={
+                <button
+                  type="button"
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  title="New task"
+                >
+                  <Plus className="size-4" />
+                </button>
+              }
+            />
+          </>
         }
       />
 
@@ -248,6 +282,11 @@ export default function SpaceTasksPage() {
                 members: spaceMembers,
                 estimateScale: space?.estimateScale,
               }}
+              projects={(projects ?? []).map((p) => ({
+                _id: p._id as string,
+                name: p.name,
+                slug: p.slug,
+              }))}
               versions={(versions ?? []).map((v) => ({
                 _id: v._id as string,
                 name: v.name,

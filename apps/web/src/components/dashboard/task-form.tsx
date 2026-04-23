@@ -48,6 +48,8 @@ interface TaskFormProps {
   projectConfig?: ProjectConfig
   /** Projects in the current space (for the optional project-tag dropdown). */
   projects?: ProjectOption[]
+  /** Pre-select this project when the dialog opens. Used by the project filter on the list views. */
+  defaultProjectId?: string
   trigger?: React.ReactNode
 }
 
@@ -62,7 +64,13 @@ function PriorityIcon({ className }: { className?: string }) {
   return <Signal className={cn("size-3.5", className)} />
 }
 
-export function TaskForm({ onSubmit, projectConfig, projects, trigger }: TaskFormProps) {
+export function TaskForm({
+  onSubmit,
+  projectConfig,
+  projects,
+  defaultProjectId,
+  trigger,
+}: TaskFormProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -72,7 +80,7 @@ export function TaskForm({ onSubmit, projectConfig, projects, trigger }: TaskFor
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([])
   const [assigneeId, setAssigneeId] = useState("")
   const [estimate, setEstimate] = useState("")
-  const [projectId, setProjectId] = useState("")
+  const [projectId, setProjectId] = useState(defaultProjectId ?? "")
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -85,7 +93,7 @@ export function TaskForm({ onSubmit, projectConfig, projects, trigger }: TaskFor
     setSelectedLabelIds([])
     setAssigneeId("")
     setEstimate("")
-    setProjectId("")
+    setProjectId(defaultProjectId ?? "")
     // Revoke preview URLs before clearing
     for (const pf of pendingFiles) {
       if (pf.preview) URL.revokeObjectURL(pf.preview)
@@ -143,7 +151,13 @@ export function TaskForm({ onSubmit, projectConfig, projects, trigger }: TaskFor
       open={open}
       onOpenChange={(v) => {
         setOpen(v)
-        if (!v) resetForm()
+        if (v) {
+          // Sync projectId to the current default when reopening (e.g. after
+          // the caller changed the project filter).
+          setProjectId(defaultProjectId ?? "")
+        } else {
+          resetForm()
+        }
       }}
     >
       <DialogTrigger asChild>

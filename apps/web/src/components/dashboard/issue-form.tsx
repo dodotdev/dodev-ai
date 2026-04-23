@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Circle,
   Gauge,
+  Layers,
   Lightbulb,
   Plus,
   Signal,
@@ -51,12 +52,23 @@ interface IssueFormData {
   labelIds?: string[]
   assigneeId?: string
   estimate?: string
+  projectId?: string
   attachments?: File[]
+}
+
+interface ProjectOption {
+  _id: string
+  name: string
+  slug: string
 }
 
 interface IssueFormProps {
   onSubmit: (data: IssueFormData) => void | Promise<void>
   projectConfig?: ProjectConfig
+  /** Projects in the current space (for the optional project-tag dropdown). */
+  projects?: ProjectOption[]
+  /** Pre-select this project when the dialog opens. */
+  defaultProjectId?: string
 }
 
 const PRIORITIES = [
@@ -84,7 +96,7 @@ function PriorityIcon({ className }: { className?: string }) {
   return <Signal className={cn("size-3.5", className)} />
 }
 
-export function IssueForm({ onSubmit, projectConfig }: IssueFormProps) {
+export function IssueForm({ onSubmit, projectConfig, projects, defaultProjectId }: IssueFormProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -96,6 +108,7 @@ export function IssueForm({ onSubmit, projectConfig }: IssueFormProps) {
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([])
   const [assigneeId, setAssigneeId] = useState("")
   const [estimate, setEstimate] = useState("")
+  const [projectId, setProjectId] = useState(defaultProjectId ?? "")
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -110,6 +123,7 @@ export function IssueForm({ onSubmit, projectConfig }: IssueFormProps) {
     setSelectedLabelIds([])
     setAssigneeId("")
     setEstimate("")
+    setProjectId(defaultProjectId ?? "")
     // Revoke preview URLs before clearing
     for (const pf of pendingFiles) {
       if (pf.preview) URL.revokeObjectURL(pf.preview)
@@ -137,6 +151,7 @@ export function IssueForm({ onSubmit, projectConfig }: IssueFormProps) {
         labelIds: selectedLabelIds.length > 0 ? selectedLabelIds : undefined,
         assigneeId: assigneeId || undefined,
         estimate: estimate || undefined,
+        projectId: projectId || undefined,
         attachments: pendingFiles.length > 0 ? pendingFiles.map((pf) => pf.file) : undefined,
       })
       resetForm()
@@ -156,6 +171,8 @@ export function IssueForm({ onSubmit, projectConfig }: IssueFormProps) {
     ? [...projectConfig.statuses].sort((a, b) => a.position - b.position)
     : []
 
+  const currentProject = projects?.find((p) => p._id === projectId)
+
   const currentType = ISSUE_TYPES.find((t) => t.value === type)
   const currentPriority = PRIORITIES.find((p) => p.value === priority)
   const currentSeverity = SEVERITIES.find((s) => s.value === severity)
@@ -170,7 +187,11 @@ export function IssueForm({ onSubmit, projectConfig }: IssueFormProps) {
       open={open}
       onOpenChange={(v) => {
         setOpen(v)
-        if (!v) resetForm()
+        if (v) {
+          setProjectId(defaultProjectId ?? "")
+        } else {
+          resetForm()
+        }
       }}
     >
       <DialogTrigger asChild>
@@ -249,6 +270,44 @@ export function IssueForm({ onSubmit, projectConfig }: IssueFormProps) {
 
           {/* Toolbar */}
           <div className="flex flex-wrap items-center gap-1.5 px-5 pb-3">
+            {/* Project Pill — filter scope inside the space */}
+            {projects && projects.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-transparent px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <Layers className="size-3.5" />
+                    {currentProject ? currentProject.name : "Project"}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="min-w-[200px]">
+                  <DropdownMenuLabel>Project</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setProjectId("")} className="gap-2">
+                    <Layers className="size-3.5 text-muted-foreground/40" />
+                    No project
+                    {projectId === "" && <Check className="ml-auto size-3.5" />}
+                  </DropdownMenuItem>
+                  {projects.map((p) => (
+                    <DropdownMenuItem
+                      key={p._id}
+                      onClick={() => setProjectId(p._id)}
+                      className="gap-2"
+                    >
+                      <Layers className="size-3.5" />
+                      <span className="flex-1">{p.name}</span>
+                      <span className="font-mono text-[10px] text-muted-foreground/60">
+                        {p.slug}
+                      </span>
+                      {projectId === p._id && <Check className="ml-auto size-3.5" />}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
             {/* Type Pill */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

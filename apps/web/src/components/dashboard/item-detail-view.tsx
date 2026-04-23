@@ -48,10 +48,18 @@ interface Comment {
   createdAt: number
 }
 
+interface ProjectOption {
+  _id: string
+  name: string
+  slug: string
+}
+
 interface ItemDetailViewProps {
   item: ListItem
   projectSlug?: string
   projectConfig?: ProjectConfig
+  /** Projects in the current space (for the Project selector in the sidebar). */
+  projects?: ProjectOption[]
   versions?: Version[]
   comments: Comment[]
   onBack: () => void
@@ -83,6 +91,7 @@ export function ItemDetailView({
   item,
   projectSlug,
   projectConfig,
+  projects,
   versions,
   comments,
   onBack,
@@ -581,6 +590,35 @@ export function ItemDetailView({
                   )}
                 </div>
               )}
+
+              {/* Project — filter scope inside the space */}
+              {projects && projects.length > 0 && (
+                <>
+                  <PropertySelect
+                    label="Project"
+                    value={item.projectId ?? ""}
+                    options={[
+                      { value: "", label: "No project" },
+                      ...projects.map((p) => ({
+                        value: p._id,
+                        label: p.name,
+                      })),
+                    ]}
+                    fallbackDisplay={
+                      item.projectId ? (
+                        <span>
+                          {projects.find((p) => p._id === item.projectId)?.name ?? "Unknown"}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">No project</span>
+                      )
+                    }
+                    onChange={(val) => onUpdateItem({ projectId: val === "" ? null : val })}
+                  />
+                  <div className="my-3 border-t border-border/30" />
+                </>
+              )}
+
               {/* Status */}
               <PropertySelect
                 label="Status"
