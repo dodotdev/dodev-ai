@@ -211,9 +211,6 @@ export default defineSchema({
       v.literal("high"),
       v.literal("urgent")
     ),
-    severity: v.optional(
-      v.union(v.literal("critical"), v.literal("major"), v.literal("minor"), v.literal("trivial"))
-    ),
     dueDate: v.optional(v.number()),
     tags: v.array(v.string()),
     completedAt: v.optional(v.number()),
@@ -234,7 +231,6 @@ export default defineSchema({
     .index("by_user_status", ["userId", "status"])
     .index("by_user_priority", ["userId", "priority"])
     .index("by_user_due_date", ["userId", "dueDate"])
-    .index("by_user_severity", ["userId", "severity"])
     // Space-scoped indexes
     .index("by_user_space", ["userId", "spaceId"])
     .index("by_user_space_status", ["userId", "spaceId", "status"])

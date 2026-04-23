@@ -141,7 +141,6 @@ export interface Task {
   description?: string
   status: TaskStatus
   priority: TaskPriority
-  severity?: Severity
   dueDate?: number
   tags: string[]
   completedAt?: number

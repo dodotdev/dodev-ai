@@ -49,3 +49,6 @@ export const backfillDefaultLabels = internalMutation({
 
 // purgeProjectConfig ran once against dev (0 patched) and prod (2 patched)
 // before the schema dropped the fields. Removed post-completion.
+
+// purgeTaskSeverity ran against dev (0 patched) and prod (0 patched). No
+// tasks had severity set; dropped along with the schema field.

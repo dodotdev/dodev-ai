@@ -11,9 +11,6 @@ export const create = mutation({
     priority: v.optional(
       v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("urgent"))
     ),
-    severity: v.optional(
-      v.union(v.literal("critical"), v.literal("major"), v.literal("minor"), v.literal("trivial"))
-    ),
     projectId: v.optional(v.id("projects")),
     spaceId: v.optional(v.id("spaces")),
     dueDate: v.optional(v.number()),
@@ -75,7 +72,6 @@ export const create = mutation({
       description: args.description,
       status,
       priority: args.priority ?? "medium",
-      severity: args.severity,
       dueDate: args.dueDate,
       tags: args.tags ?? [],
       statusId: args.statusId,
@@ -110,15 +106,6 @@ export const update = mutation({
     ),
     priority: v.optional(
       v.union(v.literal("low"), v.literal("medium"), v.literal("high"), v.literal("urgent"))
-    ),
-    severity: v.optional(
-      v.union(
-        v.literal("critical"),
-        v.literal("major"),
-        v.literal("minor"),
-        v.literal("trivial"),
-        v.null()
-      )
     ),
     dueDate: v.optional(v.union(v.number(), v.null())),
     tags: v.optional(v.array(v.string())),
@@ -190,7 +177,6 @@ export const update = mutation({
     }
 
     if (args.priority !== undefined) updates.priority = args.priority
-    if (args.severity !== undefined) updates.severity = args.severity ?? undefined
     if (args.dueDate !== undefined) updates.dueDate = args.dueDate ?? undefined
     if (args.tags !== undefined) updates.tags = args.tags
     if (args.projectId !== undefined) updates.projectId = args.projectId ?? undefined

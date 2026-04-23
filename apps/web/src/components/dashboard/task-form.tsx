@@ -1,17 +1,6 @@
 "use client"
 
-import {
-  AlertTriangle,
-  Check,
-  ChevronRight,
-  Gauge,
-  Plus,
-  Signal,
-  Tag,
-  Tags,
-  User,
-  X,
-} from "lucide-react"
+import { Check, ChevronRight, Gauge, Layers, Plus, Signal, Tag, Tags, User, X } from "lucide-react"
 import { useState } from "react"
 import { AttachmentDropzone, type PendingFile } from "@/components/dashboard/attachment-dropzone"
 import { Button } from "@/components/ui/button"
@@ -39,18 +28,26 @@ interface TaskFormData {
   title: string
   description?: string
   priority: string
-  severity?: string
   tags?: string[]
   statusId?: string
   labelIds?: string[]
   assigneeId?: string
   estimate?: string
+  projectId?: string
   attachments?: File[]
+}
+
+interface ProjectOption {
+  _id: string
+  name: string
+  slug: string
 }
 
 interface TaskFormProps {
   onSubmit: (data: TaskFormData) => void | Promise<void>
   projectConfig?: ProjectConfig
+  /** Projects in the current space (for the optional project-tag dropdown). */
+  projects?: ProjectOption[]
   trigger?: React.ReactNode
 }
 
@@ -61,28 +58,21 @@ const PRIORITIES = [
   { value: "low", label: "Low", color: "text-blue-400" },
 ] as const
 
-const SEVERITIES = [
-  { value: "critical", label: "Critical", color: "text-red-600" },
-  { value: "major", label: "Major", color: "text-orange-500" },
-  { value: "minor", label: "Minor", color: "text-yellow-500" },
-  { value: "trivial", label: "Trivial", color: "text-slate-400" },
-] as const
-
 function PriorityIcon({ className }: { className?: string }) {
   return <Signal className={cn("size-3.5", className)} />
 }
 
-export function TaskForm({ onSubmit, projectConfig, trigger }: TaskFormProps) {
+export function TaskForm({ onSubmit, projectConfig, projects, trigger }: TaskFormProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [priority, setPriority] = useState("medium")
-  const [severity, setSeverity] = useState("")
   const [tags, setTags] = useState("")
   const [statusId, setStatusId] = useState("")
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([])
   const [assigneeId, setAssigneeId] = useState("")
   const [estimate, setEstimate] = useState("")
+  const [projectId, setProjectId] = useState("")
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -90,12 +80,12 @@ export function TaskForm({ onSubmit, projectConfig, trigger }: TaskFormProps) {
     setTitle("")
     setDescription("")
     setPriority("medium")
-    setSeverity("")
     setTags("")
     setStatusId("")
     setSelectedLabelIds([])
     setAssigneeId("")
     setEstimate("")
+    setProjectId("")
     // Revoke preview URLs before clearing
     for (const pf of pendingFiles) {
       if (pf.preview) URL.revokeObjectURL(pf.preview)
@@ -113,7 +103,6 @@ export function TaskForm({ onSubmit, projectConfig, trigger }: TaskFormProps) {
         title: title.trim(),
         description: description.trim() || undefined,
         priority,
-        severity: severity || undefined,
         tags: tags
           .split(",")
           .map((t) => t.trim())
@@ -122,6 +111,7 @@ export function TaskForm({ onSubmit, projectConfig, trigger }: TaskFormProps) {
         labelIds: selectedLabelIds.length > 0 ? selectedLabelIds : undefined,
         assigneeId: assigneeId || undefined,
         estimate: estimate || undefined,
+        projectId: projectId || undefined,
         attachments: pendingFiles.length > 0 ? pendingFiles.map((pf) => pf.file) : undefined,
       })
       resetForm()
@@ -141,8 +131,9 @@ export function TaskForm({ onSubmit, projectConfig, trigger }: TaskFormProps) {
     ? [...projectConfig.statuses].sort((a, b) => a.position - b.position)
     : []
 
+  const currentProject = projects?.find((p) => p._id === projectId)
+
   const currentPriority = PRIORITIES.find((p) => p.value === priority)
-  const currentSeverity = SEVERITIES.find((s) => s.value === severity)
   const currentStatus = sortedStatuses.find((s) => s.id === statusId)
   const currentAssignee = projectConfig?.members?.find((m) => m.id === assigneeId)
   const selectedLabels = projectConfig?.labels?.filter((l) => selectedLabelIds.includes(l.id)) ?? []
@@ -233,6 +224,44 @@ export function TaskForm({ onSubmit, projectConfig, trigger }: TaskFormProps) {
 
           {/* Toolbar */}
           <div className="flex flex-wrap items-center gap-1.5 px-5 pb-3">
+            {/* Project Pill — filter scope inside the space */}
+            {projects && projects.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-transparent px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <Layers className="size-3.5" />
+                    {currentProject ? currentProject.name : "Project"}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="min-w-[200px]">
+                  <DropdownMenuLabel>Project</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setProjectId("")} className="gap-2">
+                    <Layers className="size-3.5 text-muted-foreground/40" />
+                    No project
+                    {projectId === "" && <Check className="ml-auto size-3.5" />}
+                  </DropdownMenuItem>
+                  {projects.map((p) => (
+                    <DropdownMenuItem
+                      key={p._id}
+                      onClick={() => setProjectId(p._id)}
+                      className="gap-2"
+                    >
+                      <Layers className="size-3.5" />
+                      <span className="flex-1">{p.name}</span>
+                      <span className="font-mono text-[10px] text-muted-foreground/60">
+                        {p.slug}
+                      </span>
+                      {projectId === p._id && <Check className="ml-auto size-3.5" />}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
             {/* Status Pill */}
             {sortedStatuses.length > 0 && (
               <DropdownMenu>
@@ -301,39 +330,6 @@ export function TaskForm({ onSubmit, projectConfig, trigger }: TaskFormProps) {
                     <PriorityIcon className={p.color} />
                     {p.label}
                     {priority === p.value && <Check className="ml-auto size-3.5" />}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Severity Pill */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-transparent px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                >
-                  <AlertTriangle className={cn("size-3.5", currentSeverity?.color)} />
-                  {currentSeverity?.label ?? "Severity"}
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="min-w-[140px]">
-                <DropdownMenuLabel>Severity</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setSeverity("")} className="gap-2">
-                  <AlertTriangle className="size-3.5 text-muted-foreground/40" />
-                  None
-                  {severity === "" && <Check className="ml-auto size-3.5" />}
-                </DropdownMenuItem>
-                {SEVERITIES.map((s) => (
-                  <DropdownMenuItem
-                    key={s.value}
-                    onClick={() => setSeverity(s.value)}
-                    className="gap-2"
-                  >
-                    <AlertTriangle className={cn("size-3.5", s.color)} />
-                    {s.label}
-                    {severity === s.value && <Check className="ml-auto size-3.5" />}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>

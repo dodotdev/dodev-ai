@@ -25,6 +25,11 @@ export default function SpaceTasksPage() {
     apiKeyHash ? { apiKeyHash, spaceId: id as never, limit: 100 } : "skip"
   )
 
+  const projects = useQuery(
+    api.projects.list,
+    apiKeyHash ? { apiKeyHash, spaceId: id as never, status: "active" } : "skip"
+  )
+
   // Comments query (only when item selected)
   const comments = useQuery(
     api.comments.list,
@@ -83,6 +88,7 @@ export default function SpaceTasksPage() {
     labelIds?: string[]
     assigneeId?: string
     estimate?: string
+    projectId?: string
     attachments?: File[]
   }) {
     if (!apiKeyHash) return
@@ -93,6 +99,7 @@ export default function SpaceTasksPage() {
       priority: data.priority as "low" | "medium" | "high" | "urgent",
       tags: data.tags,
       spaceId: id as never,
+      projectId: data.projectId as never,
       statusId: data.statusId,
       labelIds: data.labelIds,
       assigneeId: data.assigneeId,
@@ -200,6 +207,11 @@ export default function SpaceTasksPage() {
               members: spaceMembers,
               estimateScale: space?.estimateScale,
             }}
+            projects={(projects ?? []).map((p) => ({
+              _id: p._id as string,
+              name: p.name,
+              slug: p.slug,
+            }))}
             trigger={
               <button
                 type="button"

@@ -52,7 +52,7 @@ export default function SpaceProjectsPage() {
       </div>
 
       {activeProjects.length === 0 && archivedProjects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/40 py-16 text-center">
           <Layers className="mb-3 size-10 text-muted-foreground/60" />
           <p className="text-sm font-medium">No projects yet</p>
           <p className="mt-1 max-w-sm text-xs text-muted-foreground">
@@ -70,7 +70,7 @@ export default function SpaceProjectsPage() {
               {activeProjects.map((p) => (
                 <li
                   key={p._id}
-                  className="group relative rounded-lg border bg-card p-4 transition-colors hover:border-muted-foreground/40"
+                  className="group relative rounded-lg border border-border/40 bg-card p-4 transition-colors hover:border-muted-foreground/40"
                 >
                   <Link
                     href={`/dashboard/spaces/${id}/projects/${p._id}/settings`}
@@ -119,7 +119,7 @@ export default function SpaceProjectsPage() {
                 {archivedProjects.map((p) => (
                   <li
                     key={p._id}
-                    className="flex items-center justify-between rounded border bg-muted/30 px-3 py-2"
+                    className="flex items-center justify-between rounded border border-border/40 bg-muted/30 px-3 py-2"
                   >
                     <div>
                       <span className="font-mono text-xs text-muted-foreground">{p.slug}</span>

@@ -17,11 +17,6 @@ export const taskTools: Tool[] = [
           enum: ["low", "medium", "high", "urgent"],
           description: 'Priority level. Default: "medium"',
         },
-        severity: {
-          type: "string",
-          enum: ["critical", "major", "minor", "trivial"],
-          description: "Severity level (optional for tasks)",
-        },
         spaceId: {
           type: "string",
           description:
@@ -93,11 +88,6 @@ export const taskTools: Tool[] = [
           type: "string",
           enum: ["low", "medium", "high", "urgent"],
           description: "New priority",
-        },
-        severity: {
-          type: ["string", "null"],
-          enum: ["critical", "major", "minor", "trivial"],
-          description: "New severity, or null to clear",
         },
         dueDate: {
           type: ["number", "null"],
@@ -185,11 +175,6 @@ export const taskTools: Tool[] = [
           enum: ["low", "medium", "high", "urgent"],
           description: "Filter by priority",
         },
-        severity: {
-          type: "string",
-          enum: ["critical", "major", "minor", "trivial"],
-          description: "Filter by severity",
-        },
         search: {
           type: "string",
           description: "Full-text search in title and description",
@@ -244,7 +229,6 @@ export async function handleTaskTool(
         title: args.title as string,
         description: args.description as string | undefined,
         priority: args.priority as "low" | "medium" | "high" | "urgent" | undefined,
-        severity: args.severity as "critical" | "major" | "minor" | "trivial" | undefined,
         spaceId: args.spaceId as string | undefined,
         projectId: args.projectId as string | undefined,
         dueDate: args.dueDate as number | undefined,
@@ -266,7 +250,6 @@ export async function handleTaskTool(
         description: args.description as string | undefined,
         status: args.status as "pending" | "in_progress" | "completed" | "cancelled" | undefined,
         priority: args.priority as "low" | "medium" | "high" | "urgent" | undefined,
-        severity: args.severity as "critical" | "major" | "minor" | "trivial" | null | undefined,
         dueDate: args.dueDate as number | null | undefined,
         tags: args.tags as string[] | undefined,
         spaceId: args.spaceId as string | null | undefined,
