@@ -2,7 +2,8 @@
 
 import { api } from "@dodev/convex/api"
 import { useMutation, useQuery } from "convex/react"
-import { Archive, Loader2, Trash2 } from "lucide-react"
+import { Archive, ChevronRight, Layers, Loader2, Plus, Trash2 } from "lucide-react"
+import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { EstimateEditor } from "@/components/dashboard/settings/estimate-editor"
@@ -23,6 +24,7 @@ const TABS = [
   { key: "statuses", label: "Statuses" },
   { key: "labels", label: "Labels" },
   { key: "members", label: "Members" },
+  { key: "projects", label: "Projects" },
   { key: "estimates", label: "Estimates" },
   { key: "versions", label: "Versions" },
   { key: "persona", label: "AI Persona" },
@@ -45,10 +47,15 @@ export default function SpaceSettingsPage() {
   const [saving, setSaving] = useState(false)
 
   const space = useQuery(api.spaces.get, apiKeyHash ? { apiKeyHash, id: id as never } : "skip")
+  const projects = useQuery(
+    api.projects.list,
+    apiKeyHash && activeTab === "projects" ? { apiKeyHash, spaceId: id as never } : "skip"
+  )
 
   const updateSpace = useMutation(api.spaces.update)
   const archiveSpace = useMutation(api.spaces.archive)
   const deleteSpace = useMutation(api.spaces.remove)
+  const archiveProject = useMutation(api.projects.archive)
 
   const [editName, setEditName] = useState("")
   const [editSlug, setEditSlug] = useState("")
@@ -165,7 +172,7 @@ export default function SpaceSettingsPage() {
         <div className="min-w-0">
           {activeTab === "general" && (
             <div className="space-y-8">
-              <section className="space-y-4 rounded-lg border bg-card p-6">
+              <section className="space-y-4 rounded-lg border border-border/40 bg-card p-6">
                 <div>
                   <h3 className="text-lg font-semibold">General</h3>
                   <p className="text-sm text-muted-foreground">
@@ -319,7 +326,7 @@ export default function SpaceSettingsPage() {
           )}
 
           {activeTab === "statuses" && (
-            <section className="rounded-lg border bg-card p-6">
+            <section className="rounded-lg border border-border/40 bg-card p-6">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">Statuses</h3>
                 <p className="text-sm text-muted-foreground">
@@ -332,7 +339,7 @@ export default function SpaceSettingsPage() {
           )}
 
           {activeTab === "labels" && (
-            <section className="rounded-lg border bg-card p-6">
+            <section className="rounded-lg border border-border/40 bg-card p-6">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">Labels</h3>
                 <p className="text-sm text-muted-foreground">
@@ -345,7 +352,7 @@ export default function SpaceSettingsPage() {
           )}
 
           {activeTab === "members" && (
-            <section className="rounded-lg border bg-card p-6">
+            <section className="rounded-lg border border-border/40 bg-card p-6">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">Members</h3>
                 <p className="text-sm text-muted-foreground">
@@ -356,8 +363,132 @@ export default function SpaceSettingsPage() {
             </section>
           )}
 
+          {activeTab === "projects" && (
+            <section className="rounded-lg border border-border/40 bg-card p-6">
+              <div className="mb-4 flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold">Projects</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Optional nested scopes inside {space.name}. Each project maintains its own copy
+                    of statuses, labels, and members; estimates and persona live-inherit from this
+                    space unless overridden.
+                  </p>
+                </div>
+                <Button size="sm" asChild>
+                  <Link href={`/dashboard/spaces/${spaceId}/projects`}>
+                    <Plus className="mr-1 size-4" />
+                    New Project
+                  </Link>
+                </Button>
+              </div>
+
+              {projects === undefined ? (
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : projects.length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-border/40 py-10 text-center">
+                  <Layers className="mb-3 size-8 text-muted-foreground/60" />
+                  <p className="text-sm font-medium">No projects yet</p>
+                  <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+                    Use projects when a single space has multiple distinct codebases, services, or
+                    workstreams. Items without a project stay at the space level.
+                  </p>
+                </div>
+              ) : (
+                <ul className="divide-y divide-border/40">
+                  {projects
+                    .filter((p) => p.status !== "archived")
+                    .map((p) => {
+                      const overrides: string[] = []
+                      if (p.estimateScale) overrides.push("estimates")
+                      if (p.persona) overrides.push("persona")
+                      return (
+                        <li key={p._id as string}>
+                          <Link
+                            href={`/dashboard/spaces/${spaceId}/projects/${p._id}/settings`}
+                            className="flex items-center justify-between gap-4 py-3 transition-colors hover:bg-muted/40 -mx-2 px-2 rounded-md"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-xs text-muted-foreground">
+                                  {space.slug}-{p.slug}
+                                </span>
+                                <span className="truncate font-medium">{p.name}</span>
+                                {p.status !== "active" && (
+                                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                                    {p.status}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                {p.statuses.length} statuses · {p.labels.length} labels ·{" "}
+                                {p.members.length} members · {p.taskCounter ?? 0} tasks ·{" "}
+                                {p.issueCounter ?? 0} issues
+                                {overrides.length > 0 ? (
+                                  <>
+                                    {" · "}
+                                    <span className="text-foreground">
+                                      {overrides.join(" + ")} overridden
+                                    </span>
+                                  </>
+                                ) : (
+                                  " · inheriting estimates + persona"
+                                )}
+                              </p>
+                            </div>
+                            <div className="flex shrink-0 items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={async (e) => {
+                                  e.preventDefault()
+                                  if (!apiKeyHash) return
+                                  await archiveProject({
+                                    apiKeyHash,
+                                    id: p._id as never,
+                                  })
+                                }}
+                                className="rounded p-1.5 text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover:opacity-100"
+                                title="Archive project"
+                              >
+                                <Archive className="size-3.5" />
+                              </button>
+                              <ChevronRight className="size-4 text-muted-foreground/50" />
+                            </div>
+                          </Link>
+                        </li>
+                      )
+                    })}
+                </ul>
+              )}
+
+              {projects && projects.filter((p) => p.status === "archived").length > 0 && (
+                <details className="mt-4 border-t border-border/40 pt-4 text-sm">
+                  <summary className="cursor-pointer text-muted-foreground">
+                    Archived ({projects.filter((p) => p.status === "archived").length})
+                  </summary>
+                  <ul className="mt-2 space-y-1">
+                    {projects
+                      .filter((p) => p.status === "archived")
+                      .map((p) => (
+                        <li
+                          key={p._id as string}
+                          className="flex items-center gap-2 px-2 py-1.5 text-sm text-muted-foreground"
+                        >
+                          <span className="font-mono text-xs">
+                            {space.slug}-{p.slug}
+                          </span>
+                          <span>{p.name}</span>
+                        </li>
+                      ))}
+                  </ul>
+                </details>
+              )}
+            </section>
+          )}
+
           {activeTab === "estimates" && (
-            <section className="rounded-lg border bg-card p-6">
+            <section className="rounded-lg border border-border/40 bg-card p-6">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">Estimates</h3>
                 <p className="text-sm text-muted-foreground">
@@ -372,7 +503,7 @@ export default function SpaceSettingsPage() {
           )}
 
           {activeTab === "versions" && (
-            <section className="rounded-lg border bg-card p-6">
+            <section className="rounded-lg border border-border/40 bg-card p-6">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">Versions</h3>
                 <p className="text-sm text-muted-foreground">
@@ -384,7 +515,7 @@ export default function SpaceSettingsPage() {
           )}
 
           {activeTab === "persona" && (
-            <section className="rounded-lg border bg-card p-6">
+            <section className="rounded-lg border border-border/40 bg-card p-6">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">AI Persona</h3>
                 <p className="text-sm text-muted-foreground">

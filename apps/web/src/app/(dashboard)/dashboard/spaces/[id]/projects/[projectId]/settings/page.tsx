@@ -187,7 +187,7 @@ export default function ProjectSettingsPage() {
         <div className="min-w-0">
           {activeTab === "general" && (
             <div className="space-y-8">
-              <section className="space-y-4 rounded-lg border bg-card p-6">
+              <section className="space-y-4 rounded-lg border border-border/40 bg-card p-6">
                 <div>
                   <h3 className="text-lg font-semibold">General</h3>
                   <p className="text-sm text-muted-foreground">
@@ -343,7 +343,7 @@ export default function ProjectSettingsPage() {
           )}
 
           {activeTab === "statuses" && (
-            <section className="rounded-lg border bg-card p-6">
+            <section className="rounded-lg border border-border/40 bg-card p-6">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">Statuses</h3>
                 <p className="text-sm text-muted-foreground">
@@ -359,7 +359,7 @@ export default function ProjectSettingsPage() {
           )}
 
           {activeTab === "labels" && (
-            <section className="rounded-lg border bg-card p-6">
+            <section className="rounded-lg border border-border/40 bg-card p-6">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">Labels</h3>
                 <p className="text-sm text-muted-foreground">
@@ -374,7 +374,7 @@ export default function ProjectSettingsPage() {
           )}
 
           {activeTab === "members" && (
-            <section className="rounded-lg border bg-card p-6">
+            <section className="rounded-lg border border-border/40 bg-card p-6">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">Members</h3>
                 <p className="text-sm text-muted-foreground">
@@ -389,7 +389,7 @@ export default function ProjectSettingsPage() {
           )}
 
           {activeTab === "estimates" && (
-            <section className="rounded-lg border bg-card p-6">
+            <section className="rounded-lg border border-border/40 bg-card p-6">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">Estimates</h3>
                 <p className="text-sm text-muted-foreground">
@@ -407,7 +407,7 @@ export default function ProjectSettingsPage() {
           )}
 
           {activeTab === "persona" && (
-            <section className="rounded-lg border bg-card p-6">
+            <section className="rounded-lg border border-border/40 bg-card p-6">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">AI Persona</h3>
                 <p className="text-sm text-muted-foreground">
