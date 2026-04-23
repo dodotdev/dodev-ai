@@ -40,11 +40,12 @@ import { isCloud } from "@/lib/mode"
 import { cn } from "@/lib/utils"
 
 const SUB_ITEMS = [
+  { key: "projects", label: "Projects", icon: Layers, href: "/projects" },
   { key: "tasks", label: "Tasks", icon: CheckSquare, href: "" },
   { key: "issues", label: "Issues", icon: AlertCircle, href: "/issues" },
   { key: "memories", label: "Memories", icon: Brain, href: "/memories" },
-  { key: "projects", label: "Projects", icon: Layers, href: "/projects" },
   { key: "activity", label: "Activity", icon: Activity, href: "/activity" },
+  { key: "settings", label: "Settings", icon: Settings, href: "/settings" },
 ]
 
 const GLOBAL_ITEMS = [
