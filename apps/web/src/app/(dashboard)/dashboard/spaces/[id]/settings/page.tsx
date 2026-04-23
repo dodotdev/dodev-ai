@@ -2,10 +2,11 @@
 
 import { api } from "@dodev/convex/api"
 import { useMutation, useQuery } from "convex/react"
-import { Archive, ChevronRight, Layers, Loader2, Plus, Trash2 } from "lucide-react"
+import { Archive, ChevronRight, Layers, Loader2, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
+import { NewProjectDialog } from "@/components/dashboard/new-project-dialog"
 import { EstimateEditor } from "@/components/dashboard/settings/estimate-editor"
 import { LabelEditor } from "@/components/dashboard/settings/label-editor"
 import { MemberEditor } from "@/components/dashboard/settings/member-editor"
@@ -374,12 +375,7 @@ export default function SpaceSettingsPage() {
                     space unless overridden.
                   </p>
                 </div>
-                <Button size="sm" asChild>
-                  <Link href={`/dashboard/spaces/${spaceId}/projects`}>
-                    <Plus className="mr-1 size-4" />
-                    New Project
-                  </Link>
-                </Button>
+                <NewProjectDialog spaceId={spaceId} spaceSlug={space.slug} />
               </div>
 
               {projects === undefined ? (
