@@ -621,35 +621,28 @@ export const getContext = query({
         .first()
     }
 
-    // Effective config (merge: project overrides, else inherit from space).
-    const effectiveConfig = activeSpace
+    // Config always comes from the space. Projects are filter scopes only.
+    const spaceConfig = activeSpace
       ? {
-          statuses: activeProject?.statuses ?? activeSpace.statuses,
-          labels: activeProject?.labels ?? activeSpace.labels,
-          members: activeProject?.members ?? activeSpace.members,
-          estimateScale: activeProject?.estimateScale ?? activeSpace.estimateScale,
-          persona: activeProject?.persona ?? activeSpace.persona,
-        }
-      : undefined
-
-    const configSource = activeSpace
-      ? {
-          statuses: (activeProject ? "project" : "space") as "project" | "space",
-          labels: (activeProject ? "project" : "space") as "project" | "space",
-          members: (activeProject ? "project" : "space") as "project" | "space",
-          estimateScale: (activeProject?.estimateScale ? "project" : "space") as
-            | "project"
-            | "space",
-          persona: (activeProject?.persona ? "project" : activeSpace.persona ? "space" : null) as
-            | "project"
-            | "space"
-            | null,
+          statuses: activeSpace.statuses,
+          labels: activeSpace.labels,
+          members: activeSpace.members,
+          estimateScale: activeSpace.estimateScale,
+          persona: activeSpace.persona,
         }
       : undefined
 
     return {
       activeSpace,
-      activeProject,
+      activeProject: activeProject
+        ? {
+            _id: activeProject._id,
+            name: activeProject.name,
+            slug: activeProject.slug,
+            description: activeProject.description,
+            status: activeProject.status,
+          }
+        : null,
       taskSummary: {
         pending: pendingTasks.length,
         inProgress: inProgressTasks.length,
@@ -663,9 +656,8 @@ export const getContext = query({
       },
       spaces: spaces.map((s) => ({ id: s._id, name: s.name })),
       projects: projects.map((p) => ({ id: p._id, name: p.name, slug: p.slug })),
-      persona: effectiveConfig?.persona,
-      spaceConfig: effectiveConfig,
-      configSource,
+      persona: activeSpace?.persona,
+      spaceConfig,
       activeCycle,
       memorySettings: activeSpace?.memorySettings,
       workspace: workspaceInfo,

@@ -7,13 +7,6 @@ import { generateConfigId } from "./lib/utils"
  * Historical migrations that have already been run against both dev
  * (notable-gazelle-779) and prod (proficient-buzzard-939) are removed
  * after their target fields become schema-enforced or get repurposed.
- *
- * Removed migrations:
- *   - `renumberItems` — renumbered items under legacy projects table
- *   - `migrateProjectsToSpaces` — copied legacy projects to new spaces
- *   - `purgeLegacyProjects` — cleared legacy projectId refs; unsafe to
- *     run after v0.1.0 because `projectId` is now a legitimate field
- *     pointing at the new nested-project entity.
  */
 
 const DEFAULT_LABELS = [
@@ -29,13 +22,7 @@ const DEFAULT_LABELS = [
  * Backfill the default label set on spaces (and projects) whose `labels`
  * array is empty. New spaces created after v0.1.1 get these labels at
  * creation time — this migration only patches records that predate the
- * change. Run once per deployment.
- *
- * Run via:
- *   npx convex run --component convex migrations:backfillDefaultLabels
- *
- * Idempotent: only touches rows with `labels.length === 0`; re-runs are
- * no-ops.
+ * change.
  */
 export const backfillDefaultLabels = internalMutation({
   args: {},
@@ -60,7 +47,7 @@ export const backfillDefaultLabels = internalMutation({
 
     const projects = await ctx.db.query("projects").collect()
     for (const project of projects) {
-      if (project.labels.length === 0) {
+      if ((project.labels?.length ?? 0) === 0) {
         await ctx.db.patch(project._id, {
           labels: DEFAULT_LABELS.map((l) => ({
             id: generateConfigId("lb"),
@@ -74,5 +61,52 @@ export const backfillDefaultLabels = internalMutation({
     }
 
     return { spacesPatched, projectsPatched }
+  },
+})
+
+/**
+ * v0.1.2 cleanup: strip the project-level workflow config fields now that
+ * projects are pure filter scopes. Clears statuses, labels, members,
+ * estimateScale, persona, taskCounter, and issueCounter on every project
+ * row. Schema marks these fields as optional so this patch is safe; a
+ * follow-up deploy removes them from the schema entirely.
+ *
+ * Run via:
+ *   npx convex run --component convex migrations:purgeProjectConfig
+ *
+ * Idempotent: rows already stripped return no-op on subsequent runs.
+ */
+export const purgeProjectConfig = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    let patched = 0
+    const projects = await ctx.db.query("projects").collect()
+
+    for (const p of projects) {
+      const needsPatch =
+        p.statuses !== undefined ||
+        p.labels !== undefined ||
+        p.members !== undefined ||
+        p.estimateScale !== undefined ||
+        p.persona !== undefined ||
+        p.taskCounter !== undefined ||
+        p.issueCounter !== undefined
+
+      if (!needsPatch) continue
+
+      await ctx.db.patch(p._id, {
+        statuses: undefined,
+        labels: undefined,
+        members: undefined,
+        estimateScale: undefined,
+        persona: undefined,
+        taskCounter: undefined,
+        issueCounter: undefined,
+        updatedAt: Date.now(),
+      })
+      patched++
+    }
+
+    return { projectsPatched: patched }
   },
 })

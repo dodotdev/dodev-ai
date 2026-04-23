@@ -2,7 +2,6 @@ import { ConvexError, v } from "convex/values"
 import type { Doc } from "./_generated/dataModel"
 import { mutation, query } from "./_generated/server"
 import { authenticateApiKey } from "./lib/auth"
-import { generateConfigId } from "./lib/utils"
 
 /** Per-space project quota by plan. Infinity = no cap. */
 const PROJECTS_PER_SPACE_BY_PLAN: Record<string, number> = {
@@ -80,8 +79,6 @@ export const create = mutation({
       suffix++
     }
 
-    // Snapshot statuses, labels, and members from the parent space (copy-on-
-    // create). estimateScale/persona stay undefined → live-inherit from space.
     const now = Date.now()
     const id = await ctx.db.insert("projects", {
       userId: user._id,
@@ -91,12 +88,6 @@ export const create = mutation({
       description: args.description,
       status: "active",
       metadata: args.metadata,
-      taskCounter: 0,
-      issueCounter: 0,
-      statuses: space.statuses.map((s) => ({ ...s, id: generateConfigId("st") })),
-      labels: space.labels.map((l) => ({ ...l, id: generateConfigId("lb") })),
-      members: space.members.map((m) => ({ ...m, id: generateConfigId("mb") })),
-      // estimateScale and persona intentionally undefined → inherit from space
       createdAt: now,
       updatedAt: now,
     })

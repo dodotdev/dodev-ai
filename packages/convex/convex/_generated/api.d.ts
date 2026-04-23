@@ -23,7 +23,6 @@ import type * as mcpLogs from "../mcpLogs.js";
 import type * as memories from "../memories.js";
 import type * as migrations from "../migrations.js";
 import type * as oauthClients from "../oauthClients.js";
-import type * as projectConfig from "../projectConfig.js";
 import type * as projects from "../projects.js";
 import type * as sessions from "../sessions.js";
 import type * as spaceConfig from "../spaceConfig.js";
@@ -55,7 +54,6 @@ declare const fullApi: ApiFromModules<{
   memories: typeof memories;
   migrations: typeof migrations;
   oauthClients: typeof oauthClients;
-  projectConfig: typeof projectConfig;
   projects: typeof projects;
   sessions: typeof sessions;
   spaceConfig: typeof spaceConfig;

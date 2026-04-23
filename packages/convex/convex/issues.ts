@@ -33,13 +33,13 @@ export const create = mutation({
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
     await checkQuota(ctx, user, "issues")
 
-    // Resolve project + space. When projectId is set, derive spaceId from
-    // the project so callers don't have to duplicate it.
+    // Resolve the space. When projectId is set, derive spaceId from the
+    // project so callers don't have to duplicate it. Projects are filter
+    // scopes only — all workflow config lives on the space.
     let space = null
-    let project = null
     let resolvedSpaceId = args.spaceId
     if (args.projectId) {
-      project = await ctx.db.get(args.projectId)
+      const project = await ctx.db.get(args.projectId)
       if (!project || project.userId !== user._id) {
         throw new ConvexError("NOT_FOUND")
       }
@@ -49,22 +49,17 @@ export const create = mutation({
       space = await ctx.db.get(args.spaceId)
     }
 
-    // Derive base status category from statusId if provided.
-    // Project's statuses win over space's (project is a snapshot, editable).
+    // Derive base status category from the space's statusId mapping.
     let status: "pending" | "in_progress" | "completed" | "cancelled" = "pending"
-    if (args.statusId) {
-      const ws =
-        project?.statuses?.find((s) => s.id === args.statusId) ??
-        space?.statuses.find((s) => s.id === args.statusId)
+    if (args.statusId && space) {
+      const ws = space.statuses.find((s) => s.id === args.statusId)
       if (ws) status = ws.category
     }
 
-    // Auto-increment counter: project > space > user.
+    // Auto-increment counter: space > user. Issues in a project still use
+    // the space counter — projectId is just a filter tag.
     let nextNumber: number
-    if (project) {
-      nextNumber = (project.issueCounter ?? 0) + 1
-      await ctx.db.patch(project._id, { issueCounter: nextNumber })
-    } else if (space) {
+    if (space) {
       nextNumber = (space.itemCounter ?? 0) + 1
       await ctx.db.patch(space._id, { itemCounter: nextNumber })
     } else {
