@@ -21,9 +21,19 @@ interface EstimateScale {
   values: string[]
 }
 
+import type { ConfigScope } from "./status-editor"
+
 interface EstimateEditorProps {
-  spaceId: string
+  scope: ConfigScope
   estimateScale: EstimateScale
+  /**
+   * When scope is a project and this editor is showing the inherited (space)
+   * value, set this true so Save knows to push an override. When the project
+   * already has its own value, the UI may offer a "Revert to inherited"
+   * action which calls updateProjectEstimateScale with null.
+   */
+  inheritedFromSpace?: boolean
+  onRevertToInherit?: () => void
 }
 
 const SCALE_TYPES = [
@@ -38,9 +48,15 @@ const DEFAULT_VALUES: Record<string, string[]> = {
   hours: ["1h", "2h", "4h", "8h", "16h", "24h"],
 }
 
-export function EstimateEditor({ spaceId, estimateScale }: EstimateEditorProps) {
+export function EstimateEditor({
+  scope,
+  estimateScale,
+  inheritedFromSpace,
+  onRevertToInherit,
+}: EstimateEditorProps) {
   const { apiKeyHash } = useAuth()
-  const updateEstimateScale = useMutation(api.spaceConfig.updateEstimateScale)
+  const updateSpaceEstimateScale = useMutation(api.spaceConfig.updateEstimateScale)
+  const updateProjectEstimateScale = useMutation(api.projectConfig.updateEstimateScale)
 
   const [type, setType] = useState(estimateScale.type)
   const [values, setValues] = useState<string[]>(estimateScale.values)
@@ -94,12 +110,23 @@ export function EstimateEditor({ spaceId, estimateScale }: EstimateEditorProps) 
     setIsSaving(true)
     setError(null)
     try {
-      await updateEstimateScale({
-        apiKeyHash,
-        spaceId: spaceId as never,
-        type: type as "points" | "tshirt" | "hours",
-        values: trimmedValues,
-      })
+      if (scope.kind === "space") {
+        await updateSpaceEstimateScale({
+          apiKeyHash,
+          spaceId: scope.spaceId as never,
+          type: type as "points" | "tshirt" | "hours",
+          values: trimmedValues,
+        })
+      } else {
+        await updateProjectEstimateScale({
+          apiKeyHash,
+          projectId: scope.projectId as never,
+          scale: {
+            type: type as "points" | "tshirt" | "hours",
+            values: trimmedValues,
+          },
+        })
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save estimate scale")
     } finally {
@@ -107,9 +134,44 @@ export function EstimateEditor({ spaceId, estimateScale }: EstimateEditorProps) 
     }
   }
 
+  async function handleRevert() {
+    if (!apiKeyHash || scope.kind !== "project") return
+    setIsSaving(true)
+    setError(null)
+    try {
+      await updateProjectEstimateScale({
+        apiKeyHash,
+        projectId: scope.projectId as never,
+        scale: null,
+      })
+      onRevertToInherit?.()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to revert")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
-      <Label className="text-base font-semibold">Estimate Scale</Label>
+      <div className="flex items-center justify-between">
+        <Label className="text-base font-semibold">Estimate Scale</Label>
+        {scope.kind === "project" && inheritedFromSpace ? (
+          <span className="text-xs text-muted-foreground">
+            Inherited from space — editing creates an override
+          </span>
+        ) : scope.kind === "project" ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            onClick={handleRevert}
+            disabled={isSaving}
+          >
+            Revert to inherited
+          </Button>
+        ) : null}
+      </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 

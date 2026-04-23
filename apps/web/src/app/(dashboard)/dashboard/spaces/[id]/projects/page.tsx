@@ -180,7 +180,7 @@ export default function SpaceProjectsPage() {
                   className="group relative rounded-lg border bg-card p-4 transition-colors hover:border-muted-foreground/40"
                 >
                   <Link
-                    href={`/dashboard/spaces/${id}?projectId=${p._id}`}
+                    href={`/dashboard/spaces/${id}/projects/${p._id}/settings`}
                     className="absolute inset-0"
                     aria-label={`Open ${p.name}`}
                   />

@@ -2,7 +2,8 @@
 
 import { api } from "@dodev/convex/api"
 import { useMutation, useQuery } from "convex/react"
-import { Archive, Loader2, Trash2 } from "lucide-react"
+import { Archive, ChevronLeft, Loader2, Trash2 } from "lucide-react"
+import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { EstimateEditor } from "@/components/dashboard/settings/estimate-editor"
@@ -10,7 +11,6 @@ import { LabelEditor } from "@/components/dashboard/settings/label-editor"
 import { MemberEditor } from "@/components/dashboard/settings/member-editor"
 import { PersonaEditor } from "@/components/dashboard/settings/persona-editor"
 import { StatusEditor } from "@/components/dashboard/settings/status-editor"
-import { VersionEditor } from "@/components/dashboard/settings/version-editor"
 import { useAuth } from "@/components/providers/auth-provider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,14 +24,13 @@ const TABS = [
   { key: "labels", label: "Labels" },
   { key: "members", label: "Members" },
   { key: "estimates", label: "Estimates" },
-  { key: "versions", label: "Versions" },
   { key: "persona", label: "AI Persona" },
 ] as const
 
 type TabKey = (typeof TABS)[number]["key"]
 
-export default function SpaceSettingsPage() {
-  const { id } = useParams<{ id: string }>()
+export default function ProjectSettingsPage() {
+  const { id, projectId } = useParams<{ id: string; projectId: string }>()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { apiKeyHash, isLoading: authLoading } = useAuth()
@@ -45,10 +44,14 @@ export default function SpaceSettingsPage() {
   const [saving, setSaving] = useState(false)
 
   const space = useQuery(api.spaces.get, apiKeyHash ? { apiKeyHash, id: id as never } : "skip")
+  const project = useQuery(
+    api.projects.get,
+    apiKeyHash ? { apiKeyHash, id: projectId as never } : "skip"
+  )
 
-  const updateSpace = useMutation(api.spaces.update)
-  const archiveSpace = useMutation(api.spaces.archive)
-  const deleteSpace = useMutation(api.spaces.remove)
+  const updateProject = useMutation(api.projects.update)
+  const archiveProject = useMutation(api.projects.archive)
+  const deleteProject = useMutation(api.projects.remove)
 
   const [editName, setEditName] = useState("")
   const [editSlug, setEditSlug] = useState("")
@@ -57,39 +60,43 @@ export default function SpaceSettingsPage() {
   const [initialized, setInitialized] = useState(false)
 
   useEffect(() => {
-    if (space === null) {
-      router.replace("/dashboard")
+    if (project === null) {
+      router.replace(`/dashboard/spaces/${id}/projects`)
     }
-  }, [space, router])
+  }, [project, id, router])
 
   useEffect(() => {
-    if (space && !initialized) {
-      setEditName(space.name)
-      setEditSlug((space.slug as string) ?? "")
-      setEditDescription((space.description as string) ?? "")
+    if (project && !initialized) {
+      setEditName(project.name)
+      setEditSlug(project.slug ?? "")
+      setEditDescription(project.description ?? "")
       setInitialized(true)
     }
-  }, [space, initialized])
+  }, [project, initialized])
 
-  const spaceId = useMemo(() => id as string, [id])
+  const projectIdMemo = useMemo(() => projectId as string, [projectId])
 
-  if (authLoading || !apiKeyHash || space === undefined) {
+  if (authLoading || !apiKeyHash || project === undefined || space === undefined) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     )
   }
-  if (!space) return null
+  if (!project || !space) return null
+
+  const effectiveEstimateScale = project.estimateScale ??
+    space.estimateScale ?? { type: "points", values: [] }
+  const effectivePersona = project.persona ?? space.persona
 
   async function handleSaveGeneral() {
     if (!apiKeyHash) return
     setSlugError(null)
     setSaving(true)
     try {
-      await updateSpace({
+      await updateProject({
         apiKeyHash,
-        id: spaceId as never,
+        id: projectIdMemo as never,
         name: editName.trim(),
         slug:
           editSlug
@@ -101,7 +108,7 @@ export default function SpaceSettingsPage() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       if (msg.includes("SLUG_ALREADY_EXISTS")) {
-        setSlugError("This identifier is already taken. Choose a different one.")
+        setSlugError("This slug is already used by another project in this space.")
       }
     } finally {
       setSaving(false)
@@ -112,8 +119,8 @@ export default function SpaceSettingsPage() {
     if (!apiKeyHash) return
     setSaving(true)
     try {
-      await archiveSpace({ apiKeyHash, id: spaceId as never })
-      router.push("/dashboard")
+      await archiveProject({ apiKeyHash, id: projectIdMemo as never })
+      router.push(`/dashboard/spaces/${id}/projects`)
     } finally {
       setSaving(false)
     }
@@ -123,8 +130,8 @@ export default function SpaceSettingsPage() {
     if (!apiKeyHash) return
     setSaving(true)
     try {
-      await deleteSpace({ apiKeyHash, id: spaceId as never })
-      router.push("/dashboard")
+      await deleteProject({ apiKeyHash, id: projectIdMemo as never })
+      router.push(`/dashboard/spaces/${id}/projects`)
     } finally {
       setSaving(false)
     }
@@ -132,11 +139,26 @@ export default function SpaceSettingsPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
+      <div className="mb-2">
+        <Link
+          href={`/dashboard/spaces/${id}/projects`}
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <ChevronLeft className="size-3.5" />
+          Back to {space.name} projects
+        </Link>
+      </div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <span className="font-mono text-sm text-muted-foreground">
+            {space.slug}-{project.slug}
+          </span>
+          <span>{project.name}</span>
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Configure {space.name}. These settings apply to items created directly in this space and
-          serve as the template for new projects.
+          Configure this project. Statuses, labels, and members were snapshotted from the space at
+          creation and are edited independently here. Estimates and AI Persona live-inherit from the
+          space until you override them.
         </p>
       </div>
 
@@ -169,56 +191,56 @@ export default function SpaceSettingsPage() {
                 <div>
                   <h3 className="text-lg font-semibold">General</h3>
                   <p className="text-sm text-muted-foreground">
-                    Name, identifier, and description for this space.
+                    Name, slug (unique within {space.name}), and description.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-[1fr_auto] gap-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="settings-name">Name</Label>
+                    <Label htmlFor="project-settings-name">Name</Label>
                     <Input
-                      id="settings-name"
+                      id="project-settings-name"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="settings-slug">Slug</Label>
+                    <Label htmlFor="project-settings-slug">Slug</Label>
                     <Input
-                      id="settings-slug"
+                      id="project-settings-slug"
                       value={editSlug}
                       onChange={(e) =>
                         setEditSlug(
                           e.target.value
                             .toUpperCase()
                             .replace(/[^A-Z0-9]/g, "")
-                            .slice(0, 5)
+                            .slice(0, 8)
                         )
                       }
-                      placeholder="ABC"
-                      className="w-20 text-center font-mono uppercase"
-                      maxLength={5}
+                      placeholder="API"
+                      className="w-24 text-center font-mono uppercase"
+                      maxLength={8}
                     />
                   </div>
                 </div>
                 {slugError && <p className="text-sm text-destructive">{slugError}</p>}
                 {editSlug && (
                   <p className="text-xs text-muted-foreground">
-                    Tasks and issues display as{" "}
+                    Item slugs will be{" "}
                     <span className="font-mono font-medium text-foreground">
-                      {editSlug.toUpperCase()}-1
+                      {space.slug}-{editSlug}-1
                     </span>
                     ,{" "}
                     <span className="font-mono font-medium text-foreground">
-                      {editSlug.toUpperCase()}-2
+                      {space.slug}-{editSlug}-2
                     </span>
                     , ...
                   </p>
                 )}
                 <div className="space-y-1.5">
-                  <Label htmlFor="settings-desc">Description</Label>
+                  <Label htmlFor="project-settings-desc">Description</Label>
                   <Textarea
-                    id="settings-desc"
+                    id="project-settings-desc"
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
                     rows={2}
@@ -238,16 +260,17 @@ export default function SpaceSettingsPage() {
 
                 <div className="mt-4 space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    Archive hides this space from the dashboard but preserves its data. Delete
-                    permanently removes the space and every task, issue, memory, cycle, and version
-                    inside it.
+                    Archive hides this project from the dashboard; tasks, issues, and memories keep
+                    their <code>projectId</code>. Delete detaches every child item back to the space
+                    (clears <code>projectId</code>) and removes the project record — child data
+                    itself is never deleted.
                   </p>
 
                   {confirmAction === "archive" ? (
                     <div className="space-y-3 rounded-md border border-destructive/30 bg-destructive/5 p-3">
                       <p className="text-sm">
-                        Archive <span className="font-medium">{space.name}</span>? It will be hidden
-                        from the dashboard but can be restored later.
+                        Archive <span className="font-medium">{project.name}</span>? It will be
+                        hidden but can be restored later.
                       </p>
                       <div className="flex gap-2">
                         <Button
@@ -271,8 +294,9 @@ export default function SpaceSettingsPage() {
                   ) : confirmAction === "delete" ? (
                     <div className="space-y-3 rounded-md border border-destructive/30 bg-destructive/5 p-3">
                       <p className="text-sm">
-                        Permanently delete <span className="font-medium">{space.name}</span> and all
-                        its tasks, issues, and memories? This cannot be undone.
+                        Delete <span className="font-medium">{project.name}</span>? Tasks, issues,
+                        memories, cycles, and versions will be detached to space level — the project
+                        record itself will be removed.
                       </p>
                       <div className="flex gap-2">
                         <Button
@@ -301,7 +325,7 @@ export default function SpaceSettingsPage() {
                         onClick={() => setConfirmAction("archive")}
                       >
                         <Archive className="mr-1.5 size-3.5" />
-                        Archive Space
+                        Archive Project
                       </Button>
                       <Button
                         variant="destructive"
@@ -309,7 +333,7 @@ export default function SpaceSettingsPage() {
                         onClick={() => setConfirmAction("delete")}
                       >
                         <Trash2 className="mr-1.5 size-3.5" />
-                        Delete Space
+                        Delete Project
                       </Button>
                     </div>
                   )}
@@ -323,11 +347,14 @@ export default function SpaceSettingsPage() {
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">Statuses</h3>
                 <p className="text-sm text-muted-foreground">
-                  Workflow columns shared by tasks and issues in this space. Each status is tagged
-                  with one of four base categories: Pending, In Progress, Completed, or Cancelled.
+                  Workflow columns for tasks and issues in this project. Independent from the parent
+                  space — edits here do not affect the space&apos;s statuses.
                 </p>
               </div>
-              <StatusEditor scope={{ kind: "space", spaceId }} statuses={space.statuses ?? []} />
+              <StatusEditor
+                scope={{ kind: "project", projectId: projectIdMemo }}
+                statuses={project.statuses}
+              />
             </section>
           )}
 
@@ -336,11 +363,13 @@ export default function SpaceSettingsPage() {
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">Labels</h3>
                 <p className="text-sm text-muted-foreground">
-                  Color-coded tags. New projects snapshot this list at creation; edits here do not
-                  affect existing projects.
+                  Labels for this project. Independent from the parent space.
                 </p>
               </div>
-              <LabelEditor scope={{ kind: "space", spaceId }} labels={space.labels ?? []} />
+              <LabelEditor
+                scope={{ kind: "project", projectId: projectIdMemo }}
+                labels={project.labels}
+              />
             </section>
           )}
 
@@ -349,10 +378,13 @@ export default function SpaceSettingsPage() {
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">Members</h3>
                 <p className="text-sm text-muted-foreground">
-                  People you can assign work to. New projects snapshot this list at creation.
+                  Assignable members for this project. Independent from the parent space.
                 </p>
               </div>
-              <MemberEditor scope={{ kind: "space", spaceId }} members={space.members ?? []} />
+              <MemberEditor
+                scope={{ kind: "project", projectId: projectIdMemo }}
+                members={project.members}
+              />
             </section>
           )}
 
@@ -361,25 +393,16 @@ export default function SpaceSettingsPage() {
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">Estimates</h3>
                 <p className="text-sm text-muted-foreground">
-                  Effort-sizing scale. Projects inherit this unless they override.
+                  {project.estimateScale
+                    ? "This project has its own estimate scale override."
+                    : `Inheriting from ${space.name}. Save to create a project-level override.`}
                 </p>
               </div>
               <EstimateEditor
-                scope={{ kind: "space", spaceId }}
-                estimateScale={space.estimateScale ?? { type: "points", values: [] }}
+                scope={{ kind: "project", projectId: projectIdMemo }}
+                estimateScale={effectiveEstimateScale}
+                inheritedFromSpace={!project.estimateScale}
               />
-            </section>
-          )}
-
-          {activeTab === "versions" && (
-            <section className="rounded-lg border bg-card p-6">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">Versions</h3>
-                <p className="text-sm text-muted-foreground">
-                  Release versions for grouping completed tasks and issues.
-                </p>
-              </div>
-              <VersionEditor spaceId={spaceId} />
             </section>
           )}
 
@@ -388,14 +411,14 @@ export default function SpaceSettingsPage() {
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">AI Persona</h3>
                 <p className="text-sm text-muted-foreground">
-                  System prompt surfaced to AI agents working in this space via{" "}
-                  <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
-                    get_context
-                  </code>
-                  . Projects inherit this unless they override.
+                  System prompt for AI agents working in this project.
                 </p>
               </div>
-              <PersonaEditor scope={{ kind: "space", spaceId }} persona={space.persona} />
+              <PersonaEditor
+                scope={{ kind: "project", projectId: projectIdMemo }}
+                persona={effectivePersona}
+                inheritedFromSpace={!project.persona}
+              />
             </section>
           )}
         </div>

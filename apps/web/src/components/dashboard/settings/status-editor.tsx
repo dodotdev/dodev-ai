@@ -42,8 +42,12 @@ interface Status {
   position: number
 }
 
+export type ConfigScope =
+  | { kind: "space"; spaceId: string }
+  | { kind: "project"; projectId: string }
+
 interface StatusEditorProps {
-  spaceId: string
+  scope: ConfigScope
   statuses: Status[]
 }
 
@@ -138,9 +142,10 @@ function SortableStatusRow({
   )
 }
 
-export function StatusEditor({ spaceId, statuses: initialStatuses }: StatusEditorProps) {
+export function StatusEditor({ scope, statuses: initialStatuses }: StatusEditorProps) {
   const { apiKeyHash } = useAuth()
-  const updateStatuses = useMutation(api.spaceConfig.updateStatuses)
+  const updateSpaceStatuses = useMutation(api.spaceConfig.updateStatuses)
+  const updateProjectStatuses = useMutation(api.projectConfig.updateStatuses)
 
   const [statuses, setStatuses] = useState<Status[]>(initialStatuses)
   const [isSaving, setIsSaving] = useState(false)
@@ -231,7 +236,19 @@ export function StatusEditor({ spaceId, statuses: initialStatuses }: StatusEdito
     setIsSaving(true)
     setError(null)
     try {
-      await updateStatuses({ apiKeyHash, spaceId: spaceId as never, statuses })
+      if (scope.kind === "space") {
+        await updateSpaceStatuses({
+          apiKeyHash,
+          spaceId: scope.spaceId as never,
+          statuses,
+        })
+      } else {
+        await updateProjectStatuses({
+          apiKeyHash,
+          projectId: scope.projectId as never,
+          statuses,
+        })
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save statuses")
     } finally {

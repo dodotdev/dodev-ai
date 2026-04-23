@@ -17,8 +17,10 @@ interface Member {
   avatarUrl?: string
 }
 
+import type { ConfigScope } from "./status-editor"
+
 interface MemberEditorProps {
-  spaceId: string
+  scope: ConfigScope
   members: Member[]
 }
 
@@ -31,10 +33,12 @@ function getInitials(name: string): string {
     .slice(0, 2)
 }
 
-export function MemberEditor({ spaceId, members }: MemberEditorProps) {
+export function MemberEditor({ scope, members }: MemberEditorProps) {
   const { apiKeyHash } = useAuth()
-  const addMember = useMutation(api.spaceConfig.addMember)
-  const removeMember = useMutation(api.spaceConfig.removeMember)
+  const addSpaceMember = useMutation(api.spaceConfig.addMember)
+  const removeSpaceMember = useMutation(api.spaceConfig.removeMember)
+  const addProjectMember = useMutation(api.projectConfig.addMember)
+  const removeProjectMember = useMutation(api.projectConfig.removeMember)
 
   const [newName, setNewName] = useState("")
   const [newRole, setNewRole] = useState("")
@@ -62,12 +66,21 @@ export function MemberEditor({ spaceId, members }: MemberEditorProps) {
     setIsAdding(true)
     setError(null)
     try {
-      await addMember({
-        apiKeyHash,
-        spaceId: spaceId as never,
-        name: trimmedName,
-        role: trimmedRole,
-      })
+      if (scope.kind === "space") {
+        await addSpaceMember({
+          apiKeyHash,
+          spaceId: scope.spaceId as never,
+          name: trimmedName,
+          role: trimmedRole,
+        })
+      } else {
+        await addProjectMember({
+          apiKeyHash,
+          projectId: scope.projectId as never,
+          name: trimmedName,
+          role: trimmedRole,
+        })
+      }
       setNewName("")
       setNewRole("")
     } catch (err) {
@@ -83,7 +96,19 @@ export function MemberEditor({ spaceId, members }: MemberEditorProps) {
     setRemovingId(memberId)
     setError(null)
     try {
-      await removeMember({ apiKeyHash, spaceId: spaceId as never, memberId })
+      if (scope.kind === "space") {
+        await removeSpaceMember({
+          apiKeyHash,
+          spaceId: scope.spaceId as never,
+          memberId,
+        })
+      } else {
+        await removeProjectMember({
+          apiKeyHash,
+          projectId: scope.projectId as never,
+          memberId,
+        })
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove member")
     } finally {

@@ -198,67 +198,18 @@ export function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
           <div className="space-y-0.5">
             {(spaces ?? [])
               .filter((s) => (s as { status: string }).status !== "archived")
-              .map((space) => {
-                const id = space._id as string
-                const isExpanded = expandedSpaces.has(id)
-                const base = `/dashboard/spaces/${id}`
-                const isSpaceActive = pathname.startsWith(base)
-
-                return (
-                  <div key={id}>
-                    {/* Space row */}
-                    <button
-                      type="button"
-                      onClick={() => toggleSpace(id)}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none",
-                        isSpaceActive
-                          ? "text-foreground"
-                          : "text-muted-foreground hover:bg-white hover:text-foreground dark:hover:bg-accent"
-                      )}
-                    >
-                      <FolderOpen className="size-4 shrink-0" />
-                      <span className="flex-1 truncate text-left">{space.name}</span>
-                      {isExpanded ? (
-                        <ChevronDown className="size-3.5 shrink-0 text-muted-foreground/50" />
-                      ) : (
-                        <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/50" />
-                      )}
-                    </button>
-
-                    {/* Sub-items */}
-                    {isExpanded && (
-                      <div className="ml-[22px] space-y-1 border-l border-border py-1 pl-3">
-                        {SUB_ITEMS.map((sub) => {
-                          const Icon = sub.icon
-                          const href = `${base}${sub.href}`
-                          const active =
-                            sub.href === ""
-                              ? pathname === base
-                              : pathname === href || pathname.startsWith(href)
-
-                          return (
-                            <Link
-                              key={sub.key}
-                              href={href}
-                              onClick={onNavigate}
-                              className={cn(
-                                "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors",
-                                active
-                                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                                  : "text-muted-foreground hover:bg-white hover:text-foreground dark:hover:bg-accent"
-                              )}
-                            >
-                              <Icon className="size-3.5 shrink-0" />
-                              {sub.label}
-                            </Link>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+              .map((space) => (
+                <SpaceBranch
+                  key={space._id as string}
+                  spaceId={space._id as string}
+                  spaceName={space.name}
+                  spaceSlug={(space as { slug?: string }).slug}
+                  isExpanded={expandedSpaces.has(space._id as string)}
+                  onToggle={() => toggleSpace(space._id as string)}
+                  pathname={pathname}
+                  onNavigate={onNavigate}
+                />
+              ))}
 
             {spaces !== undefined && spaces.length === 0 && (
               <p className="px-3 py-2 text-xs text-muted-foreground">No spaces yet</p>
@@ -513,5 +464,127 @@ function NewSpaceDialog({
         </form>
       </DialogContent>
     </Dialog>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// SpaceBranch — a single space row plus its (optionally expanded) sub-items
+// and nested project list.
+// ---------------------------------------------------------------------------
+function SpaceBranch({
+  spaceId,
+  spaceName,
+  spaceSlug,
+  isExpanded,
+  onToggle,
+  pathname,
+  onNavigate,
+}: {
+  spaceId: string
+  spaceName: string
+  spaceSlug?: string
+  isExpanded: boolean
+  onToggle: () => void
+  pathname: string
+  onNavigate?: () => void
+}) {
+  const { apiKeyHash } = useAuth()
+  const base = `/dashboard/spaces/${spaceId}`
+  const isSpaceActive = pathname.startsWith(base)
+
+  // Only query projects when the space is expanded — Convex dedups shared
+  // queries across SpaceBranch instances automatically.
+  const projects = useQuery(
+    api.projects.list,
+    isExpanded && apiKeyHash ? { apiKeyHash, spaceId: spaceId as never } : "skip"
+  )
+
+  const activeProjects = (projects ?? []).filter((p) => p.status !== "archived")
+
+  return (
+    <div>
+      {/* Space row */}
+      <button
+        type="button"
+        onClick={onToggle}
+        className={cn(
+          "flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none",
+          isSpaceActive
+            ? "text-foreground"
+            : "text-muted-foreground hover:bg-white hover:text-foreground dark:hover:bg-accent"
+        )}
+      >
+        <FolderOpen className="size-4 shrink-0" />
+        <span className="flex-1 truncate text-left">{spaceName}</span>
+        {isExpanded ? (
+          <ChevronDown className="size-3.5 shrink-0 text-muted-foreground/50" />
+        ) : (
+          <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/50" />
+        )}
+      </button>
+
+      {isExpanded && (
+        <div className="ml-[22px] space-y-1 border-l border-border py-1 pl-3">
+          {/* Sub-items */}
+          {SUB_ITEMS.map((sub) => {
+            const Icon = sub.icon
+            const href = `${base}${sub.href}`
+            const active =
+              sub.href === "" ? pathname === base : pathname === href || pathname.startsWith(href)
+
+            return (
+              <Link
+                key={sub.key}
+                href={href}
+                onClick={onNavigate}
+                className={cn(
+                  "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors",
+                  active
+                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                    : "text-muted-foreground hover:bg-white hover:text-foreground dark:hover:bg-accent"
+                )}
+              >
+                <Icon className="size-3.5 shrink-0" />
+                {sub.label}
+              </Link>
+            )
+          })}
+
+          {/* Nested projects for this space. Each project links to its
+              settings page for now (project detail views land in a later PR).
+              When there are no projects, render nothing — the "Projects"
+              sub-item above leads to the list view. */}
+          {activeProjects.length > 0 && (
+            <div className="mt-1 border-t border-border/60 pt-1">
+              <p className="mb-1 px-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+                Projects
+              </p>
+              {activeProjects.map((p) => {
+                const href = `${base}/projects/${p._id}/settings`
+                const projectBase = `${base}/projects/${p._id}`
+                const active = pathname.startsWith(projectBase)
+                return (
+                  <Link
+                    key={p._id as string}
+                    href={href}
+                    onClick={onNavigate}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-md px-2.5 py-1 text-[12.5px] transition-colors",
+                      active
+                        ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                        : "text-muted-foreground hover:bg-white hover:text-foreground dark:hover:bg-accent"
+                    )}
+                    title={`${spaceSlug ?? ""}-${p.slug}`}
+                  >
+                    <Layers className="size-3 shrink-0 opacity-60" />
+                    <span className="truncate">{p.name}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
