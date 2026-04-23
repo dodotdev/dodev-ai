@@ -8,6 +8,8 @@
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
       "env": [
         "NEXT_PUBLIC_CONVEX_URL",
+        "VITE_CONVEX_URL",
+        "VITE_MARKETING_ORIGIN",
         "WORKOS_CLIENT_ID",
         "WORKOS_API_KEY",
         "WORKOS_COOKIE_PASSWORD",

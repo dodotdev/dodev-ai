@@ -10,6 +10,9 @@ out/
 *.tsbuildinfo
 next-env.d.ts
 
+# TanStack Router generated tree (regenerated on each dev/build)
+routeTree.gen.ts
+
 # Environment files
 .env
 .env.local
