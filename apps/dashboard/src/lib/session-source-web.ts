@@ -23,7 +23,7 @@ export const webSessionSource: SessionSource = {
     return body.user
   },
   signInUrl(returnTo: string): string {
-    return marketingUrl(`/auth/sign-in?next=${encodeURIComponent(returnTo)}`)
+    return marketingUrl(`/auth/sign-in?returnTo=${encodeURIComponent(returnTo)}`)
   },
   signOutUrl(): string {
     return marketingUrl("/auth/sign-out")

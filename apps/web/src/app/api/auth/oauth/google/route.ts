@@ -1,11 +1,12 @@
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
+import { sanitizeReturnTo } from "@/lib/return-to"
 import { workos } from "@/lib/workos"
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const returnTo = searchParams.get("returnTo") || "/dashboard"
+    const returnTo = sanitizeReturnTo(searchParams.get("returnTo"))
 
     const stateData = JSON.stringify({ returnPathname: returnTo })
     const state = Buffer.from(stateData).toString("base64url")

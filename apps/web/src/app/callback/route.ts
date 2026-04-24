@@ -2,6 +2,7 @@ import { handleAuth } from "@workos-inc/authkit-nextjs"
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { getConvexClient } from "@/lib/convex"
+import { sanitizeReturnTo } from "@/lib/return-to"
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,16 +22,24 @@ export async function GET(request: NextRequest) {
     if (state) {
       try {
         const stateData = JSON.parse(Buffer.from(state, "base64url").toString())
-        if (stateData.returnPathname) {
-          returnPathname = stateData.returnPathname
-        }
+        returnPathname = sanitizeReturnTo(stateData.returnPathname)
       } catch {
         // Ignore state parsing errors, use default
       }
     }
 
-    const handler = handleAuth({ returnPathname })
+    // authkit's handleAuth only understands same-origin pathnames. If the
+    // caller asked us to return to a different origin (e.g. app.dodev.ai),
+    // let handleAuth set its session cookies against a throwaway pathname
+    // and then override the Location header ourselves.
+    const isAbsoluteReturn = /^https?:\/\//.test(returnPathname)
+    const handler = handleAuth({
+      returnPathname: isAbsoluteReturn ? "/dashboard" : returnPathname,
+    })
     const response = await handler(request)
+    if (isAbsoluteReturn && response.status >= 300 && response.status < 400) {
+      response.headers.set("Location", returnPathname)
+    }
 
     // Sync user to Convex in the background (best-effort)
     try {

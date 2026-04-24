@@ -13,9 +13,10 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { Suspense, useCallback, useEffect, useRef, useState } from "react"
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { sanitizeReturnTo } from "@/lib/return-to"
 
 type Step = "email" | "code" | "success"
 const RESEND_COOLDOWN = 30
@@ -31,7 +32,7 @@ export default function SignInPage() {
 
 function SignInContent() {
   const searchParams = useSearchParams()
-  const returnTo = searchParams.get("returnTo") || "/dashboard"
+  const returnTo = useMemo(() => sanitizeReturnTo(searchParams.get("returnTo")), [searchParams])
   const [step, setStep] = useState<Step>("email")
   const [email, setEmail] = useState("")
   const [codeDigits, setCodeDigits] = useState<string[]>(Array(CODE_LENGTH).fill(""))
@@ -103,7 +104,7 @@ function SignInContent() {
         setIsLoading(false)
       }
     },
-    [email]
+    [email, returnTo]
   )
 
   const handleDigitChange = useCallback(

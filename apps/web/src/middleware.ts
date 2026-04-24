@@ -42,11 +42,15 @@ export default async function middleware(request: NextRequest, _event: NextFetch
     debug: process.env.NODE_ENV === "development",
   })
 
-  const { pathname } = request.nextUrl
+  const { pathname, search } = request.nextUrl
 
-  // Protected route with no session → redirect to our custom sign-in (never to WorkOS hosted page)
+  // Protected route with no session → redirect to our custom sign-in (never to
+  // WorkOS hosted page) and round-trip through returnTo so the user lands back
+  // where they tried to go.
   if (!session.user && !isPublicPath(pathname)) {
-    return handleAuthkitHeaders(request, headers, { redirect: "/auth/sign-in" })
+    const returnTo = `${pathname}${search}`
+    const redirectUrl = `/auth/sign-in?returnTo=${encodeURIComponent(returnTo)}`
+    return handleAuthkitHeaders(request, headers, { redirect: redirectUrl })
   }
 
   // Continue with authkit headers (session cookies, internal headers for withAuth())
