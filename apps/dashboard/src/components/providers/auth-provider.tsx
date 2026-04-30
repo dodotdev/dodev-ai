@@ -41,6 +41,12 @@ export function AuthProvider({
   children,
   fallback,
   onUnauthenticated,
+  /**
+   * Optional subscription. The Electron source uses this to push session
+   * changes from the main process (after a loopback callback completes,
+   * or after sign-out clears the file). Default: noop.
+   */
+  subscribe,
 }: {
   sessionSource: SessionSource
   children: React.ReactNode
@@ -51,6 +57,7 @@ export function AuthProvider({
    * redirects the browser to `sessionSource.signInUrl(window.location.href)`.
    */
   onUnauthenticated: () => void
+  subscribe?: (cb: (session: SessionUser | null) => void) => () => void
 }) {
   const [session, setSession] = useState<SessionUser | null | undefined>(undefined)
 
@@ -74,6 +81,15 @@ export function AuthProvider({
       cancelled = true
     }
   }, [sessionSource, onUnauthenticated])
+
+  // Push-based session updates (Electron). Web uses pull-only via fetchSession.
+  useEffect(() => {
+    if (!subscribe) return
+    return subscribe((s) => {
+      setSession(s)
+      if (s === null) onUnauthenticated()
+    })
+  }, [subscribe, onUnauthenticated])
 
   if (session === undefined) return <>{fallback}</>
   if (session === null) return <>{fallback}</>

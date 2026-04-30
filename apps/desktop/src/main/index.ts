@@ -1,6 +1,7 @@
 import { join } from "node:path"
 import { electronApp, is, optimizer } from "@electron-toolkit/utils"
 import { app, BrowserWindow, shell } from "electron"
+import { registerAuthHandlers } from "./ipc/auth"
 
 const APP_DISPLAY_NAME = "dodev.ai"
 app.setName(APP_DISPLAY_NAME)
@@ -62,6 +63,12 @@ app.whenReady().then(() => {
   app.on("browser-window-created", (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
+
+  // Phase 3.1: register auth IPC handlers BEFORE the renderer mounts so
+  // the dashboard's electron SessionSource can call into them as soon as
+  // it boots. Calling registerAuthHandlers more than once would throw, so
+  // do it exactly once at app-ready time.
+  registerAuthHandlers()
 
   createWindow()
 

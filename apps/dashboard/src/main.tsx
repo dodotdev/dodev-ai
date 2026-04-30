@@ -7,6 +7,12 @@ import { ConvexProvider, ConvexReactClient } from "convex/react"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { AuthProvider } from "./components/providers/auth-provider"
+import {
+  desktopSignIn,
+  electronSessionSource,
+  isElectron,
+  subscribeToDesktopSessionChanges,
+} from "./lib/session-source-electron"
 import { webSessionSource } from "./lib/session-source-web"
 import { router } from "./router"
 
@@ -17,7 +23,21 @@ if (!convexUrl) {
 
 const convex = new ConvexReactClient(convexUrl)
 
+// Runtime target detection — same dashboard bundle serves both web and
+// Electron (see electron.vite.config.ts for the architecture rationale).
+// Electron exposes window.dodev via the preload bridge.
+const onElectron = isElectron()
+const sessionSource = onElectron ? electronSessionSource : webSessionSource
+
 function redirectToSignIn() {
+  if (onElectron) {
+    // Open the system browser to the marketing sign-in page; the
+    // loopback HTTP server in the main process catches the redirect.
+    void desktopSignIn().catch((err) => {
+      console.error("desktopSignIn failed", err)
+    })
+    return
+  }
   const returnTo = window.location.href
   window.location.href = webSessionSource.signInUrl(returnTo)
 }
@@ -29,9 +49,10 @@ createRoot(rootEl).render(
   <StrictMode>
     <ConvexProvider client={convex}>
       <AuthProvider
-        sessionSource={webSessionSource}
+        sessionSource={sessionSource}
         fallback={<LoadingShell />}
         onUnauthenticated={redirectToSignIn}
+        subscribe={onElectron ? subscribeToDesktopSessionChanges : undefined}
       >
         <RouterProvider router={router} />
       </AuthProvider>
