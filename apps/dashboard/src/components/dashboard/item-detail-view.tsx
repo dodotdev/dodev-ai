@@ -16,6 +16,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import type { ListItem } from "@/components/dashboard/linear-list-view"
+import { TaskReviewsPanel } from "@/components/dashboard/reviews/task-reviews-panel"
 import { useAuth } from "@/components/providers/auth-provider"
 import { cn, formatRelativeTime } from "@/lib/utils"
 
@@ -104,7 +105,7 @@ export function ItemDetailView({
   totalItems,
   onNavigate,
 }: ItemDetailViewProps) {
-  const { user } = useAuth()
+  const { user, apiKeyHash } = useAuth()
   const [commentText, setCommentText] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -459,6 +460,11 @@ export function ItemDetailView({
             )}
 
             <div className="mt-6 border-t border-border" />
+
+            {/* R4 reviews — silent when no reviews exist on this task */}
+            <div className="pt-4">
+              <TaskReviewsPanel apiKeyHash={apiKeyHash} taskId={item._id} />
+            </div>
 
             <div className="pt-4">
               <h2 className="text-sm font-semibold text-foreground">Comments</h2>
