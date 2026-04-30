@@ -1,0 +1,27 @@
+{
+  "name": "@dodev/desktop",
+  "productName": "dodev.ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "dodev.ai desktop — AI-native task and memory management.",
+  "author": {
+    "name": "do.dev",
+    "email": "hello@do.dev"
+  },
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@electron-toolkit/utils": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "electron": "^35.0.0",
+    "electron-vite": "^3.0.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0"
+  }
+}
