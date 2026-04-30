@@ -178,6 +178,9 @@ export interface Issue {
   updatedAt: number
 }
 
+/** Lifecycle status for a memory (R1: curation). */
+export type MemoryLifecycleStatus = "active" | "deprecated"
+
 /** Memory as returned from Convex */
 export interface Memory {
   _id: string
@@ -190,9 +193,35 @@ export interface Memory {
   source?: MemorySource
   type?: MemoryType
   importance?: number
+  /** Times this memory has been reinforced (R1). 0 if never. */
+  reinforcements?: number
+  /** Memory ID this one replaces. Lifecycle: supersedes -> deprecated. */
+  supersedes?: string
+  /** When the memory was last reinforced or otherwise validated. */
+  lastValidatedAt?: number
+  lifecycleStatus?: MemoryLifecycleStatus
+  /** Manual override for digest ordering. Higher = surfaces sooner. */
+  digestRank?: number
   embedding?: number[]
   createdAt: number
   updatedAt: number
+}
+
+/** Compact digest entry for prompt injection (R1). */
+export interface MemoryDigestEntry {
+  _id: string
+  content: string
+  summary?: string
+  tags: string[]
+  type?: MemoryType
+  reinforcements: number
+  lastValidatedAt: number
+  lifecycleStatus: MemoryLifecycleStatus
+  digestRank?: number
+  spaceId?: string
+  projectId?: string
+  /** Computed score used for ranking. Higher = more relevant. */
+  score: number
 }
 
 /** File attachment linked to a task or issue */

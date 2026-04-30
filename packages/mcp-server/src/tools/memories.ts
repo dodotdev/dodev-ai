@@ -148,7 +148,7 @@ export const memoryTools: Tool[] = [
   {
     name: "update_memory",
     description:
-      "Update a memory when information changes or becomes more complete. Use this to correct outdated facts, add detail to a sparse memory, or re-tag memories for better organization. Prefer updating over creating duplicates — if a memory about the same topic already exists, update it rather than adding a new one.",
+      "Update a memory when information changes or becomes more complete. Use this to correct outdated facts, add detail to a sparse memory, or re-tag memories for better organization. Prefer updating over creating duplicates — if a memory about the same topic already exists, update it rather than adding a new one. To indicate that an existing memory proved true again, use reinforce_memory instead. To replace one memory with a new one (keeping audit trail), use supersede_memory.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -176,14 +176,113 @@ export const memoryTools: Tool[] = [
           type: "number",
           description: "Update importance (0.0-1.0).",
         },
+        lifecycleStatus: {
+          type: "string",
+          enum: ["active", "deprecated"],
+          description:
+            "Manually mark active or deprecated. Deprecated memories are excluded from memory_digest. Most callers should use supersede_memory instead — this is an escape hatch.",
+        },
+        digestRank: {
+          type: ["number", "null"],
+          description:
+            "Manual digest ordering override. Higher values surface sooner. Pass null to clear. Use sparingly — reinforcement count and recency normally suffice.",
+        },
       },
       required: ["id"],
     },
   },
   {
+    name: "reinforce_memory",
+    description:
+      "Bump the reinforcement counter on a memory. Call this when an existing memory proves true again — for example, you just relied on a stored architectural fact and it was correct, or a captured user preference held up in a new context. Reinforced memories surface higher in memory_digest. ALWAYS prefer reinforce_memory over creating a duplicate memory about the same topic.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        id: { type: "string", description: "The memory ID to reinforce." },
+        note: {
+          type: "string",
+          description:
+            "Optional one-line note about the context in which this proved true again. Currently informational only.",
+        },
+      },
+      required: ["id"],
+    },
+  },
+  {
+    name: "supersede_memory",
+    description:
+      "Replace an outdated memory with a new one. The old memory is marked deprecated (kept for audit) and the new one stores a `supersedes` link back to it. Use this instead of update_memory when the underlying fact has fundamentally changed (e.g. status IDs were rotated, an architectural decision was reversed). Either pass `newId` to link an already-created memory, or pass `content` to create the replacement inline.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        oldId: { type: "string", description: "The memory ID to deprecate." },
+        newId: {
+          type: "string",
+          description:
+            "An existing memory ID to mark as the replacement. Provide either this OR content (not both).",
+        },
+        content: {
+          type: "string",
+          description:
+            "If creating the replacement inline, the new content. Inherits scope and source from the old memory.",
+        },
+        tags: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Tags for the new memory (only if creating inline). Defaults to the old memory's tags.",
+        },
+        type: {
+          type: "string",
+          enum: ["fact", "decision", "preference", "context", "learning"],
+          description: "Type for the new memory (only if creating inline).",
+        },
+      },
+      required: ["oldId"],
+    },
+  },
+  {
+    name: "memory_digest",
+    description:
+      "Get a compact, rank-ordered summary of active memories for the current scope. Designed for session-start prompt injection: high-signal, low-volume, surfaces the most relevant durable knowledge. Ranking favors heavily-reinforced memories, recently-validated ones, and memories with manual digestRank overrides. Deprecated memories are excluded. Call this at session start (alongside get_context) to ground yourself in what's already known. Different shape than search_memories — search is query-driven; digest is 'give me the important stuff right now.'",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        spaceId: {
+          type: "string",
+          description:
+            "Scope to a specific space. Bubble-up (default: on) includes the space's projects and global memories.",
+        },
+        projectId: {
+          type: "string",
+          description:
+            "Scope to a specific project. With bubble-up on, includes parent space and global memories too.",
+        },
+        bubbleUp: {
+          type: "boolean",
+          description: "Include broader/narrower scopes per the bubble-up rules. Default: true.",
+        },
+        type: {
+          type: "string",
+          enum: ["fact", "decision", "preference", "context", "learning"],
+          description: "Filter to a single memory type.",
+        },
+        minReinforcements: {
+          type: "number",
+          description:
+            "Only include memories reinforced at least this many times. Default: 0 (all active). Useful for a 'must-know' digest.",
+        },
+        limit: {
+          type: "number",
+          description: "Max entries (1-50). Default: 20.",
+        },
+      },
+    },
+  },
+  {
     name: "delete_memory",
     description:
-      "Permanently delete a memory. Use sparingly — only for memories that are clearly wrong, duplicated, or no longer relevant. When in doubt, update the memory instead of deleting it.",
+      "Permanently delete a memory. Use sparingly — only for memories that are clearly wrong, duplicated, or no longer relevant. When in doubt, prefer supersede_memory (keeps audit trail) or update_memory (correct in place).",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -265,6 +364,36 @@ export async function handleMemoryTool(
         spaceId: args.spaceId as string | null | undefined,
         type: args.type as string | undefined,
         importance: args.importance as number | undefined,
+        lifecycleStatus: args.lifecycleStatus as "active" | "deprecated" | undefined,
+        digestRank: args.digestRank as number | null | undefined,
+      })
+
+    case "reinforce_memory":
+      return await client.mutation(api.memories.reinforce, {
+        apiKeyHash,
+        id: args.id as string,
+        note: args.note as string | undefined,
+      })
+
+    case "supersede_memory":
+      return await client.mutation(api.memories.supersede, {
+        apiKeyHash,
+        oldId: args.oldId as string,
+        newId: args.newId as string | undefined,
+        content: args.content as string | undefined,
+        tags: args.tags as string[] | undefined,
+        type: args.type as string | undefined,
+      })
+
+    case "memory_digest":
+      return await client.query(api.memories.digest, {
+        apiKeyHash,
+        spaceId: args.spaceId as string | undefined,
+        projectId: args.projectId as string | undefined,
+        bubbleUp: args.bubbleUp as boolean | undefined,
+        type: args.type as string | undefined,
+        minReinforcements: args.minReinforcements as number | undefined,
+        limit: args.limit as number | undefined,
       })
 
     case "delete_memory":

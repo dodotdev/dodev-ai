@@ -331,6 +331,14 @@ export default defineSchema({
   // Scope is a 3-tier hierarchy: global (no ids) -> space -> project.
   // Searches bubble up: a project-scoped search sees project + space + global;
   // a space-scoped search sees space + all its projects + global.
+  //
+  // Lifecycle (R1): memories carry reinforcement metadata so curated
+  // knowledge doesn't sprawl. `reinforcements` bumps when the same fact
+  // proves true again (instead of duplicating). `supersedes` links to a
+  // prior memory this one replaces; the older one is patched to
+  // `lifecycleStatus: "deprecated"` and stays for audit. `lastValidatedAt`
+  // tracks staleness; `digestRank` lets a memory pin/demote independently
+  // of reinforcement count.
   // ---------------------------------------------------------------------------
   memories: defineTable({
     userId: v.id("users"),
@@ -353,6 +361,14 @@ export default defineSchema({
     ),
     importance: v.optional(v.number()), // 0.0-1.0
 
+    // Lifecycle / curation (R1)
+    reinforcements: v.optional(v.number()),
+    supersedes: v.optional(v.id("memories")),
+    lastValidatedAt: v.optional(v.number()),
+    lifecycleStatus: v.optional(v.union(v.literal("active"), v.literal("deprecated"))),
+    /** Manual override for digest ordering. Higher = surfaces sooner. */
+    digestRank: v.optional(v.number()),
+
     // Vector embedding for semantic search
     embedding: v.optional(v.array(v.float64())),
 
@@ -363,6 +379,7 @@ export default defineSchema({
     .index("by_user_created", ["userId", "createdAt"])
     .index("by_user_space", ["userId", "spaceId"])
     .index("by_user_project", ["userId", "projectId"])
+    .index("by_supersedes", ["supersedes"])
     .searchIndex("search_content", {
       searchField: "content",
       filterFields: ["userId", "spaceId", "projectId"],

@@ -68,6 +68,9 @@ export const add = mutation({
       source: args.source,
       type: args.type,
       importance,
+      reinforcements: 0,
+      lastValidatedAt: now,
+      lifecycleStatus: "active",
       createdAt: now,
       updatedAt: now,
     })
@@ -255,6 +258,8 @@ export const update = mutation({
     spaceId: v.optional(v.union(v.id("spaces"), v.null())),
     type: memoryTypeValidator,
     importance: v.optional(v.number()),
+    lifecycleStatus: v.optional(v.union(v.literal("active"), v.literal("deprecated"))),
+    digestRank: v.optional(v.union(v.number(), v.null())),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
@@ -272,6 +277,8 @@ export const update = mutation({
     if (args.importance !== undefined) {
       updates.importance = Math.max(0, Math.min(1, args.importance))
     }
+    if (args.lifecycleStatus !== undefined) updates.lifecycleStatus = args.lifecycleStatus
+    if (args.digestRank !== undefined) updates.digestRank = args.digestRank ?? undefined
 
     await ctx.db.patch(args.id, updates)
 
@@ -564,5 +571,216 @@ export const authenticateForSearch = internalQuery({
       .query("users")
       .withIndex("by_api_key_hash", (q) => q.eq("apiKeyHash", args.apiKeyHash))
       .unique()
+  },
+})
+
+// ===========================================================================
+// R1 — Lifecycle / curation: reinforce, supersede, digest
+//
+// These three tools fix the memory-sprawl problem: when the same fact proves
+// true again, bump the counter on the existing memory instead of writing a
+// duplicate. When a memory becomes outdated, supersede it with a new one and
+// keep the old row for audit. The digest renders a compact, prompt-injectable
+// rank-ordered summary of active memories, ranked by reinforcement strength
+// and recency.
+// ===========================================================================
+
+/** Bump the reinforcement counter on a memory. */
+export const reinforce = mutation({
+  args: {
+    apiKeyHash: v.string(),
+    id: v.id("memories"),
+    /** Optional note to append (creates a comment-style trail in `summary`). */
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await authenticateApiKey(ctx, args.apiKeyHash)
+    const memory = await ctx.db.get(args.id)
+    if (!memory || memory.userId !== user._id) {
+      throw new ConvexError("NOT_FOUND")
+    }
+    const now = Date.now()
+    const next = (memory.reinforcements ?? 0) + 1
+    await ctx.db.patch(args.id, {
+      reinforcements: next,
+      lastValidatedAt: now,
+      lifecycleStatus: "active",
+      updatedAt: now,
+    })
+    return { ...(await ctx.db.get(args.id)), reinforcementsBefore: memory.reinforcements ?? 0 }
+  },
+})
+
+/**
+ * Replace an outdated memory with a new one. The old memory is marked
+ * deprecated; the new one carries `supersedes` pointing back to it. Either
+ * provide an existing `newId` to link, or content to create a fresh memory
+ * inline.
+ */
+export const supersede = mutation({
+  args: {
+    apiKeyHash: v.string(),
+    oldId: v.id("memories"),
+    newId: v.optional(v.id("memories")),
+    // Inline-create path
+    content: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
+    type: memoryTypeValidator,
+  },
+  handler: async (ctx, args) => {
+    const user = await authenticateApiKey(ctx, args.apiKeyHash)
+    const oldMemory = await ctx.db.get(args.oldId)
+    if (!oldMemory || oldMemory.userId !== user._id) {
+      throw new ConvexError("NOT_FOUND")
+    }
+
+    const now = Date.now()
+    let newId = args.newId
+
+    if (newId) {
+      const existing = await ctx.db.get(newId)
+      if (!existing || existing.userId !== user._id) {
+        throw new ConvexError("NOT_FOUND")
+      }
+      await ctx.db.patch(newId, {
+        supersedes: args.oldId,
+        lifecycleStatus: "active",
+        updatedAt: now,
+      })
+    } else {
+      if (!args.content) {
+        throw new ConvexError("Either `newId` or `content` is required to supersede a memory.")
+      }
+      // Inherit scope and source from the old memory; tags/type are
+      // overridable so the new memory can be re-classified.
+      newId = await ctx.db.insert("memories", {
+        userId: user._id,
+        spaceId: oldMemory.spaceId,
+        projectId: oldMemory.projectId,
+        content: args.content,
+        tags: args.tags ?? oldMemory.tags,
+        source: oldMemory.source,
+        type: args.type ?? oldMemory.type,
+        importance: oldMemory.importance,
+        reinforcements: 0,
+        supersedes: args.oldId,
+        lastValidatedAt: now,
+        lifecycleStatus: "active",
+        createdAt: now,
+        updatedAt: now,
+      })
+      await incrementUsage(ctx, user._id, "memoryCount")
+      await ctx.scheduler.runAfter(0, internal.memories.generateAndStoreEmbedding, {
+        memoryId: newId,
+      })
+    }
+
+    await ctx.db.patch(args.oldId, {
+      lifecycleStatus: "deprecated",
+      updatedAt: now,
+    })
+
+    return {
+      old: await ctx.db.get(args.oldId),
+      new: await ctx.db.get(newId),
+    }
+  },
+})
+
+/**
+ * Compact, rank-ordered rendering of active memories. Designed for
+ * prompt-injection at session start (the `/dodev` skill in R5 calls this).
+ * Ranking: digestRank override > (importance + reinforcement bonus + recency).
+ * Deprecated memories are excluded.
+ */
+export const digest = query({
+  args: {
+    apiKeyHash: v.string(),
+    spaceId: v.optional(v.id("spaces")),
+    projectId: v.optional(v.id("projects")),
+    /** Default: bubble-up on, like search/list. */
+    bubbleUp: v.optional(v.boolean()),
+    type: memoryTypeValidator,
+    /** Filter by reinforcement floor. Default: 0 (all active). */
+    minReinforcements: v.optional(v.number()),
+    /** Max results (1-50). Default: 20. */
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const user = await authenticateApiKey(ctx, args.apiKeyHash)
+    const limit = Math.min(args.limit ?? 20, 50)
+    const bubbleUp = args.bubbleUp !== false
+    const minReinforcements = args.minReinforcements ?? 0
+
+    let effectiveSpaceId = args.spaceId
+    if (args.projectId && !effectiveSpaceId) {
+      const p = await ctx.db.get(args.projectId)
+      effectiveSpaceId = p?.spaceId
+    }
+
+    // Over-fetch: deprecation, scope filter, type filter, and reinforcement
+    // floor all happen post-query.
+    const fetchLimit = Math.max(limit * 4, 100)
+    const rows = await ctx.db
+      .query("memories")
+      .withIndex("by_user_created", (q) => q.eq("userId", user._id))
+      .order("desc")
+      .take(fetchLimit)
+
+    const now = Date.now()
+    const DAY = 24 * 60 * 60 * 1000
+
+    const scored = rows
+      .filter((m) => {
+        if (m.lifecycleStatus === "deprecated") return false
+        if (args.type && m.type !== args.type) return false
+        if ((m.reinforcements ?? 0) < minReinforcements) return false
+        // Scope rules — same bubble-up shape as listMemories.
+        if (args.projectId) {
+          if (!bubbleUp) return m.projectId === args.projectId
+          if (m.projectId === args.projectId) return true
+          if (m.spaceId === effectiveSpaceId && !m.projectId) return true
+          if (!m.projectId && !m.spaceId) return true
+          return false
+        }
+        if (effectiveSpaceId) {
+          if (!bubbleUp) return m.spaceId === effectiveSpaceId && !m.projectId
+          if (m.spaceId === effectiveSpaceId) return true
+          if (!m.projectId && !m.spaceId) return true
+          return false
+        }
+        return true
+      })
+      .map((m) => {
+        const reinforcements = m.reinforcements ?? 0
+        const importance = m.importance ?? 0.5
+        const validatedAt = m.lastValidatedAt ?? m.updatedAt
+        const ageDays = Math.max(0, (now - validatedAt) / DAY)
+        // Recency decay: full credit within 7 days, half by 60 days, ~zero past 180.
+        const recency = 1 / (1 + ageDays / 30)
+        // Reinforcement bonus diminishes (sqrt) so 100 reinforcements doesn't
+        // dwarf a fresh decision. Empirically: 1=1.0, 4=2.0, 9=3.0, 25=5.0.
+        const reinforcementBonus = Math.sqrt(reinforcements + 1)
+        // Manual override always wins.
+        const baseScore = m.digestRank ?? importance + reinforcementBonus + recency
+        return { memory: m, score: baseScore }
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+
+    return scored.map(({ memory, score }) => ({
+      _id: memory._id,
+      content: memory.content,
+      summary: memory.summary,
+      tags: memory.tags,
+      type: memory.type,
+      reinforcements: memory.reinforcements ?? 0,
+      lastValidatedAt: memory.lastValidatedAt ?? memory.updatedAt,
+      lifecycleStatus: memory.lifecycleStatus ?? "active",
+      digestRank: memory.digestRank,
+      spaceId: memory.spaceId,
+      projectId: memory.projectId,
+      score,
+    }))
   },
 })
