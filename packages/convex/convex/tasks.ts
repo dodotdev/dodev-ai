@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values"
 import { mutation, query } from "./_generated/server"
 import { authenticateApiKey, checkQuota } from "./lib/auth"
 import { incrementUsage } from "./lib/utils"
+import { resolveRequireReview } from "./reviews"
 
 export const create = mutation({
   args: {
@@ -220,6 +221,33 @@ export const update = mutation({
     if (args.changelog !== undefined) updates.changelog = args.changelog ?? undefined
     if (args.versionId !== undefined) updates.versionId = args.versionId ?? undefined
     if (args.parentTaskId !== undefined) updates.parentTaskId = args.parentTaskId ?? undefined
+
+    // R4 — review gating. Only enforce on a transition into "completed".
+    if (updates.status === "completed" && task.status !== "completed") {
+      const policy = await resolveRequireReview(ctx, user._id, task)
+      if (policy.plan || policy.code) {
+        // Find latest review per stage on this task.
+        const reviewRows = await ctx.db
+          .query("reviews")
+          .withIndex("by_user_task", (q) => q.eq("userId", user._id).eq("taskId", args.id))
+          .order("desc")
+          .collect()
+        const latestPlan = reviewRows.find((r) => r.stage === "plan")
+        const latestCode = reviewRows.find((r) => r.stage === "code")
+
+        const okVerdicts = new Set(["approve", "approve_with_suggestions"])
+        if (policy.plan && !(latestPlan && okVerdicts.has(latestPlan.verdict))) {
+          throw new ConvexError(
+            "REVIEW_REQUIRED: this scope requires an approved plan review before completing the task."
+          )
+        }
+        if (policy.code && !(latestCode && okVerdicts.has(latestCode.verdict))) {
+          throw new ConvexError(
+            "REVIEW_REQUIRED: this scope requires an approved code review before completing the task."
+          )
+        }
+      }
+    }
 
     await ctx.db.patch(args.id, updates)
     return await ctx.db.get(args.id)

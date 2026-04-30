@@ -145,6 +145,15 @@ export default defineSchema({
       })
     ),
 
+    /** Review gating (R4). When set, complete_task enforces approved review. */
+    requireReview: v.optional(
+      v.object({
+        plan: v.optional(v.boolean()),
+        code: v.optional(v.boolean()),
+        reviewerModel: v.optional(v.string()),
+      })
+    ),
+
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -179,6 +188,16 @@ export default defineSchema({
     // Workspace linking (optional)
     linkedPaths: v.optional(v.array(v.string())),
     linkedRepos: v.optional(v.array(v.string())),
+
+    /** Per-project review gating (R4). Override of the space's requireReview;
+     *  when undefined, complete_task falls back to the parent space. */
+    requireReview: v.optional(
+      v.object({
+        plan: v.optional(v.boolean()),
+        code: v.optional(v.boolean()),
+        reviewerModel: v.optional(v.string()),
+      })
+    ),
 
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -655,6 +674,66 @@ export default defineSchema({
     .index("by_user_project", ["userId", "projectId"])
     .index("by_user_space_created", ["userId", "spaceId", "createdAt"])
     .index("by_user_project_created", ["userId", "projectId", "createdAt"]),
+
+  // ---------------------------------------------------------------------------
+  // reviews (R4)
+  //
+  // Second-AI verdicts on a plan or diff. The first agent calls
+  // request_review before/after implementation; the verdict is recorded
+  // here. complete_task can be configured to require an approved code
+  // review (project.requireReview), giving the gate teeth.
+  // ---------------------------------------------------------------------------
+  reviews: defineTable({
+    userId: v.id("users"),
+    spaceId: v.optional(v.id("spaces")),
+    projectId: v.optional(v.id("projects")),
+    /** What's being reviewed. Either a task or an arbitrary scope-level review. */
+    taskId: v.optional(v.id("tasks")),
+    issueId: v.optional(v.id("issues")),
+    stage: v.union(v.literal("plan"), v.literal("code"), v.literal("ad_hoc")),
+    /** What artifact was sent to the reviewer (plan markdown, diff, etc.). */
+    artifact: v.string(),
+    /** Optional context the requester provided. */
+    context: v.optional(v.string()),
+    /** Reviewer model identifier (e.g. claude-sonnet-4-6). */
+    reviewerModel: v.string(),
+    /** Top-level verdict. */
+    verdict: v.union(
+      v.literal("approve"),
+      v.literal("approve_with_suggestions"),
+      v.literal("needs_revision"),
+      v.literal("blocker"),
+      v.literal("error")
+    ),
+    /** One-paragraph summary from the reviewer. */
+    summary: v.string(),
+    findings: v.array(
+      v.object({
+        category: v.string(),
+        severity: v.union(
+          v.literal("critical"),
+          v.literal("major"),
+          v.literal("minor"),
+          v.literal("suggestion")
+        ),
+        title: v.string(),
+        description: v.string(),
+        location: v.optional(v.string()),
+      })
+    ),
+    /** Lenses requested for this review (R4.5 — plain "general" lens for now). */
+    lenses: v.optional(v.array(v.string())),
+    durationMs: v.number(),
+    /** Raw error if the reviewer call itself failed. */
+    errorMessage: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_task", ["userId", "taskId"])
+    .index("by_user_issue", ["userId", "issueId"])
+    .index("by_user_space_created", ["userId", "spaceId", "createdAt"])
+    .index("by_user_project_created", ["userId", "projectId", "createdAt"])
+    .index("by_user_task_stage", ["userId", "taskId", "stage"]),
 
   // ---------------------------------------------------------------------------
   // mcpLogs

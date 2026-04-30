@@ -14,6 +14,7 @@ import { handleLinkingTool, linkingTools } from "./tools/linking.js"
 import { handleMemoryTool, memoryTools } from "./tools/memories.js"
 import { handleProjectTool, projectTools } from "./tools/projects.js"
 import { handleRecommendTool, recommendTools } from "./tools/recommend.js"
+import { handleReviewTool, reviewTools } from "./tools/reviews.js"
 import { handleSnapshotTool, snapshotTools } from "./tools/snapshots.js"
 import { handleSpaceConfigTool, spaceConfigTools } from "./tools/space-config.js"
 import { handleSpaceTool, spaceTools } from "./tools/spaces.js"
@@ -39,6 +40,7 @@ const allTools = [
   ...snapshotTools,
   ...handoverTools,
   ...recommendTools,
+  ...reviewTools,
 ]
 
 const taskToolNames = new Set(taskTools.map((t) => t.name))
@@ -56,6 +58,7 @@ const versionToolNames = new Set(versionTools.map((t) => t.name))
 const snapshotToolNames = new Set(snapshotTools.map((t) => t.name))
 const handoverToolNames = new Set(handoverTools.map((t) => t.name))
 const recommendToolNames = new Set(recommendTools.map((t) => t.name))
+const reviewToolNames = new Set(reviewTools.map((t) => t.name))
 
 /** Strip sensitive fields and return loggable args */
 function sanitizeArgs(toolArgs: Record<string, unknown>): Record<string, unknown> {
@@ -199,6 +202,8 @@ export function createServer(): Server {
         result = await handleHandoverTool(name, toolArgs)
       } else if (recommendToolNames.has(name)) {
         result = await handleRecommendTool(name, toolArgs)
+      } else if (reviewToolNames.has(name)) {
+        result = await handleReviewTool(name, toolArgs)
       } else {
         if (isDev) console.error(`[MCP] ${name} → NOT_FOUND`)
         writeLog(name, toolArgs, "error", Date.now() - start, "NOT_FOUND")
@@ -237,6 +242,7 @@ export function createServer(): Server {
       else if (message === "NOT_FOUND") code = "NOT_FOUND"
       else if (message === "QUOTA_EXCEEDED") code = "QUOTA_EXCEEDED"
       else if (message === "RATE_LIMITED") code = "RATE_LIMITED"
+      else if (message.startsWith("REVIEW_REQUIRED")) code = "REVIEW_REQUIRED"
 
       const duration = Date.now() - start
       if (isDev) console.error(`[MCP] ${name} → ${code}: ${message} (${duration}ms)`)

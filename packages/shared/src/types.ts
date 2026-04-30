@@ -542,4 +542,55 @@ export type ErrorCode =
   | "UNAUTHORIZED"
   | "RATE_LIMITED"
   | "QUOTA_EXCEEDED"
+  | "REVIEW_REQUIRED"
   | "INTERNAL_ERROR"
+
+// ---------------------------------------------------------------------------
+// R4 — second-AI review
+// ---------------------------------------------------------------------------
+
+export type ReviewStage = "plan" | "code" | "ad_hoc"
+
+export type ReviewVerdict =
+  | "approve"
+  | "approve_with_suggestions"
+  | "needs_revision"
+  | "blocker"
+  | "error"
+
+export type ReviewFindingSeverity = "critical" | "major" | "minor" | "suggestion"
+
+export interface ReviewFinding {
+  category: string
+  severity: ReviewFindingSeverity
+  title: string
+  description: string
+  location?: string
+}
+
+export interface Review {
+  _id: string
+  userId: string
+  spaceId?: string
+  projectId?: string
+  taskId?: string
+  issueId?: string
+  stage: ReviewStage
+  artifact: string
+  context?: string
+  reviewerModel: string
+  verdict: ReviewVerdict
+  summary: string
+  findings: ReviewFinding[]
+  lenses?: string[]
+  durationMs: number
+  errorMessage?: string
+  createdAt: number
+}
+
+/** Per-scope review-gating policy. */
+export interface RequireReviewPolicy {
+  plan?: boolean
+  code?: boolean
+  reviewerModel?: string
+}
