@@ -16,14 +16,16 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "src/skill"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node -e \"require('node:fs').cpSync('src/skill','dist/skill',{recursive:true})\"",
     "dev:cloud": "DODEV_MODE=cloud tsx --env-file=.env.local src/index.ts",
     "dev:stdio": "tsx --env-file=.env.local src/index.ts",
     "typecheck": "tsc --noEmit",
-    "generate-key": "tsx src/cli.ts generate-key"
+    "generate-key": "tsx src/cli.ts generate-key",
+    "setup-skill": "tsx src/cli.ts setup-skill"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
