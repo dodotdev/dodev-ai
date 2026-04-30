@@ -10,7 +10,7 @@
   "homepage": "https://dodev.ai",
   "license": "MIT",
   "scripts": {
-    "dev:all": "lsof -ti:3041 | xargs kill -9 2>/dev/null || true; lsof -ti:3100 | xargs kill -9 2>/dev/null || true; pkill -f 'convex dev' 2>/dev/null || true; turbo run dev dev:cloud --ui=tui --concurrency=20 --filter=@dodev/web --filter=@dodev/convex --filter=@dodev/mcp-server",
+    "dev:all": "lsof -ti:3041 | xargs kill -9 2>/dev/null || true; lsof -ti:3042 | xargs kill -9 2>/dev/null || true; lsof -ti:3100 | xargs kill -9 2>/dev/null || true; pkill -f 'convex dev' 2>/dev/null || true; turbo run dev dev:cloud --ui=tui --concurrency=20 --filter=@dodev/web --filter=@dodev/dashboard --filter=@dodev/convex --filter=@dodev/mcp-server",
     "dev:web": "lsof -ti:3041 | xargs kill -9 2>/dev/null || true; turbo run dev --ui=tui --concurrency=20 --filter=@dodev/web",
     "dev:dashboard": "lsof -ti:3042 | xargs kill -9 2>/dev/null || true; turbo run dev --ui=tui --concurrency=20 --filter=@dodev/dashboard",
     "dev:desktop": "lsof -ti:3042 | xargs kill -9 2>/dev/null || true; turbo run dev --ui=tui --concurrency=20 --filter=@dodev/dashboard --filter=@dodev/desktop",
@@ -22,7 +22,9 @@
     "check:fix": "biome check --write .",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
-    "generate-key": "pnpm --filter @dodev/mcp-server generate-key"
+    "generate-key": "pnpm --filter @dodev/mcp-server generate-key",
+    "package:desktop": "pnpm --filter @dodev/desktop package",
+    "package:desktop:mac": "pnpm --filter @dodev/desktop package:mac"
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.5",
@@ -37,7 +39,9 @@
     "onlyBuiltDependencies": [
       "electron",
       "esbuild",
-      "@tailwindcss/oxide"
+      "@tailwindcss/oxide",
+      "app-builder-bin",
+      "dmg-license"
     ]
   }
 }

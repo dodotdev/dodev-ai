@@ -1,0 +1,90 @@
+# electron-builder packaging config (Phase 3.4).
+#
+# Three targets:
+#   - macOS: .dmg + .zip (zip is what electron-updater prefers; dmg is the
+#     human download). Hardened runtime on so the future signed/notarized
+#     pipeline drops in cleanly. Unsigned for now — `package:mac` produces
+#     a "damaged app" warning on Gatekeeper-strict installs; that's fine
+#     for personal/internal builds and friends-of-the-project.
+#   - Windows: NSIS installer.
+#   - Linux: AppImage.
+#
+# Code signing + notarization wires up later via electron-builder's standard
+# CSC_LINK / APPLE_ID env vars and a release CI job. Not gated here.
+
+appId: com.dodev.desktop
+productName: dodev.ai
+copyright: © ${new Date().getFullYear()} do.dev
+
+directories:
+  output: release
+  buildResources: build
+
+# Files included in the packaged app. We ship out/* (main, preload, renderer
+# bundled by scripts/bundle-renderer.mjs) and the package.json so Electron
+# can resolve `main`. Everything else (src/, node_modules/ dev bits) is
+# excluded — pnpm's hoisted node_modules is huge and most of it isn't
+# needed at runtime. Production deps are auto-included by electron-builder.
+files:
+  - "out/**/*"
+  - "package.json"
+  - "!**/.DS_Store"
+  - "!**/{__tests__,test,tests,powered-test,example,examples}/**"
+  - "!**/*.d.ts"
+  - "!**/*.map"
+
+# Workspace dependencies need to be unpacked from pnpm's symlinked layout.
+# electron-builder's own resolver handles this when nodeGypRebuild=false,
+# but we set asarUnpack for the @electron-toolkit native bits to be safe.
+asar: true
+asarUnpack:
+  - "node_modules/@electron-toolkit/**"
+
+mac:
+  category: public.app-category.developer-tools
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+    - target: zip
+      arch:
+        - arm64
+        - x64
+
+dmg:
+  artifactName: "${productName}-${version}-${arch}.${ext}"
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  artifactName: "${productName}-${version}-setup.${ext}"
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+  category: Development
+  artifactName: "${productName}-${version}-${arch}.${ext}"
+
+# Auto-update via GitHub Releases. Configured but not depended on at
+# package time; electron-updater integration lands in Phase 3.5.
+publish:
+  provider: github
+  owner: dodotdev
+  repo: dodev-ai
+  releaseType: release

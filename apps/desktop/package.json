@@ -11,7 +11,14 @@
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
-    "build": "electron-vite build",
+    "build:desktop": "electron-vite build",
+    "build:dashboard": "pnpm --filter @dodev/dashboard build",
+    "build:bundle-renderer": "node scripts/bundle-renderer.mjs",
+    "build": "pnpm build:dashboard && pnpm build:desktop && pnpm build:bundle-renderer",
+    "package": "pnpm build && electron-builder --publish never",
+    "package:mac": "pnpm build && electron-builder --mac --publish never",
+    "package:win": "pnpm build && electron-builder --win --publish never",
+    "package:linux": "pnpm build && electron-builder --linux --publish never",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -20,6 +27,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "electron": "^35.0.0",
+    "electron-builder": "^25.1.8",
     "electron-vite": "^3.0.0",
     "typescript": "^5.7.0",
     "vite": "^6.0.0"

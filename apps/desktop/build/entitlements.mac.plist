@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  macOS hardened-runtime entitlements (Phase 3.4).
+
+  Minimum set for an Electron app that:
+    - opens the system browser (shell.openExternal)
+    - listens on a 127.0.0.1 loopback for the OAuth callback
+    - reads/writes <userData>/auth-state.json
+    - uses Electron's safeStorage for encrypted-at-rest tokens
+
+  We deliberately do NOT request com.apple.security.app-sandbox — the
+  sandbox would break the loopback listener and the userData write path
+  used by auth-store.ts. Hardened runtime + notarization (when we add
+  it) is sufficient for Gatekeeper.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Electron requires JIT for V8 -->
+  <key>com.apple.security.cs.allow-jit</key>
+  <true/>
+  <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+  <true/>
+  <key>com.apple.security.cs.disable-library-validation</key>
+  <true/>
+
+  <!-- Required for outbound HTTP (Convex, marketing site) and inbound
+       loopback OAuth callback. -->
+  <key>com.apple.security.network.client</key>
+  <true/>
+  <key>com.apple.security.network.server</key>
+  <true/>
+</dict>
+</plist>
