@@ -40,6 +40,7 @@ export function AuthProvider({
   sessionSource,
   children,
   fallback,
+  unauthedFallback,
   onUnauthenticated,
   /**
    * Optional subscription. The Electron source uses this to push session
@@ -50,11 +51,20 @@ export function AuthProvider({
 }: {
   sessionSource: SessionSource
   children: React.ReactNode
-  /** Rendered while the session is being resolved. */
+  /** Rendered while the session is still being resolved (undefined). */
   fallback: React.ReactNode
   /**
-   * Called when `fetchSession()` returns null. The typical implementation
-   * redirects the browser to `sessionSource.signInUrl(window.location.href)`.
+   * Rendered when the session is explicitly absent (null). Defaults to
+   * `fallback` so the web flow can keep using a single shell. The
+   * Electron path passes a real sign-in screen here so users see a
+   * branded prompt instead of an indefinite spinner.
+   */
+  unauthedFallback?: React.ReactNode
+  /**
+   * Called once when `fetchSession()` returns null. The web path
+   * implementation redirects to `sessionSource.signInUrl(...)`. The
+   * Electron path uses an in-window sign-in screen and doesn't need
+   * this callback to fire — pass a noop.
    */
   onUnauthenticated: () => void
   subscribe?: (cb: (session: SessionUser | null) => void) => () => void
@@ -92,7 +102,7 @@ export function AuthProvider({
   }, [subscribe, onUnauthenticated])
 
   if (session === undefined) return <>{fallback}</>
-  if (session === null) return <>{fallback}</>
+  if (session === null) return <>{unauthedFallback ?? fallback}</>
   return (
     <SessionAttachedProvider session={session} signOutUrl={sessionSource.signOutUrl()}>
       {children}

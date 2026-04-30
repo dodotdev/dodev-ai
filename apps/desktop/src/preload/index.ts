@@ -53,6 +53,7 @@ const dodev = {
 
 try {
   contextBridge.exposeInMainWorld("dodev", dodev)
+  console.log("[preload] window.dodev exposed (isDesktop=true)")
 } catch (error) {
   console.error("[preload] failed to expose dodev API:", error)
 }

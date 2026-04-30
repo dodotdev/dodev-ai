@@ -59,7 +59,11 @@ function toSessionUser(s: DesktopBridgeSession | null): SessionUser | null {
 
 export const electronSessionSource: SessionSource = {
   async fetchSession(): Promise<SessionUser | null> {
+    console.log("[dodev:auth] electronSessionSource.fetchSession()")
     const session = await bridge().getSession()
+    console.log(
+      `[dodev:auth] electronSessionSource resolved: ${session ? `user ${session.email}` : "null"}`
+    )
     return toSessionUser(session)
   },
 
@@ -83,7 +87,9 @@ export const electronSessionSource: SessionSource = {
  * `subscribeToSessionChanges`.
  */
 export async function desktopSignIn(): Promise<void> {
-  await bridge().signIn()
+  console.log("[dodev:auth] desktopSignIn() called → invoking signIn IPC")
+  const result = await bridge().signIn()
+  console.log(`[dodev:auth] signIn IPC returned, loopback port=${result.port}`)
 }
 
 /** Sign out: clear the persisted session file in main process. */

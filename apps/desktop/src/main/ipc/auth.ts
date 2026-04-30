@@ -141,22 +141,28 @@ function failureHtml(message: string): string {
 }
 
 export function registerAuthHandlers(): void {
+  console.log(`[auth] handlers registered, WEB_URL=${WEB_URL}`)
+
   ipcMain.handle("auth:signIn", async () => {
     const port = await startCallbackServer()
     const returnTo = encodeURIComponent(`/desktop-auth?callbackPort=${port}`)
     const authUrl = `${WEB_URL}/auth/sign-in?returnTo=${returnTo}`
+    console.log(`[auth] signIn -> opening ${authUrl} (loopback :${port})`)
     await shell.openExternal(authUrl)
     return { ok: true as const, port }
   })
 
   ipcMain.handle("auth:signOut", async () => {
+    console.log("[auth] signOut")
     clearSession()
     broadcastSessionChanged(null)
     return { ok: true as const }
   })
 
   ipcMain.handle("auth:getSession", async () => {
-    return loadSession()
+    const session = loadSession()
+    console.log(`[auth] getSession -> ${session ? `user ${session.email}` : "null"}`)
+    return session
   })
 
   // Diagnostic only — exposed for the renderer's "About" / debug panel.

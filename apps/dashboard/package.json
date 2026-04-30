@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port 3042 --host",
+    "dev": "NODE_OPTIONS='--max-http-header-size=65536' vite --port 3042 --host",
     "build": "tsc -b && vite build",
     "preview": "vite preview --port 3042",
     "typecheck": "tsc -b --noEmit"

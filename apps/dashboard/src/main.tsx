@@ -6,9 +6,9 @@ import { RouterProvider } from "@tanstack/react-router"
 import { ConvexProvider, ConvexReactClient } from "convex/react"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
+import { DesktopSignInScreen } from "./components/dashboard/desktop-sign-in/desktop-sign-in-screen"
 import { AuthProvider } from "./components/providers/auth-provider"
 import {
-  desktopSignIn,
   electronSessionSource,
   isElectron,
   subscribeToDesktopSessionChanges,
@@ -28,14 +28,14 @@ const convex = new ConvexReactClient(convexUrl)
 // Electron exposes window.dodev via the preload bridge.
 const onElectron = isElectron()
 const sessionSource = onElectron ? electronSessionSource : webSessionSource
+console.log(`[dodev:boot] runtime=${onElectron ? "electron" : "web"}`)
 
 function redirectToSignIn() {
   if (onElectron) {
-    // Open the system browser to the marketing sign-in page; the
-    // loopback HTTP server in the main process catches the redirect.
-    void desktopSignIn().catch((err) => {
-      console.error("desktopSignIn failed", err)
-    })
+    // No-op on Electron. The DesktopSignInScreen rendered by
+    // `unauthedFallback` handles sign-in via a click instead of an
+    // auto-redirect — much better UX than popping a browser tab the
+    // user didn't ask for.
     return
   }
   const returnTo = window.location.href
@@ -51,6 +51,7 @@ createRoot(rootEl).render(
       <AuthProvider
         sessionSource={sessionSource}
         fallback={<LoadingShell />}
+        unauthedFallback={onElectron ? <DesktopSignInScreen /> : undefined}
         onUnauthenticated={redirectToSignIn}
         subscribe={onElectron ? subscribeToDesktopSessionChanges : undefined}
       >

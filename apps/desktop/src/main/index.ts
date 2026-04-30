@@ -2,6 +2,7 @@ import { join } from "node:path"
 import { electronApp, is, optimizer } from "@electron-toolkit/utils"
 import { app, BrowserWindow, globalShortcut, shell } from "electron"
 import { registerAuthHandlers } from "./ipc/auth"
+import { loadWindowState, saveWindowState, type WindowBounds } from "./window-state"
 
 const APP_DISPLAY_NAME = "dodev.ai"
 app.setName(APP_DISPLAY_NAME)
@@ -18,13 +19,23 @@ if (process.platform === "darwin") {
 }
 
 let mainWindow: BrowserWindow | null = null
+let saveBoundsTimer: ReturnType<typeof setTimeout> | null = null
+
+const DEFAULT_BOUNDS: WindowBounds = { width: 1200, height: 820 }
 
 function createWindow(): void {
+  // Restore saved bounds, falling back to defaults. Validates that
+  // stored coords still intersect a connected display.
+  const restored = loadWindowState(DEFAULT_BOUNDS)
+
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 820,
+    x: restored.x,
+    y: restored.y,
+    width: restored.width,
+    height: restored.height,
     minWidth: 900,
     minHeight: 600,
+    resizable: true,
     show: false,
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
     backgroundColor: "#0a0a0a",
@@ -36,8 +47,71 @@ function createWindow(): void {
     },
   })
 
+  if (restored.isMaximized) {
+    mainWindow.maximize()
+  }
+
   mainWindow.on("ready-to-show", () => {
     mainWindow?.show()
+    if (is.dev) {
+      // DevTools open automatically in dev so the renderer's console is
+      // available without users having to remember Cmd+Option+I.
+      mainWindow?.webContents.openDevTools({ mode: "detach" })
+    }
+  })
+
+  // Persist bounds on move/resize. Debounced so we're not pegging the
+  // disk during a drag or live-resize. `getBounds()` returns the
+  // pre-maximize bounds, which is what we want — if the user maximizes
+  // we record the underlying bounds + a separate flag.
+  const persistBounds = () => {
+    if (!mainWindow) return
+    if (saveBoundsTimer) clearTimeout(saveBoundsTimer)
+    saveBoundsTimer = setTimeout(() => {
+      if (!mainWindow || mainWindow.isDestroyed()) return
+      const bounds = mainWindow.getNormalBounds()
+      saveWindowState({
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+        isMaximized: mainWindow.isMaximized(),
+      })
+    }, 250)
+  }
+  mainWindow.on("resize", persistBounds)
+  mainWindow.on("move", persistBounds)
+  mainWindow.on("maximize", persistBounds)
+  mainWindow.on("unmaximize", persistBounds)
+  mainWindow.on("close", () => {
+    // Flush any pending debounce on close so we don't lose the final
+    // resize.
+    if (saveBoundsTimer) {
+      clearTimeout(saveBoundsTimer)
+      saveBoundsTimer = null
+    }
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      const bounds = mainWindow.getNormalBounds()
+      saveWindowState({
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+        isMaximized: mainWindow.isMaximized(),
+      })
+    }
+  })
+
+  // Surface renderer console messages in the main-process terminal too —
+  // doubly useful when the renderer hasn't fully rendered yet (e.g. stuck
+  // on Loading… because window.dodev didn't expose).
+  mainWindow.webContents.on("console-message", (_event, level, message, line, sourceId) => {
+    const tag = ["v", "i", "w", "e"][level] ?? "?"
+    console.log(`[renderer:${tag}] ${message}  (${sourceId}:${line})`)
+  })
+
+  mainWindow.webContents.on("did-fail-load", (_e, code, desc, url) => {
+    console.error(`[renderer] did-fail-load ${code} ${desc} url=${url}`)
   })
 
   // Open external links in the user's browser, not a new Electron window.
