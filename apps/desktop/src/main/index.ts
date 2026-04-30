@@ -1,6 +1,6 @@
 import { join } from "node:path"
 import { electronApp, is, optimizer } from "@electron-toolkit/utils"
-import { app, BrowserWindow, shell } from "electron"
+import { app, BrowserWindow, globalShortcut, shell } from "electron"
 import { registerAuthHandlers } from "./ipc/auth"
 
 const APP_DISPLAY_NAME = "dodev.ai"
@@ -72,9 +72,46 @@ app.whenReady().then(() => {
 
   createWindow()
 
+  // Phase 3.3: global hotkey ⌘⇧D / Ctrl+Shift+D toggles window
+  // visibility from anywhere on the desktop. The behavior mirrors
+  // Spotlight: hidden -> show + focus, visible+focused -> hide,
+  // visible+unfocused -> focus.
+  registerGlobalHotkey()
+
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+})
+
+function registerGlobalHotkey(): void {
+  const accelerator = process.platform === "darwin" ? "Cmd+Shift+D" : "Ctrl+Shift+D"
+  const success = globalShortcut.register(accelerator, () => {
+    const win = BrowserWindow.getAllWindows()[0]
+    if (!win) {
+      createWindow()
+      return
+    }
+    if (!win.isVisible()) {
+      win.show()
+      win.focus()
+      return
+    }
+    if (win.isFocused()) {
+      win.hide()
+      return
+    }
+    if (win.isMinimized()) win.restore()
+    win.focus()
+  })
+
+  if (!success) {
+    // Some other app already grabbed this shortcut. Non-fatal.
+    console.warn(`[hotkey] failed to register ${accelerator} (already in use)`)
+  }
+}
+
+app.on("will-quit", () => {
+  globalShortcut.unregisterAll()
 })
 
 app.on("window-all-closed", () => {
