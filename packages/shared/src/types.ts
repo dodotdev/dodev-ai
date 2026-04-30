@@ -207,6 +207,119 @@ export interface Memory {
   updatedAt: number
 }
 
+/** Trigger that produced a snapshot (R2). */
+export type SnapshotTrigger = "manual" | "pre_compact" | "session_end"
+
+/** Frozen state of a scope at a point in time (R2). */
+export interface Snapshot {
+  _id: string
+  userId: string
+  spaceId?: string
+  projectId?: string
+  createdAt: number
+  gitHead?: string
+  trigger?: SnapshotTrigger
+  latestHandoverId?: string
+  counts: {
+    tasks: {
+      total: number
+      pending: number
+      inProgress: number
+      completed: number
+      cancelled: number
+    }
+    issues: {
+      total: number
+      pending: number
+      inProgress: number
+      completed: number
+      cancelled: number
+      critical: number
+      major: number
+      minor: number
+      trivial: number
+    }
+    memories: {
+      total: number
+      active: number
+      deprecated: number
+    }
+  }
+  taskStatuses: Array<{
+    id: string
+    statusId?: string
+    status: string
+    title: string
+  }>
+  issueStatuses: Array<{
+    id: string
+    statusId?: string
+    status: string
+    severity: string
+    title: string
+  }>
+}
+
+/** A single diff entry in a recap result. */
+export interface RecapDiffEntry {
+  id: string
+  title: string
+  from?: string
+  to?: string
+}
+
+/** Result of recap() — what changed since the last snapshot (R2). */
+export interface Recap {
+  hasBaseline: boolean
+  baselineSnapshotId: string | null
+  baselineCreatedAt: number | null
+  baselineGitHead: string | null
+  currentGitHead: string | null
+  scope: { spaceId?: string; projectId?: string }
+  tasks: {
+    added: RecapDiffEntry[]
+    removed: RecapDiffEntry[]
+    statusChanged: RecapDiffEntry[]
+  }
+  issues: {
+    added: RecapDiffEntry[]
+    resolved: RecapDiffEntry[]
+    statusChanged: RecapDiffEntry[]
+    severityChanged: RecapDiffEntry[]
+  }
+  memories: {
+    addedCount: number
+    deprecatedCount: number
+  }
+  debt: {
+    previousOpenIssues: number
+    currentOpenIssues: number
+    delta: number
+    growthRatio: number
+  }
+  markdown: string
+}
+
+/** Append-only narrative session document (R3 schema, lands in R2). */
+export interface Handover {
+  _id: string
+  userId: string
+  spaceId?: string
+  projectId?: string
+  title: string
+  slug?: string
+  author?: string
+  tldr: string
+  markdown: string
+  decisions?: string[]
+  blockers?: string[]
+  nextSteps?: string[]
+  referencedTaskIds?: string[]
+  referencedIssueIds?: string[]
+  gitHead?: string
+  createdAt: number
+}
+
 /** Compact digest entry for prompt injection (R1). */
 export interface MemoryDigestEntry {
   _id: string

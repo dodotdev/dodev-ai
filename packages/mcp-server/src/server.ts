@@ -8,10 +8,12 @@ import { attachmentTools, handleAttachmentTool } from "./tools/attachments.js"
 import { commentTools, handleCommentTool } from "./tools/comments.js"
 import { contextTools, handleContextTool } from "./tools/context.js"
 import { cycleTools, handleCycleTool } from "./tools/cycles.js"
+import { handleHandoverTool, handoverTools } from "./tools/handovers.js"
 import { handleIssueTool, issueTools } from "./tools/issues.js"
 import { handleLinkingTool, linkingTools } from "./tools/linking.js"
 import { handleMemoryTool, memoryTools } from "./tools/memories.js"
 import { handleProjectTool, projectTools } from "./tools/projects.js"
+import { handleSnapshotTool, snapshotTools } from "./tools/snapshots.js"
 import { handleSpaceConfigTool, spaceConfigTools } from "./tools/space-config.js"
 import { handleSpaceTool, spaceTools } from "./tools/spaces.js"
 import { handleTaskTool, taskTools } from "./tools/tasks.js"
@@ -33,6 +35,8 @@ const allTools = [
   ...attachmentTools,
   ...commentTools,
   ...versionTools,
+  ...snapshotTools,
+  ...handoverTools,
 ]
 
 const taskToolNames = new Set(taskTools.map((t) => t.name))
@@ -47,6 +51,8 @@ const linkingToolNames = new Set(linkingTools.map((t) => t.name))
 const attachmentToolNames = new Set(attachmentTools.map((t) => t.name))
 const commentToolNames = new Set(commentTools.map((t) => t.name))
 const versionToolNames = new Set(versionTools.map((t) => t.name))
+const snapshotToolNames = new Set(snapshotTools.map((t) => t.name))
+const handoverToolNames = new Set(handoverTools.map((t) => t.name))
 
 /** Strip sensitive fields and return loggable args */
 function sanitizeArgs(toolArgs: Record<string, unknown>): Record<string, unknown> {
@@ -184,6 +190,10 @@ export function createServer(): Server {
         result = await handleCommentTool(name, toolArgs)
       } else if (versionToolNames.has(name)) {
         result = await handleVersionTool(name, toolArgs)
+      } else if (snapshotToolNames.has(name)) {
+        result = await handleSnapshotTool(name, toolArgs)
+      } else if (handoverToolNames.has(name)) {
+        result = await handleHandoverTool(name, toolArgs)
       } else {
         if (isDev) console.error(`[MCP] ${name} → NOT_FOUND`)
         writeLog(name, toolArgs, "error", Date.now() - start, "NOT_FOUND")

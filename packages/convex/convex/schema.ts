@@ -536,6 +536,120 @@ export default defineSchema({
   }).index("by_client_id", ["clientId"]),
 
   // ---------------------------------------------------------------------------
+  // snapshots (R2)
+  //
+  // Frozen counts + git HEAD for a space or project at a point in time.
+  // Used by recap() to compute "what changed since last session." Capped at
+  // SNAPSHOT_RETENTION per scope (oldest pruned by createdAt).
+  //
+  // Scoping rule: exactly one of spaceId or projectId is set. A project
+  // snapshot is independent of its parent space's snapshots.
+  // ---------------------------------------------------------------------------
+  snapshots: defineTable({
+    userId: v.id("users"),
+    spaceId: v.optional(v.id("spaces")),
+    projectId: v.optional(v.id("projects")),
+    createdAt: v.number(),
+    /** Git HEAD SHA at snapshot time, if available. Best-effort. */
+    gitHead: v.optional(v.string()),
+    /** Trigger that produced this snapshot. Default "manual". */
+    trigger: v.optional(
+      v.union(v.literal("manual"), v.literal("pre_compact"), v.literal("session_end"))
+    ),
+    /** Latest handover ID at snapshot time, for recap diffing. R3+. */
+    latestHandoverId: v.optional(v.id("handovers")),
+    counts: v.object({
+      tasks: v.object({
+        total: v.number(),
+        pending: v.number(),
+        inProgress: v.number(),
+        completed: v.number(),
+        cancelled: v.number(),
+      }),
+      issues: v.object({
+        total: v.number(),
+        pending: v.number(),
+        inProgress: v.number(),
+        completed: v.number(),
+        cancelled: v.number(),
+        critical: v.number(),
+        major: v.number(),
+        minor: v.number(),
+        trivial: v.number(),
+      }),
+      memories: v.object({
+        total: v.number(),
+        active: v.number(),
+        deprecated: v.number(),
+      }),
+    }),
+    /** Per-task status snapshot for fine-grained diff. Keyed by task _id. */
+    taskStatuses: v.array(
+      v.object({
+        id: v.id("tasks"),
+        statusId: v.optional(v.string()),
+        status: v.string(),
+        title: v.string(),
+      })
+    ),
+    /** Per-issue status snapshot. */
+    issueStatuses: v.array(
+      v.object({
+        id: v.id("issues"),
+        statusId: v.optional(v.string()),
+        status: v.string(),
+        severity: v.string(),
+        title: v.string(),
+      })
+    ),
+  })
+    .index("by_user_space", ["userId", "spaceId"])
+    .index("by_user_project", ["userId", "projectId"])
+    .index("by_user_space_created", ["userId", "spaceId", "createdAt"])
+    .index("by_user_project_created", ["userId", "projectId", "createdAt"]),
+
+  // ---------------------------------------------------------------------------
+  // handovers (R3 — schema landed in R2 so snapshots can reference them)
+  //
+  // Append-only narrative session-end documents. Memory is fact-shaped;
+  // handovers are temporal narrative ("today I shipped X, decided Y, T-014
+  // is next"). Reading the latest 1-3 at session start gives the agent
+  // reasoning history, not just current state.
+  //
+  // Mutations: enforce no in-place edits — a corrected handover creates a
+  // NEW handover that may reference the old one.
+  // ---------------------------------------------------------------------------
+  handovers: defineTable({
+    userId: v.id("users"),
+    spaceId: v.optional(v.id("spaces")),
+    projectId: v.optional(v.id("projects")),
+    title: v.string(),
+    /** Author identifier — agent name (e.g. "claude-code"), user name, or "manual". */
+    author: v.optional(v.string()),
+    /** Human-friendly slug for URLs / dashboard linking. */
+    slug: v.optional(v.string()),
+    /** 1-2 sentence summary. */
+    tldr: v.string(),
+    /** Full markdown body. */
+    markdown: v.string(),
+    /** Structured pull-outs for the recommend engine + dashboard. */
+    decisions: v.optional(v.array(v.string())),
+    blockers: v.optional(v.array(v.string())),
+    nextSteps: v.optional(v.array(v.string())),
+    /** Task / issue IDs referenced in nextSteps. Resolved opportunistically by
+     *  create_handover; primarily used by recommend()'s handover-context boost. */
+    referencedTaskIds: v.optional(v.array(v.id("tasks"))),
+    referencedIssueIds: v.optional(v.array(v.id("issues"))),
+    gitHead: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_space", ["userId", "spaceId"])
+    .index("by_user_project", ["userId", "projectId"])
+    .index("by_user_space_created", ["userId", "spaceId", "createdAt"])
+    .index("by_user_project_created", ["userId", "projectId", "createdAt"]),
+
+  // ---------------------------------------------------------------------------
   // mcpLogs
   // ---------------------------------------------------------------------------
   mcpLogs: defineTable({
