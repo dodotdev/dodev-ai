@@ -15,6 +15,7 @@ import {
   LayoutDashboard,
   LogOut,
   Plus,
+  Radio,
   Rocket,
   Settings,
   User,
@@ -85,6 +86,7 @@ const GLOBAL_ITEMS = [
   { label: "Memories", icon: Brain, href: "/dashboard/memories" },
   { label: "Tasks", icon: CheckSquare, href: "/dashboard/tasks" },
   { label: "Issues", icon: AlertCircle, href: "/dashboard/issues" },
+  { label: "Live", icon: Radio, href: "/dashboard/live" },
   { label: "Activity", icon: Activity, href: "/dashboard/activity" },
 ] as const
 

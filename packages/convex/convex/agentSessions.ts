@@ -165,6 +165,44 @@ export const listRecent = query({
   },
 })
 
+/**
+ * Live-monitoring feed: every session that has had activity within the
+ * window, regardless of connect/disconnect status. The dashboard tile
+ * grid classifies tiles client-side by `lastActivityAt` freshness:
+ *   <30s   active (green)
+ *   <2min  idle (yellow)
+ *   <5min  stalled (orange)
+ *   ≥5min  stuck or dead (red, or gray when status != connected)
+ *
+ * Returns up to 24 tiles. Default window is 1 hour, capped at 24.
+ */
+export const listRecentlyActive = query({
+  args: {
+    apiKeyHash: v.string(),
+    /** Window in milliseconds. Default: 1 hour. Capped at 24h. */
+    sinceMs: v.optional(v.number()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const user = await authenticateApiKey(ctx, args.apiKeyHash)
+    const cap = 24 * 60 * 60 * 1000
+    const window = Math.min(args.sinceMs ?? 60 * 60 * 1000, cap)
+    const since = Date.now() - window
+    const limit = Math.min(args.limit ?? 24, 50)
+
+    // Index ordered by lastActivityAt; take a generous slice and filter to
+    // this user. This avoids a missing index — by_user_status orders by
+    // status not time, by_user orders by _creationTime not lastActivityAt.
+    const recent = await ctx.db
+      .query("agentSessions")
+      .withIndex("by_last_activity", (q) => q.gt("lastActivityAt", since))
+      .order("desc")
+      .take(limit * 4)
+
+    return recent.filter((s) => s.userId === user._id).slice(0, limit)
+  },
+})
+
 /** Expire stale sessions (no activity for 30 minutes). Called by cron. */
 export const expireStaleSessions = internalMutation({
   args: {},
