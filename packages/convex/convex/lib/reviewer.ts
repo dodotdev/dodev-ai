@@ -187,15 +187,18 @@ function normalizeFinding(input: unknown): Finding | null {
   }
 }
 
-/** Read the reviewer API key + default model from process.env. */
-export function getReviewerConfig(): {
+/** Env fallback — only used if no scope (project/space/user) supplied a key. */
+export function getEnvReviewerConfig(): {
   apiKey: string | undefined
-  defaultModel: string
+  model: string | undefined
   baseUrl: string | undefined
 } {
   return {
     apiKey: process.env.ANTHROPIC_API_KEY ?? process.env.REVIEWER_API_KEY,
-    defaultModel: process.env.REVIEWER_MODEL ?? "claude-sonnet-4-6",
+    model: process.env.REVIEWER_MODEL,
     baseUrl: process.env.REVIEWER_BASE_URL,
   }
 }
+
+/** Hardcoded default — only the model. Used when no scope/env supplied one. */
+export const DEFAULT_REVIEWER_MODEL = "claude-sonnet-4-6"

@@ -243,6 +243,7 @@ export function createServer(): Server {
       else if (message === "QUOTA_EXCEEDED") code = "QUOTA_EXCEEDED"
       else if (message === "RATE_LIMITED") code = "RATE_LIMITED"
       else if (message.startsWith("REVIEW_REQUIRED")) code = "REVIEW_REQUIRED"
+      else if (message.startsWith("REVIEWER_KEY_MISSING")) code = "REVIEWER_KEY_MISSING"
 
       const duration = Date.now() - start
       if (isDev) console.error(`[MCP] ${name} → ${code}: ${message} (${duration}ms)`)

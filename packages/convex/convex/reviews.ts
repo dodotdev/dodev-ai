@@ -10,9 +10,25 @@
 import { ConvexError, v } from "convex/values"
 import { internal } from "./_generated/api"
 import type { Doc, Id } from "./_generated/dataModel"
-import { action, internalMutation, internalQuery, type QueryCtx, query } from "./_generated/server"
+import {
+  action,
+  internalMutation,
+  internalQuery,
+  mutation,
+  type QueryCtx,
+  query,
+} from "./_generated/server"
 import { authenticateApiKey } from "./lib/auth"
-import { getReviewerConfig, runReview } from "./lib/reviewer"
+import { DEFAULT_REVIEWER_MODEL, getEnvReviewerConfig, runReview } from "./lib/reviewer"
+
+const reviewerSettingsValidator = v.object({
+  apiKey: v.optional(v.union(v.string(), v.null())),
+  model: v.optional(v.union(v.string(), v.null())),
+  baseUrl: v.optional(v.union(v.string(), v.null())),
+})
+
+/** Source of a resolved reviewer field — for diagnostics. */
+type ResolutionSource = "project" | "space" | "user" | "env" | "default"
 
 const stageValidator = v.union(v.literal("plan"), v.literal("code"), v.literal("ad_hoc"))
 
@@ -37,35 +53,100 @@ export const authenticateForAction = internalQuery({
   },
 })
 
-/** Internal — resolve the effective reviewer model for a scope. */
-export const resolveReviewerConfig = internalQuery({
+/**
+ * Internal — walk project -> space -> user looking for reviewerSettings.
+ * Returns the first set value for each field separately (apiKey, model,
+ * baseUrl can each come from a different scope).
+ *
+ * The env fallback is applied later in the action (queries can't read
+ * process.env safely in all Convex runtimes).
+ *
+ * Future: when teams ship, slot a `team` rung between space and user.
+ */
+export const resolveReviewerScopes = internalQuery({
   args: {
     userId: v.id("users"),
     spaceId: v.optional(v.id("spaces")),
     projectId: v.optional(v.id("projects")),
   },
   handler: async (ctx, args) => {
-    let projectModel: string | undefined
-    let spaceModel: string | undefined
+    const out: {
+      apiKey?: string
+      apiKeySource?: ResolutionSource
+      model?: string
+      modelSource?: ResolutionSource
+      baseUrl?: string
+      baseUrlSource?: ResolutionSource
+      // Legacy: requireReview.reviewerModel (R4 path) is still honored on
+      // the model rung — same precedence as reviewerSettings.model.
+      legacyModel?: string
+      legacyModelSource?: ResolutionSource
+    } = {}
 
+    const set = (
+      source: ResolutionSource,
+      settings: { apiKey?: string; model?: string; baseUrl?: string } | undefined,
+      legacyModel?: string
+    ) => {
+      if (out.apiKey === undefined && settings?.apiKey) {
+        out.apiKey = settings.apiKey
+        out.apiKeySource = source
+      }
+      if (out.model === undefined && settings?.model) {
+        out.model = settings.model
+        out.modelSource = source
+      }
+      if (out.baseUrl === undefined && settings?.baseUrl) {
+        out.baseUrl = settings.baseUrl
+        out.baseUrlSource = source
+      }
+      if (out.legacyModel === undefined && legacyModel) {
+        out.legacyModel = legacyModel
+        out.legacyModelSource = source
+      }
+    }
+
+    // Project rung — highest precedence.
+    let parentSpaceId: Id<"spaces"> | undefined
     if (args.projectId) {
       const project = await ctx.db.get(args.projectId)
       if (project && project.userId === args.userId) {
-        projectModel = project.requireReview?.reviewerModel
-        if (!args.spaceId && !spaceModel) {
-          const space = await ctx.db.get(project.spaceId)
-          spaceModel = space?.requireReview?.reviewerModel
-        }
-      }
-    }
-    if (args.spaceId) {
-      const space = await ctx.db.get(args.spaceId)
-      if (space && space.userId === args.userId) {
-        spaceModel = space.requireReview?.reviewerModel
+        set(
+          "project",
+          project.reviewerSettings as
+            | { apiKey?: string; model?: string; baseUrl?: string }
+            | undefined,
+          project.requireReview?.reviewerModel
+        )
+        parentSpaceId = project.spaceId
       }
     }
 
-    return { projectModel, spaceModel }
+    // Space rung. If only projectId was passed, fall back to its parent space.
+    const spaceId = args.spaceId ?? parentSpaceId
+    if (spaceId) {
+      const space = await ctx.db.get(spaceId)
+      if (space && space.userId === args.userId) {
+        set(
+          "space",
+          space.reviewerSettings as
+            | { apiKey?: string; model?: string; baseUrl?: string }
+            | undefined,
+          space.requireReview?.reviewerModel
+        )
+      }
+    }
+
+    // User rung — broadest scope.
+    const user = await ctx.db.get(args.userId)
+    if (user) {
+      set(
+        "user",
+        user.reviewerSettings as { apiKey?: string; model?: string; baseUrl?: string } | undefined
+      )
+    }
+
+    return out
   },
 })
 
@@ -137,24 +218,29 @@ export const request = action({
       throw new ConvexError("artifact is required and must be non-empty.")
     }
 
-    const config = getReviewerConfig()
-    if (!config.apiKey) {
-      throw new ConvexError(
-        "Reviewer API key not configured. Set ANTHROPIC_API_KEY (or REVIEWER_API_KEY) in Convex env."
-      )
-    }
-
-    const scopeConfig = await ctx.runQuery(internal.reviews.resolveReviewerConfig, {
+    // Walk project -> space -> user for each field independently.
+    const scoped = await ctx.runQuery(internal.reviews.resolveReviewerScopes, {
       userId: user._id,
       spaceId: args.spaceId,
       projectId: args.projectId,
     })
+    const env = getEnvReviewerConfig()
+
+    const apiKey = scoped.apiKey ?? env.apiKey
+    if (!apiKey) {
+      throw new ConvexError(
+        "REVIEWER_KEY_MISSING: No reviewer API key found at project, space, or user scope, and ANTHROPIC_API_KEY is not set in Convex env. Use set_*_reviewer_settings to configure one, or set the env var on the deployment."
+      )
+    }
 
     const reviewerModel =
       args.reviewerModel ??
-      scopeConfig.projectModel ??
-      scopeConfig.spaceModel ??
-      config.defaultModel
+      scoped.model ??
+      scoped.legacyModel ??
+      env.model ??
+      DEFAULT_REVIEWER_MODEL
+
+    const baseUrl = scoped.baseUrl ?? env.baseUrl
 
     const start = Date.now()
     let verdict: "approve" | "approve_with_suggestions" | "needs_revision" | "blocker" | "error" =
@@ -175,8 +261,8 @@ export const request = action({
         artifact: args.artifact,
         context: args.context,
         reviewerModel,
-        apiKey: config.apiKey,
-        baseUrl: config.baseUrl,
+        apiKey,
+        baseUrl,
       })
       verdict = result.verdict
       summary = result.summary
@@ -252,6 +338,167 @@ export const get = query({
     const row = await ctx.db.get(args.id)
     if (!row || row.userId !== user._id) throw new ConvexError("NOT_FOUND")
     return row
+  },
+})
+
+// ---------------------------------------------------------------------------
+// R4.1 — Reviewer settings mutations + diagnostics
+//
+// Three siblings — one per scope — keep the auth boundary explicit. A
+// single "set_reviewer_settings({ scope })" tool would look smaller but
+// would push the agent into checking ownership across types.
+// ---------------------------------------------------------------------------
+
+function applyPatch(
+  current: { apiKey?: string; model?: string; baseUrl?: string } | undefined,
+  patch: { apiKey?: string | null; model?: string | null; baseUrl?: string | null }
+): { apiKey?: string; model?: string; baseUrl?: string } | undefined {
+  const merged: { apiKey?: string; model?: string; baseUrl?: string } = { ...(current ?? {}) }
+  if (patch.apiKey !== undefined) {
+    if (patch.apiKey === null) delete merged.apiKey
+    else merged.apiKey = patch.apiKey
+  }
+  if (patch.model !== undefined) {
+    if (patch.model === null) delete merged.model
+    else merged.model = patch.model
+  }
+  if (patch.baseUrl !== undefined) {
+    if (patch.baseUrl === null) delete merged.baseUrl
+    else merged.baseUrl = patch.baseUrl
+  }
+  // If the merged object has no fields, drop the wrapper entirely.
+  if (merged.apiKey === undefined && merged.model === undefined && merged.baseUrl === undefined) {
+    return undefined
+  }
+  return merged
+}
+
+/** User-level reviewer settings. Lowest-precedence scope (after env). */
+export const setUserReviewerSettings = mutation({
+  args: {
+    apiKeyHash: v.string(),
+    settings: reviewerSettingsValidator,
+  },
+  handler: async (ctx, args) => {
+    const user = await authenticateApiKey(ctx, args.apiKeyHash)
+    const next = applyPatch(user.reviewerSettings, args.settings)
+    await ctx.db.patch(user._id, {
+      reviewerSettings: next,
+      updatedAt: Date.now(),
+    })
+    return { configured: !!next?.apiKey, model: next?.model, baseUrl: next?.baseUrl }
+  },
+})
+
+/** Space-level reviewer settings. Shared across everyone with space access. */
+export const setSpaceReviewerSettings = mutation({
+  args: {
+    apiKeyHash: v.string(),
+    spaceId: v.id("spaces"),
+    settings: reviewerSettingsValidator,
+  },
+  handler: async (ctx, args) => {
+    const user = await authenticateApiKey(ctx, args.apiKeyHash)
+    const space = await ctx.db.get(args.spaceId)
+    if (!space || space.userId !== user._id) throw new ConvexError("NOT_FOUND")
+
+    const next = applyPatch(space.reviewerSettings, args.settings)
+    await ctx.db.patch(args.spaceId, {
+      reviewerSettings: next,
+      updatedAt: Date.now(),
+    })
+    return { configured: !!next?.apiKey, model: next?.model, baseUrl: next?.baseUrl }
+  },
+})
+
+/** Project-level reviewer settings. Highest-precedence scope. */
+export const setProjectReviewerSettings = mutation({
+  args: {
+    apiKeyHash: v.string(),
+    projectId: v.id("projects"),
+    settings: reviewerSettingsValidator,
+  },
+  handler: async (ctx, args) => {
+    const user = await authenticateApiKey(ctx, args.apiKeyHash)
+    const project = await ctx.db.get(args.projectId)
+    if (!project || project.userId !== user._id) throw new ConvexError("NOT_FOUND")
+
+    const next = applyPatch(project.reviewerSettings, args.settings)
+    await ctx.db.patch(args.projectId, {
+      reviewerSettings: next,
+      updatedAt: Date.now(),
+    })
+    return { configured: !!next?.apiKey, model: next?.model, baseUrl: next?.baseUrl }
+  },
+})
+
+/**
+ * Show the effective reviewer config for a scope without leaking the key.
+ * Returns where each field came from (project / space / user / env / default).
+ */
+export const effectiveReviewerSettings = query({
+  args: {
+    apiKeyHash: v.string(),
+    spaceId: v.optional(v.id("spaces")),
+    projectId: v.optional(v.id("projects")),
+  },
+  handler: async (ctx, args) => {
+    const user = await authenticateApiKey(ctx, args.apiKeyHash)
+
+    // Inline-walk the chain (cannot call internal queries from a public query
+    // with the same auth without auth-boundary friction; reproduce the
+    // walker here for read-only display).
+    let parentSpaceId: Id<"spaces"> | undefined
+    type Scope = "project" | "space" | "user"
+    const collect: Record<"apiKey" | "model" | "baseUrl", { value: string; source: Scope } | null> =
+      { apiKey: null, model: null, baseUrl: null }
+
+    const consider = (
+      source: Scope,
+      settings: { apiKey?: string; model?: string; baseUrl?: string } | undefined
+    ) => {
+      if (!settings) return
+      if (!collect.apiKey && settings.apiKey) {
+        collect.apiKey = { value: settings.apiKey, source }
+      }
+      if (!collect.model && settings.model) {
+        collect.model = { value: settings.model, source }
+      }
+      if (!collect.baseUrl && settings.baseUrl) {
+        collect.baseUrl = { value: settings.baseUrl, source }
+      }
+    }
+
+    if (args.projectId) {
+      const project = await ctx.db.get(args.projectId)
+      if (project && project.userId === user._id) {
+        consider("project", project.reviewerSettings as never)
+        parentSpaceId = project.spaceId
+      }
+    }
+    const spaceId = args.spaceId ?? parentSpaceId
+    if (spaceId) {
+      const space = await ctx.db.get(spaceId)
+      if (space && space.userId === user._id) {
+        consider("space", space.reviewerSettings as never)
+      }
+    }
+    consider("user", user.reviewerSettings as never)
+
+    // Env fallback for diagnostics — we only report whether it's set, never the value.
+    const env = getEnvReviewerConfig()
+    const envHasKey = !!env.apiKey
+
+    return {
+      hasKey: !!collect.apiKey || envHasKey,
+      apiKeySource: collect.apiKey?.source ?? (envHasKey ? "env" : null),
+      // Never return the resolved key. The dashboard / agent can see whether
+      // it's configured but cannot read it back out.
+      model: collect.model?.value ?? env.model ?? DEFAULT_REVIEWER_MODEL,
+      modelSource: collect.model?.source ?? (env.model ? "env" : "default"),
+      baseUrl: collect.baseUrl?.value ?? env.baseUrl ?? null,
+      baseUrlSource: collect.baseUrl?.source ?? (env.baseUrl ? "env" : null),
+    }
   },
 })
 

@@ -543,6 +543,7 @@ export type ErrorCode =
   | "RATE_LIMITED"
   | "QUOTA_EXCEEDED"
   | "REVIEW_REQUIRED"
+  | "REVIEWER_KEY_MISSING"
   | "INTERNAL_ERROR"
 
 // ---------------------------------------------------------------------------
@@ -593,4 +594,32 @@ export interface RequireReviewPolicy {
   plan?: boolean
   code?: boolean
   reviewerModel?: string
+}
+
+/**
+ * Reviewer call config — Anthropic API key + model + baseUrl.
+ * Stored independently at user / space / project scope. Resolution
+ * order: project > space > user > env > default model.
+ *
+ * R4.1 puts these at multiple scopes so a single shared key can sit at
+ * the space level (the team-key primitive) without requiring a `teams`
+ * table. Future: a `team` rung will slot between space and user.
+ */
+export interface ReviewerSettings {
+  apiKey?: string
+  model?: string
+  baseUrl?: string
+}
+
+/** Source of a resolved reviewer field — for diagnostics in dashboard / agent. */
+export type ReviewerSettingResolution = "project" | "space" | "user" | "env" | "default" | null
+
+/** Result of effective_reviewer_settings — never returns the key itself. */
+export interface EffectiveReviewerSettings {
+  hasKey: boolean
+  apiKeySource: ReviewerSettingResolution
+  model: string
+  modelSource: ReviewerSettingResolution
+  baseUrl: string | null
+  baseUrlSource: ReviewerSettingResolution
 }

@@ -85,6 +85,82 @@ export const reviewTools: Tool[] = [
       required: ["id"],
     },
   },
+  // -------------------------------------------------------------------------
+  // R4.1 — Reviewer settings (multi-scope keys)
+  // -------------------------------------------------------------------------
+  {
+    name: "set_user_reviewer_settings",
+    description:
+      "Store the reviewer API key/model/baseUrl on your USER row — lowest-precedence scope (overrides only the env fallback). Use this when you want one key for everything you do across all your spaces. Pass null on a field to clear it. Returns whether a key is now configured (never returns the key itself).",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        apiKey: {
+          type: ["string", "null"],
+          description:
+            "Anthropic (or compatible) API key. Pass null to clear. Stored as plaintext on your user row in your Convex deployment.",
+        },
+        model: {
+          type: ["string", "null"],
+          description:
+            "Override the reviewer model (default: claude-sonnet-4-6). Pass null to clear.",
+        },
+        baseUrl: {
+          type: ["string", "null"],
+          description:
+            "Override the API base URL. Use for Anthropic-compatible providers. Pass null to clear.",
+        },
+      },
+    },
+  },
+  {
+    name: "set_space_reviewer_settings",
+    description:
+      "Store the reviewer settings on a SPACE — shared across everyone with access to that space. This is the team-key primitive: one place to put a shared Anthropic key for the whole team's reviews. Higher precedence than user-level. Pass null on a field to clear.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        spaceId: { type: "string", description: "The space ID." },
+        apiKey: {
+          type: ["string", "null"],
+          description: "Anthropic API key for this space. Null to clear.",
+        },
+        model: { type: ["string", "null"], description: "Reviewer model override." },
+        baseUrl: { type: ["string", "null"], description: "API base URL override." },
+      },
+      required: ["spaceId"],
+    },
+  },
+  {
+    name: "set_project_reviewer_settings",
+    description:
+      "Store reviewer settings on a PROJECT — highest precedence. Use to bill a specific project to a different account, or to scope an experimental key away from the team's main key.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        projectId: { type: "string", description: "The project ID." },
+        apiKey: {
+          type: ["string", "null"],
+          description: "Anthropic API key for this project. Null to clear.",
+        },
+        model: { type: ["string", "null"], description: "Reviewer model override." },
+        baseUrl: { type: ["string", "null"], description: "API base URL override." },
+      },
+      required: ["projectId"],
+    },
+  },
+  {
+    name: "effective_reviewer_settings",
+    description:
+      "Show the resolved reviewer settings for a scope — model, baseUrl, and where each came from (project / space / user / env / default). Reports whether an API key is configured, but never returns the key itself. Use to diagnose 'why is request_review failing' or to confirm which scope's key will be used.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        spaceId: { type: "string" },
+        projectId: { type: "string" },
+      },
+    },
+  },
 ]
 
 export async function handleReviewTool(
@@ -125,6 +201,45 @@ export async function handleReviewTool(
       return await client.query(api.reviews.get, {
         apiKeyHash,
         id: args.id as string,
+      })
+
+    case "set_user_reviewer_settings":
+      return await client.mutation(api.reviews.setUserReviewerSettings, {
+        apiKeyHash,
+        settings: {
+          apiKey: args.apiKey as string | null | undefined,
+          model: args.model as string | null | undefined,
+          baseUrl: args.baseUrl as string | null | undefined,
+        },
+      })
+
+    case "set_space_reviewer_settings":
+      return await client.mutation(api.reviews.setSpaceReviewerSettings, {
+        apiKeyHash,
+        spaceId: args.spaceId as string,
+        settings: {
+          apiKey: args.apiKey as string | null | undefined,
+          model: args.model as string | null | undefined,
+          baseUrl: args.baseUrl as string | null | undefined,
+        },
+      })
+
+    case "set_project_reviewer_settings":
+      return await client.mutation(api.reviews.setProjectReviewerSettings, {
+        apiKeyHash,
+        projectId: args.projectId as string,
+        settings: {
+          apiKey: args.apiKey as string | null | undefined,
+          model: args.model as string | null | undefined,
+          baseUrl: args.baseUrl as string | null | undefined,
+        },
+      })
+
+    case "effective_reviewer_settings":
+      return await client.query(api.reviews.effectiveReviewerSettings, {
+        apiKeyHash,
+        spaceId: args.spaceId as string | undefined,
+        projectId: args.projectId as string | undefined,
       })
 
     default:

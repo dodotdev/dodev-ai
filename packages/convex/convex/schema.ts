@@ -62,6 +62,25 @@ export default defineSchema({
       })
     ),
 
+    /**
+     * R4.1 — Reviewer call config. The Anthropic key (or any
+     * Anthropic-compatible provider). Resolved by the chain
+     * project -> space -> user -> env. The env fallback
+     * (process.env.ANTHROPIC_API_KEY) lets paranoid self-hosted
+     * users keep the key entirely out of Convex storage.
+     *
+     * Future: a `teams` table will slot a rung between space and
+     * user. The resolver in reviews.ts is the only place that
+     * walks this chain — extending it is additive.
+     */
+    reviewerSettings: v.optional(
+      v.object({
+        apiKey: v.optional(v.string()),
+        model: v.optional(v.string()),
+        baseUrl: v.optional(v.string()),
+      })
+    ),
+
     // Global item counter (shared across all tasks, issues, spaces)
     itemCounter: v.optional(v.number()),
 
@@ -154,6 +173,20 @@ export default defineSchema({
       })
     ),
 
+    /**
+     * R4.1 — Space-level reviewer settings. Shared by everyone with
+     * access to this space. This is the team-key-without-teams primitive:
+     * a startup setting one key here covers every member who works in
+     * the space. Resolution: project > SPACE > user > env.
+     */
+    reviewerSettings: v.optional(
+      v.object({
+        apiKey: v.optional(v.string()),
+        model: v.optional(v.string()),
+        baseUrl: v.optional(v.string()),
+      })
+    ),
+
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -196,6 +229,20 @@ export default defineSchema({
         plan: v.optional(v.boolean()),
         code: v.optional(v.boolean()),
         reviewerModel: v.optional(v.string()),
+      })
+    ),
+
+    /**
+     * R4.1 — Per-project reviewer override. Use to bill a specific
+     * project to a different account, or to scope an experimental key
+     * away from the team's main key. Highest precedence in the chain:
+     * PROJECT > space > user > env.
+     */
+    reviewerSettings: v.optional(
+      v.object({
+        apiKey: v.optional(v.string()),
+        model: v.optional(v.string()),
+        baseUrl: v.optional(v.string()),
       })
     ),
 

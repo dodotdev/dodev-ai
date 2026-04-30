@@ -82,6 +82,17 @@ End with an `AskUserQuestion`:
 - After implementation, before `complete_task`: `request_review` with `stage: "code"` and the unified diff.
 - If the project sets `requireReview: { plan: true, code: true }`, `complete_task` will refuse to mark the task complete without an approved review of that stage. The error code `REVIEW_REQUIRED` tells you which stage is missing — fix the artifact and run `request_review` again.
 
+**Reviewer key (bring-your-own)**
+
+dodev never holds your Anthropic key. Set it at any scope; resolution is `project → space → user → env`:
+
+- `set_user_reviewer_settings({ apiKey })` — your key for everything.
+- `set_space_reviewer_settings({ spaceId, apiKey })` — shared key for a team's space.
+- `set_project_reviewer_settings({ projectId, apiKey })` — override for one project.
+- Or self-hosters can set `ANTHROPIC_API_KEY` on their Convex deployment env (no per-user setup).
+
+`effective_reviewer_settings` shows the resolved model + where each field came from, without leaking the key. If `request_review` returns `REVIEWER_KEY_MISSING`, no scope had a key set and the env var isn't there.
+
 **Closing the session**
 
 When the session has produced meaningful changes:
