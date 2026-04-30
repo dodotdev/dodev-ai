@@ -3,6 +3,7 @@ import { createFileRoute, useParams } from "@tanstack/react-router"
 import { useMutation, useQuery } from "convex/react"
 import { Loader2, Search } from "lucide-react"
 import { useState } from "react"
+import { MemoryDigestPanel } from "@/components/dashboard/memory-digest/memory-digest-panel"
 import { MemoryForm } from "@/components/dashboard/memory-form"
 import { MemoryGrid } from "@/components/dashboard/memory-grid"
 import { useAuth } from "@/components/providers/auth-provider"
@@ -104,6 +105,8 @@ function SpaceMemoriesRoute() {
         </div>
         <MemoryForm onSubmit={handleCreate} />
       </div>
+
+      <MemoryDigestPanel spaceId={id} limit={10} />
 
       <div className="flex gap-3">
         <div className="relative flex-1">
