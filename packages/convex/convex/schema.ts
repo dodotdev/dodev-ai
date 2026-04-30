@@ -224,6 +224,11 @@ export default defineSchema({
     changelog: v.optional(v.boolean()),
     versionId: v.optional(v.id("versions")),
 
+    /** Parent task for umbrella/leaf hierarchy (R3). When set, this task is a
+     *  leaf under the parent; the parent is an "umbrella" whose status is
+     *  derived from its descendants. */
+    parentTaskId: v.optional(v.id("tasks")),
+
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -244,6 +249,8 @@ export default defineSchema({
     .index("by_user_project_cycle", ["userId", "projectId", "cycleId"])
     .index("by_user_project_version", ["userId", "projectId", "versionId"])
     .index("by_user_space_project", ["userId", "spaceId", "projectId"])
+    // R3 — umbrella hierarchy traversal
+    .index("by_parent", ["parentTaskId"])
     // Search index
     .searchIndex("search_title_description", {
       searchField: "title",

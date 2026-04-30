@@ -22,10 +22,19 @@ export const create = mutation({
     cycleId: v.optional(v.id("cycles")),
     changelog: v.optional(v.boolean()),
     versionId: v.optional(v.id("versions")),
+    parentTaskId: v.optional(v.id("tasks")),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
     await checkQuota(ctx, user, "tasks")
+
+    // Validate parent — must exist and belong to the same user.
+    if (args.parentTaskId) {
+      const parent = await ctx.db.get(args.parentTaskId)
+      if (!parent || parent.userId !== user._id) {
+        throw new ConvexError("NOT_FOUND")
+      }
+    }
 
     // Resolve the space. When projectId is set, derive spaceId from the
     // project so callers don't have to duplicate it. Projects are filter
@@ -81,6 +90,7 @@ export const create = mutation({
       cycleId: args.cycleId,
       changelog: args.changelog,
       versionId: args.versionId,
+      parentTaskId: args.parentTaskId,
       createdAt: now,
       updatedAt: now,
     })
@@ -118,12 +128,34 @@ export const update = mutation({
     cycleId: v.optional(v.union(v.id("cycles"), v.null())),
     changelog: v.optional(v.union(v.boolean(), v.null())),
     versionId: v.optional(v.union(v.id("versions"), v.null())),
+    parentTaskId: v.optional(v.union(v.id("tasks"), v.null())),
   },
   handler: async (ctx, args) => {
     const user = await authenticateApiKey(ctx, args.apiKeyHash)
     const task = await ctx.db.get(args.id)
     if (!task || task.userId !== user._id) {
       throw new ConvexError("NOT_FOUND")
+    }
+
+    // Validate parent + reject self-loops and cycles.
+    if (args.parentTaskId) {
+      if (args.parentTaskId === args.id) {
+        throw new ConvexError("A task cannot be its own parent.")
+      }
+      const parent = await ctx.db.get(args.parentTaskId)
+      if (!parent || parent.userId !== user._id) {
+        throw new ConvexError("NOT_FOUND")
+      }
+      // Walk up the chain — reject if `args.id` shows up as an ancestor.
+      let cursor: typeof parent | null = parent
+      const seen = new Set<string>([args.id])
+      while (cursor?.parentTaskId) {
+        if (seen.has(cursor.parentTaskId)) {
+          throw new ConvexError("Cycle detected in parentTaskId chain.")
+        }
+        seen.add(cursor.parentTaskId)
+        cursor = await ctx.db.get(cursor.parentTaskId)
+      }
     }
 
     const updates: Record<string, unknown> = { updatedAt: Date.now() }
@@ -187,6 +219,7 @@ export const update = mutation({
     if (args.cycleId !== undefined) updates.cycleId = args.cycleId ?? undefined
     if (args.changelog !== undefined) updates.changelog = args.changelog ?? undefined
     if (args.versionId !== undefined) updates.versionId = args.versionId ?? undefined
+    if (args.parentTaskId !== undefined) updates.parentTaskId = args.parentTaskId ?? undefined
 
     await ctx.db.patch(args.id, updates)
     return await ctx.db.get(args.id)

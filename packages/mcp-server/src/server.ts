@@ -13,6 +13,7 @@ import { handleIssueTool, issueTools } from "./tools/issues.js"
 import { handleLinkingTool, linkingTools } from "./tools/linking.js"
 import { handleMemoryTool, memoryTools } from "./tools/memories.js"
 import { handleProjectTool, projectTools } from "./tools/projects.js"
+import { handleRecommendTool, recommendTools } from "./tools/recommend.js"
 import { handleSnapshotTool, snapshotTools } from "./tools/snapshots.js"
 import { handleSpaceConfigTool, spaceConfigTools } from "./tools/space-config.js"
 import { handleSpaceTool, spaceTools } from "./tools/spaces.js"
@@ -37,6 +38,7 @@ const allTools = [
   ...versionTools,
   ...snapshotTools,
   ...handoverTools,
+  ...recommendTools,
 ]
 
 const taskToolNames = new Set(taskTools.map((t) => t.name))
@@ -53,6 +55,7 @@ const commentToolNames = new Set(commentTools.map((t) => t.name))
 const versionToolNames = new Set(versionTools.map((t) => t.name))
 const snapshotToolNames = new Set(snapshotTools.map((t) => t.name))
 const handoverToolNames = new Set(handoverTools.map((t) => t.name))
+const recommendToolNames = new Set(recommendTools.map((t) => t.name))
 
 /** Strip sensitive fields and return loggable args */
 function sanitizeArgs(toolArgs: Record<string, unknown>): Record<string, unknown> {
@@ -194,6 +197,8 @@ export function createServer(): Server {
         result = await handleSnapshotTool(name, toolArgs)
       } else if (handoverToolNames.has(name)) {
         result = await handleHandoverTool(name, toolArgs)
+      } else if (recommendToolNames.has(name)) {
+        result = await handleRecommendTool(name, toolArgs)
       } else {
         if (isDev) console.error(`[MCP] ${name} → NOT_FOUND`)
         writeLog(name, toolArgs, "error", Date.now() - start, "NOT_FOUND")

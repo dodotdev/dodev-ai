@@ -149,8 +149,38 @@ export interface Task {
   assigneeId?: string
   estimate?: string
   cycleId?: string
+  /** Parent task for umbrella/leaf hierarchy (R3). */
+  parentTaskId?: string
   createdAt: number
   updatedAt: number
+}
+
+/** Categories returned by recommend() (R3). */
+export type RecommendCategory =
+  | "critical_issue"
+  | "inprogress_task"
+  | "near_complete_umbrella"
+  | "handover_context"
+  | "debt_trend"
+  | "priority_momentum"
+  | "quick_win"
+  | "open_issue"
+
+export type RecommendKind = "task" | "issue" | "action"
+
+export interface Recommendation {
+  id: string
+  kind: RecommendKind
+  title: string
+  category: RecommendCategory
+  reason: string
+  score: number
+  meta?: Record<string, unknown>
+}
+
+export interface RecommendResult {
+  recommendations: Recommendation[]
+  totalCandidates: number
 }
 
 /** Issue as returned from Convex */

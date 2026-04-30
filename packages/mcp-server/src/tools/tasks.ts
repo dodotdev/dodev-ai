@@ -66,6 +66,11 @@ export const taskTools: Tool[] = [
           type: "string",
           description: "Version ID to associate this task with a release version",
         },
+        parentTaskId: {
+          type: "string",
+          description:
+            "Parent task ID for umbrella/leaf hierarchy (R3). Set this to make the new task a leaf under an umbrella. The umbrella's progress is derived from its leaves; the recommend engine boosts work that closes near-complete umbrellas.",
+        },
       },
       required: ["title"],
     },
@@ -131,6 +136,11 @@ export const taskTools: Tool[] = [
         versionId: {
           type: ["string", "null"],
           description: "Version ID, or null to remove from version",
+        },
+        parentTaskId: {
+          type: ["string", "null"],
+          description:
+            "Re-parent or detach the task. Null to make it a top-level task. Cycles in the parent chain are rejected.",
         },
       },
       required: ["id"],
@@ -240,6 +250,7 @@ export async function handleTaskTool(
         cycleId: args.cycleId as string | undefined,
         changelog: args.changelog as boolean | undefined,
         versionId: args.versionId as string | undefined,
+        parentTaskId: args.parentTaskId as string | undefined,
       })
 
     case "update_task":
@@ -260,6 +271,7 @@ export async function handleTaskTool(
         cycleId: args.cycleId as string | null | undefined,
         changelog: args.changelog as boolean | null | undefined,
         versionId: args.versionId as string | null | undefined,
+        parentTaskId: args.parentTaskId as string | null | undefined,
       })
 
     case "complete_task":
